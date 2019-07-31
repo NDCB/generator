@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "lib": ["esnext"],
+    "target": "esnext",
+    "outDir": "./lib",
+    "typeRoots": ["./node_modules/@types"],
+    "alwaysStrict": true,
+    "declaration": true,
+    "declarationMap": true,
+    "composite": true,
+    "noImplicitAny": false,
+    "downlevelIteration": true,
+    "listFiles": true,
+    "listEmittedFiles": true,
+    "pretty": true,
+    "esModuleInterop": true
+  }
+}

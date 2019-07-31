@@ -1,0 +1,45 @@
+{
+	"name": "generator",
+	"private": true,
+	"version": "0.0.0",
+	"description": "A static website generator.",
+	"license": "MIT",
+	"author": "Marc-Antoine Ouimet <ouimetmarcantoine@gmail.com>",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/NDCB/generator.git"
+	},
+	"homepage": "https://github.com/NDCB/generator#readme",
+	"bugs": {
+		"url": "https://github.com/NDCB/generator/issues",
+		"email": "ouimetmarcantoine@gmail.com"
+	},
+	"files": [
+		"lib"
+	],
+	"scripts": {
+		"format": "prettier --write \"./{src,test}/**/*.ts\"",
+		"lint": "tslint --force --format verbose \"./{src,test}/**/*.ts\"",
+		"build": "npm run format && npm run lint && echo Using TypeScript && tsc --version && tsc --project tsconfig.build.json",
+		"doc": "typedoc --out ./doc/ ./src --mode file --module esnext",
+		"test": "mocha",
+		"test:watch": "mocha --watch",
+		"coverage": "nyc npm run test"
+	},
+	"devDependencies": {
+		"@types/chai": "^4.1.7",
+		"@types/mocha": "^5.2.7",
+		"@types/node": "^10.13.4",
+		"chai": "^4.2.0",
+		"mocha": "^6.2.0",
+		"nyc": "^14.1.1",
+		"prettier": "^1.18.2",
+		"source-map-support": "^0.5.12",
+		"ts-node": "^8.3.0",
+		"tslint": "^5.18.0",
+		"tslint-config-prettier": "^1.18.0",
+		"typedoc": "^0.15.0",
+		"typescript": "^3.5.3"
+	},
+	"dependencies": {}
+}
