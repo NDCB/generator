@@ -10,6 +10,7 @@ import {
 	baseName,
 	extensionName,
 	hasSubPath,
+	joinPath,
 	name,
 	parentPath,
 	Path,
@@ -190,3 +191,11 @@ export const isRootDirectory = (directory: Directory): boolean =>
  */
 export const parentDirectory = (entry: Entry): Directory =>
 	directory(parentPath(entryToPath(entry)));
+
+export const fileInDirectory = (directory: Directory) => (
+	fileBaseName: string,
+): File => file(joinPath(directoryToPath(directory), fileBaseName));
+
+export const directoryInDirectory = (d: Directory) => (
+	directoryBaseName: string,
+): Directory => directory(joinPath(directoryToPath(d), directoryBaseName));
