@@ -17,3 +17,24 @@ export const fileToString = (file: File): string =>
 
 export const fileEquals = (f1: File, f2: File): boolean =>
 	pathEquals(fileToPath(f1), fileToPath(f2));
+
+/**
+ * A directory in the file system. The directory may not exist.
+ */
+export interface Directory {
+	readonly _tag: "Directory";
+	readonly path: Path;
+}
+
+export const directory = (path: Path): Directory => ({
+	_tag: "Directory",
+	path,
+});
+
+export const directoryToPath = (directory: Directory): Path => directory.path;
+
+export const directoryToString = (directory: Directory): string =>
+	pathToString(directoryToPath(directory));
+
+export const directoryEquals = (d1: Directory, d2: Directory): boolean =>
+	pathEquals(directoryToPath(d1), directoryToPath(d2));
