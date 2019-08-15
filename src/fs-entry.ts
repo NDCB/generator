@@ -1,4 +1,11 @@
-import { existsSync, realpathSync, Stats as Status, statSync } from "fs";
+import {
+	ensureDirSync,
+	ensureFileSync,
+	existsSync,
+	realpathSync,
+	Stats as Status,
+	statSync,
+} from "fs-extra";
 import {
 	baseName,
 	extensionName,
@@ -96,20 +103,67 @@ export const entryStatus = (entry: Entry): Status =>
 /**
  * @precondition entryExists(entry)
  */
-export const entryIsFile = (entry: Entry): boolean =>
+export const entryIsFile = (entry: Entry): entry is File =>
 	entryStatus(entry).isFile();
 
 /**
  * @precondition entryExists(entry)
  */
-export const entryIsDirectory = (entry: Entry): boolean =>
+export const entryIsDirectory = (entry: Entry): entry is Directory =>
 	entryStatus(entry).isDirectory();
 
+/**
+ * @postcondition entryExists(file) && entryIsFile(file)
+ */
 export const fileExists = (file: File): boolean =>
 	entryExists(file) && entryIsFile(file);
 
+/**
+ * @postcondition entryExists(directory) && entryIsDirectory(directory)
+ */
 export const directoryExists = (directory: Directory): boolean =>
 	entryExists(directory) && entryIsDirectory(directory);
+
+/**
+ * @postcondition fileExists(file)
+ */
+export const ensureFileExists = (file: File): void =>
+	ensureFileSync(pathToString(fileToPath(file)));
+
+/**
+ * @postcondition directoryExists(directory)
+ */
+export const ensureDirectoryExists = (directory: Directory): void =>
+	ensureDirSync(pathToString(directoryToPath(directory)));
+
+export interface EntryPattern<T> {
+	readonly file: (file: File) => T;
+	readonly directory: (directory: Directory) => T;
+}
+
+export const matchEntry = <T>(pattern: EntryPattern<T>) => (
+	entry: Entry,
+): T => {
+	if (entryIsFile(entry)) {
+		return pattern.file(entry);
+	} else if (entryIsDirectory(entry)) {
+		return pattern.directory(entry);
+	} else {
+		throw new Error(
+			`Failed to match pattern for entry ${entryToString(entry)}`,
+		);
+	}
+};
+
+const ensureEntryExistsPattern: EntryPattern<void> = {
+	file: ensureFileExists,
+	directory: ensureDirectoryExists,
+};
+
+/**
+ * @postcondition entryExists(entry)
+ */
+export const ensureEntryExists = matchEntry(ensureEntryExistsPattern);
 
 export const directoryHasDescendent = (directory: Directory) => {
 	const predicate = hasSubPath(directoryToPath(directory));
