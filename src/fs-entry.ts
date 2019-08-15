@@ -38,3 +38,15 @@ export const directoryToString = (directory: Directory): string =>
 
 export const directoryEquals = (d1: Directory, d2: Directory): boolean =>
 	pathEquals(directoryToPath(d1), directoryToPath(d2));
+
+export type Entry = File | Directory;
+
+export const entryToPath = (entry: Entry): Path => entry.path;
+
+export const entryToString = (entry: Entry): string =>
+	pathToString(entryToPath(entry));
+
+export const entryToFile = (entry: Entry): File => file(entryToPath(entry));
+
+export const entryToDirectory = (entry: Entry): Directory =>
+	directory(entryToPath(entry));
