@@ -64,6 +64,12 @@ export const entryToPath = (entry: Entry): Path => entry.path;
 export const entryToString = (entry: Entry): string =>
 	pathToString(entryToPath(entry));
 
+export const entryIsFile = (entry: Entry): entry is File =>
+	entry._tag === "File";
+
+export const entryIsDirectory = (entry: Entry): entry is Directory =>
+	entry._tag === "Directory";
+
 export const entryToFile = (entry: Entry): File => file(entryToPath(entry));
 
 export const entryToDirectory = (entry: Entry): Directory =>
@@ -103,26 +109,26 @@ export const entryStatus = (entry: Entry): Status =>
 /**
  * @precondition entryExists(entry)
  */
-export const entryIsFile = (entry: Entry): entry is File =>
+export const existingEntryIsFile = (entry: Entry): boolean =>
 	entryStatus(entry).isFile();
 
 /**
  * @precondition entryExists(entry)
  */
-export const entryIsDirectory = (entry: Entry): entry is Directory =>
+export const existingEntryIsDirectory = (entry: Entry): boolean =>
 	entryStatus(entry).isDirectory();
 
 /**
  * @postcondition entryExists(file) && entryIsFile(file)
  */
 export const fileExists = (file: File): boolean =>
-	entryExists(file) && entryIsFile(file);
+	entryExists(file) && existingEntryIsFile(file);
 
 /**
  * @postcondition entryExists(directory) && entryIsDirectory(directory)
  */
 export const directoryExists = (directory: Directory): boolean =>
-	entryExists(directory) && entryIsDirectory(directory);
+	entryExists(directory) && existingEntryIsDirectory(directory);
 
 /**
  * @postcondition fileExists(file)
