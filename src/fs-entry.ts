@@ -1,5 +1,13 @@
 import { existsSync, realpathSync, Stats as Status, statSync } from "fs";
-import { Path, path, pathEquals, pathToString } from "./fs-path";
+import {
+	baseName,
+	extensionName,
+	name,
+	Path,
+	path,
+	pathEquals,
+	pathToString,
+} from "./fs-path";
 
 /**
  * A file in the file system. The file may not exist.
@@ -51,6 +59,14 @@ export const entryToFile = (entry: Entry): File => file(entryToPath(entry));
 
 export const entryToDirectory = (entry: Entry): Directory =>
 	directory(entryToPath(entry));
+
+export const entryBaseName = (entry: Entry): string =>
+	baseName(entryToPath(entry));
+
+export const fileName = (file: File): string => name(fileToPath(file));
+
+export const fileExtensionName = (file: File): string =>
+	extensionName(fileToPath(file));
 
 export const realPath = (p: Path): Path =>
 	path(realpathSync.native(pathToString(p)));
