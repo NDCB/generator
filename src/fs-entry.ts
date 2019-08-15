@@ -2,7 +2,9 @@ import { existsSync, realpathSync, Stats as Status, statSync } from "fs";
 import {
 	baseName,
 	extensionName,
+	hasSubPath,
 	name,
+	parentPath,
 	Path,
 	path,
 	pathEquals,
@@ -108,3 +110,23 @@ export const fileExists = (file: File): boolean =>
 
 export const directoryExists = (directory: Directory): boolean =>
 	entryExists(directory) && entryIsDirectory(directory);
+
+export const directoryHasDescendent = (directory: Directory) => {
+	const predicate = hasSubPath(directoryToPath(directory));
+	return (descendent: Entry): boolean => predicate(entryToPath(descendent));
+};
+
+export const hasParentDirectory = (entry: Entry): boolean => {
+	const path = entryToPath(entry);
+	const parent = parentPath(path);
+	return pathEquals(path, parent);
+};
+
+export const isRootDirectory = (directory: Directory): boolean =>
+	!hasParentDirectory(directory);
+
+/**
+ * @precondition hasParentDirectory(entry)
+ */
+export const parentDirectory = (entry: Entry): Directory =>
+	directory(parentPath(entryToPath(entry)));
