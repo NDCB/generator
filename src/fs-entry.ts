@@ -1,4 +1,4 @@
-import { realpathSync } from "fs";
+import { existsSync, realpathSync, Stats as Status, statSync } from "fs";
 import { Path, path, pathEquals, pathToString } from "./fs-path";
 
 /**
@@ -62,3 +62,33 @@ export const fileRealPath = (file: File): Path => realPath(fileToPath(file));
 
 export const directoryRealPath = (directory: Directory): Path =>
 	realPath(directoryToPath(directory));
+
+export const pathExists = (path: Path): boolean =>
+	existsSync(pathToString(path));
+
+export const entryExists = (entry: Entry): boolean =>
+	pathExists(entryToPath(entry));
+
+/**
+ * @precondition entryExists(entry)
+ */
+export const entryStatus = (entry: Entry): Status =>
+	statSync(pathToString(entryToPath(entry)));
+
+/**
+ * @precondition entryExists(entry)
+ */
+export const entryIsFile = (entry: Entry): boolean =>
+	entryStatus(entry).isFile();
+
+/**
+ * @precondition entryExists(entry)
+ */
+export const entryIsDirectory = (entry: Entry): boolean =>
+	entryStatus(entry).isDirectory();
+
+export const fileExists = (file: File): boolean =>
+	entryExists(file) && entryIsFile(file);
+
+export const directoryExists = (directory: Directory): boolean =>
+	entryExists(directory) && entryIsDirectory(directory);
