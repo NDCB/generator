@@ -28,6 +28,7 @@
 	},
 	"devDependencies": {
 		"@types/chai": "^4.1.7",
+		"@types/fs-extra": "^8.0.0",
 		"@types/mocha": "^5.2.7",
 		"@types/node": "^10.13.4",
 		"chai": "^4.2.0",
@@ -41,5 +42,7 @@
 		"typedoc": "^0.15.0",
 		"typescript": "^3.5.3"
 	},
-	"dependencies": {}
+	"dependencies": {
+		"fs-extra": "^8.1.0"
+	}
 }
