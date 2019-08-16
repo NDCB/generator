@@ -8,6 +8,7 @@ import {
 	Stats as Status,
 	statSync,
 } from "fs-extra";
+
 import {
 	baseName,
 	extensionName,
@@ -200,38 +201,36 @@ export const directoryInDirectory = (d: Directory) => (
 	directoryBaseName: string,
 ): Directory => directory(joinPath(directoryToPath(d), directoryBaseName));
 
-export const upwardDirectoriesFromDirectory = (
+export const upwardDirectoriesFromDirectory = function*(
 	directory: Directory,
-): Directory[] => {
-	const directories: Directory[] = [directory];
+): Iterable<Directory> {
+	yield directory;
 	let current = directory;
 	while (hasParentDirectory(current)) {
 		current = parentDirectory(current);
-		directories.push(current);
+		yield current;
 	}
-	return directories;
 };
 
-export const upwardDirectoriesFromFile = (file: File): Directory[] =>
+export const upwardDirectoriesFromFile = (file: File): Iterable<Directory> =>
 	upwardDirectoriesFromDirectory(parentDirectory(file));
 
-export const upwardDirectories: (entry: Entry) => Directory[] = matchEntry({
+export const upwardDirectories: (
+	entry: Entry,
+) => Iterable<Directory> = matchEntry<Iterable<Directory>>({
 	file: upwardDirectoriesFromFile,
 	directory: upwardDirectoriesFromDirectory,
 });
 
-export const upwardDirectoriesUntil = (root: Directory) => (
-	entry: Entry,
-): Directory[] => {
-	const directories: Directory[] = [];
-	for (const directory of upwardDirectories(entry)) {
-		directories.push(directory);
-		if (directoryEquals(root, directory)) {
-			return directories;
+export const upwardDirectoriesUntil = (root: Directory) =>
+	function*(entry: Entry): Iterable<Directory> {
+		for (const directory of upwardDirectories(entry)) {
+			yield directory;
+			if (directoryEquals(root, directory)) {
+				break;
+			}
 		}
-	}
-	return directories;
-};
+	};
 
 export const copyFile = (file: File) => (destination: Directory): void =>
 	copySync(
