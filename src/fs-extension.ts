@@ -1,3 +1,6 @@
+import { File, fileToPath } from "./fs-entry";
+import { extensionName } from "./fs-path";
+
 export interface Extension {
 	readonly _tag: "Extension";
 	readonly value: string;
@@ -13,3 +16,6 @@ export const extensionToString = (extension: Extension): string =>
 
 export const extensionEquals = (e1: Extension, e2: Extension): boolean =>
 	extensionToString(e1) === extensionToString(e2);
+
+export const fileExtension = (file: File): Extension =>
+	extension(extensionName(fileToPath(file)));
