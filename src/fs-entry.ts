@@ -197,3 +197,36 @@ export const fileInDirectory = (directory: Directory) => (
 export const directoryInDirectory = (d: Directory) => (
 	directoryBaseName: string,
 ): Directory => directory(joinPath(directoryToPath(d), directoryBaseName));
+
+export const upwardDirectoriesFromDirectory = (
+	directory: Directory,
+): Directory[] => {
+	const directories: Directory[] = [directory];
+	let current = directory;
+	while (hasParentDirectory(current)) {
+		current = parentDirectory(current);
+		directories.push(current);
+	}
+	return directories;
+};
+
+export const upwardDirectoriesFromFile = (file: File): Directory[] =>
+	upwardDirectoriesFromDirectory(parentDirectory(file));
+
+export const upwardDirectories: (entry: Entry) => Directory[] = matchEntry({
+	file: upwardDirectoriesFromFile,
+	directory: upwardDirectoriesFromDirectory,
+});
+
+export const upwardDirectoriesUntil = (root: Directory) => (
+	entry: Entry,
+): Directory[] => {
+	const directories: Directory[] = [];
+	for (const directory of upwardDirectories(entry)) {
+		directories.push(directory);
+		if (directoryEquals(root, directory)) {
+			return directories;
+		}
+	}
+	return directories;
+};
