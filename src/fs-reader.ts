@@ -7,6 +7,9 @@ import {
 	directoryToPath,
 	directoryToString,
 	Entry,
+	entryIsDirectory,
+	entryIsFile,
+	entryToString,
 	File,
 	fileInDirectory,
 	fileToPath,
@@ -82,3 +85,23 @@ export const logDirectoryRead = (
 	logger.info(`Reading directory ${directoryToString(directory)}`);
 	return directoryReader(directory);
 };
+
+export const readDownwardFiles = (
+	directoryReader: (directory: Directory) => Entry[],
+) =>
+	function*(directory: Directory): Iterable<File> {
+		const directoriesToRead: Directory[] = [directory];
+		while (directoriesToRead.length > 0) {
+			for (const entry of directoryReader(directoriesToRead.pop())) {
+				if (entryIsFile(entry)) {
+					yield entry;
+				} else if (entryIsDirectory(entry)) {
+					directoriesToRead.push(entry);
+				} else {
+					throw new Error(
+						`Failed to match pattern for entry ${entryToString(entry)}`,
+					);
+				}
+			}
+		}
+	};
