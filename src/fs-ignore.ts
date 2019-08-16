@@ -1,7 +1,12 @@
 import consola from "consola";
 
 import { File, fileToString } from "./fs-entry";
-import { Extension, extensionToString, fileHasExtension } from "./fs-extension";
+import {
+	Extension,
+	extensionToString,
+	fileHasAnyExtension,
+	fileHasExtension,
+} from "./fs-extension";
 
 export const logger = consola.withTag("fs-ignore");
 
@@ -22,4 +27,14 @@ export const logIgnoreExtension = (extension: Extension) => {
 		}
 		return isIgnored;
 	};
+};
+
+export const ignoreExtensions: (
+	...extensions: Extension[]
+) => (file: File) => boolean = fileHasAnyExtension;
+
+export const logIgnoreExtensions = (...extensions: Extension[]) => {
+	const predicates = extensions.map(logIgnoreExtension);
+	return (file: File): boolean =>
+		predicates.some((predicate) => predicate(file));
 };
