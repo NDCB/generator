@@ -1,3 +1,7 @@
+import { readFileSync } from "fs";
+import { File, fileToPath, fileToString } from "./fs-entry";
+import { pathToString } from "./fs-path";
+
 export interface FileContents {
 	readonly _tag: "FileContents";
 	readonly value: string;
@@ -22,3 +26,9 @@ export const encoding = (value: string): Encoding => ({
 });
 
 export const encodingToString = (encoding: Encoding): string => encoding.value;
+
+export const readFile = (encoding: Encoding) => (file: File): FileContents =>
+	fileContents(
+		readFileSync(pathToString(fileToPath(file)), encodingToString(encoding)),
+	);
+
