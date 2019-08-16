@@ -162,15 +162,13 @@ export const matchEntry = <T>(pattern: EntryPattern<T>) => (
 	}
 };
 
-const ensureEntryExistsPattern: EntryPattern<void> = {
-	file: ensureFileExists,
-	directory: ensureDirectoryExists,
-};
-
 /**
  * @postcondition entryExists(entry)
  */
-export const ensureEntryExists = matchEntry(ensureEntryExistsPattern);
+export const ensureEntryExists: (entry: Entry) => void = matchEntry({
+	file: ensureFileExists,
+	directory: ensureDirectoryExists,
+});
 
 export const directoryHasDescendent = (directory: Directory) => {
 	const predicate = hasSubPath(directoryToPath(directory));
