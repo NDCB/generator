@@ -1,6 +1,12 @@
 import consola from "consola";
 
-import { File, fileToString } from "./fs-entry";
+import {
+	Directory,
+	Entry,
+	entryBaseName,
+	File,
+	fileToString,
+} from "./fs-entry";
 import {
 	Extension,
 	extensionToString,
@@ -38,3 +44,11 @@ export const logIgnoreExtensions = (...extensions: Extension[]) => {
 	return (file: File): boolean =>
 		predicates.some((predicate) => predicate(file));
 };
+
+export const entryHasLeadingUnderscore = (entry: Entry): boolean =>
+	entryBaseName(entry).startsWith("_");
+
+export const ignoreLeadingUnderscore = (
+	upwardDirectories: (file: File) => Iterable<Directory>,
+) => (file: File): boolean =>
+	[file, ...upwardDirectories(file)].some(entryHasLeadingUnderscore);
