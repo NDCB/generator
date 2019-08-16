@@ -178,7 +178,7 @@ export const directoryHasDescendent = (directory: Directory) => {
 export const hasParentDirectory = (entry: Entry): boolean => {
 	const path = entryToPath(entry);
 	const parent = parentPath(path);
-	return pathEquals(path, parent);
+	return !pathEquals(path, parent);
 };
 
 export const isRootDirectory = (directory: Directory): boolean =>
