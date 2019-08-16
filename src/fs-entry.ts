@@ -1,4 +1,6 @@
 import {
+	copySync,
+	emptyDirSync,
 	ensureDirSync,
 	ensureFileSync,
 	existsSync,
@@ -230,3 +232,13 @@ export const upwardDirectoriesUntil = (root: Directory) => (
 	}
 	return directories;
 };
+
+export const copyFile = (file: File) => (destination: Directory): void =>
+	copySync(
+		pathToString(fileToPath(file)),
+		pathToString(directoryToPath(destination)),
+		{ errorOnExist: true, preserveTimestamps: true },
+	);
+
+export const emptyDirectory = (directory: Directory): void =>
+	emptyDirSync(pathToString(directoryToPath(directory)));
