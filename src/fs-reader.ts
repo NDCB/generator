@@ -1,6 +1,10 @@
+import consola from "consola";
+
 import { readFileSync } from "fs";
 import { File, fileToPath, fileToString } from "./fs-entry";
 import { pathToString } from "./fs-path";
+
+export const logger = consola.withTag("fs-reader");
 
 export interface FileContents {
 	readonly _tag: "FileContents";
@@ -32,3 +36,9 @@ export const readFile = (encoding: Encoding) => (file: File): FileContents =>
 		readFileSync(pathToString(fileToPath(file)), encodingToString(encoding)),
 	);
 
+export const logFileRead = (fileReader: (file: File) => FileContents) => (
+	file: File,
+): FileContents => {
+	logger.info(`Reading file ${fileToString(file)}`);
+	return fileReader(file);
+};
