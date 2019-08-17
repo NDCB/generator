@@ -58,6 +58,24 @@ export const logFileIgnoredByGitignore = (gitignoreFile: File) => (
 		)}`,
 	);
 
+export const ifRuleAppliesToFile = (
+	applies: (file: File) => boolean,
+	rule: (file: File) => boolean,
+) => (file: File): boolean => applies(file) && rule(file);
+
+export const forFirstRuleThatAppliesToFile = (
+	...criteria: Array<{
+		applies: (file: File) => boolean;
+		rule: (file: File) => boolean;
+	}>
+) => (file: File): boolean => {
+	const criterion = criteria.find(({ applies }) => applies(file));
+	if (!criterion) {
+		return false;
+	}
+	return criterion.rule(file);
+};
+
 export const logIfFileIgnored = (
 	logger: (file: File) => void,
 	isFileIgnored: (file: File) => boolean,
@@ -114,10 +132,11 @@ export const ignoreUsingGitignore = (
 ) => (gitignoreFile: File) => {
 	const rules = ignore().add(fileContentsToString(fileReader(gitignoreFile)));
 	const root = parentDirectory(gitignoreFile);
-	const rulesApplyTo: (file: File) => boolean = directoryHasDescendent(root);
 	const pathname: (file: File) => string = entryRelativePath(root);
-	return (file: File): boolean =>
-		rulesApplyTo(file) && rules.ignores(pathname(file));
+	return ifRuleAppliesToFile(
+		directoryHasDescendent(root),
+		(file: File): boolean => rules.ignores(pathname(file)),
+	);
 };
 
 export const logIgnoreUsingGitignore = (
