@@ -12,6 +12,7 @@ import {
 	fileToString,
 	matchEntry,
 	parentDirectory,
+	upwardDirectoriesUntil,
 } from "./fs-entry";
 import {
 	Extension,
@@ -150,3 +151,23 @@ export const logIgnoreUsingGitignore = (
 export const compositeIgnore = (...rules: Array<(file: File) => boolean>) => (
 	file: File,
 ): boolean => rules.some((rule) => rule(file));
+
+export const ignoreLeadingUnderscoreFromRoots = (
+	...roots: Directory[]
+): ((file: File) => boolean) =>
+	forFirstRuleThatAppliesToFile(
+		...roots.map((root) => ({
+			applies: directoryHasDescendent(root),
+			rule: ignoreLeadingUnderscore(upwardDirectoriesUntil(root)),
+		})),
+	);
+
+export const logIgnoreLeadingUnderscoreFromRoots = (
+	...roots: Directory[]
+): ((file: File) => boolean) =>
+	forFirstRuleThatAppliesToFile(
+		...roots.map((root) => ({
+			applies: directoryHasDescendent(root),
+			rule: logIgnoreLeadingUnderscore(upwardDirectoriesUntil(root)),
+		})),
+	);
