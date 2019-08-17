@@ -92,7 +92,7 @@ export const ignoreExtension: (
 	extension: Extension,
 ) => (file: File) => boolean = fileHasExtension;
 
-export const logIgnoreExtension = (extension: Extension) =>
+export const ignoreExtensionWithLogging = (extension: Extension) =>
 	logIfFileIgnored(
 		logFileIgnoredForHavingExtension,
 		ignoreExtension(extension),
@@ -102,7 +102,7 @@ export const ignoreExtensions: (
 	...extensions: Extension[]
 ) => (file: File) => boolean = fileHasAnyExtension;
 
-export const logIgnoreExtensions = (...extensions: Extension[]) =>
+export const ignoreExtensionsWithLogging = (...extensions: Extension[]) =>
 	logIfFileIgnored(
 		logFileIgnoredForHavingExtension,
 		ignoreExtensions(...extensions),
@@ -116,7 +116,7 @@ export const ignoreLeadingUnderscore = (
 ) => (file: File): boolean =>
 	[file, ...upwardDirectories(file)].some(entryHasLeadingUnderscore);
 
-export const logIgnoreLeadingUnderscore = (
+export const ignoreLeadingUnderscoreWithLogging = (
 	upwardDirectories: (file: File) => Iterable<Directory>,
 ) => (file: File): boolean => {
 	const cause: Entry = [file, ...upwardDirectories(file)].find(
@@ -140,7 +140,7 @@ export const ignoreUsingGitignore = (
 	);
 };
 
-export const logIgnoreUsingGitignore = (
+export const ignoreUsingGitignoreWithLogging = (
 	fileReader: (file: File) => FileContents,
 ) => (gitignoreFile: File) =>
 	logIfFileIgnored(
@@ -162,12 +162,12 @@ export const ignoreLeadingUnderscoreFromRoots = (
 		})),
 	);
 
-export const logIgnoreLeadingUnderscoreFromRoots = (
+export const ignoreLeadingUnderscoreFromRootsWithLogging = (
 	...roots: Directory[]
 ): ((file: File) => boolean) =>
 	forFirstRuleThatAppliesToFile(
 		...roots.map((root) => ({
 			applies: directoryHasDescendent(root),
-			rule: logIgnoreLeadingUnderscore(upwardDirectoriesUntil(root)),
+			rule: ignoreLeadingUnderscoreWithLogging(upwardDirectoriesUntil(root)),
 		})),
 	);
