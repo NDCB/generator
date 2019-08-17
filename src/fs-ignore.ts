@@ -127,3 +127,7 @@ export const logIgnoreUsingGitignore = (
 		logFileIgnoredByGitignore(gitignoreFile),
 		ignoreUsingGitignore(fileReader)(gitignoreFile),
 	);
+
+export const compositeIgnore = (...rules: Array<(file: File) => boolean>) => (
+	file: File,
+): boolean => rules.some((rule) => rule(file));
