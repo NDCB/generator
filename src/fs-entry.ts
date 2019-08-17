@@ -20,6 +20,7 @@ import {
 	path,
 	pathEquals,
 	pathToString,
+	relativePath,
 } from "./fs-path";
 
 /**
@@ -97,6 +98,11 @@ export const fileRealPath = (file: File): Path => realPath(fileToPath(file));
 
 export const directoryRealPath = (directory: Directory): Path =>
 	realPath(directoryToPath(directory));
+
+export const entryRelativePath = (from: Entry) => {
+	const relativeTo = relativePath(entryToPath(from));
+	return (to: Entry): string => relativeTo(entryToPath(to));
+};
 
 export const pathExists = (path: Path): boolean =>
 	existsSync(pathToString(path));
