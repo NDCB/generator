@@ -33,7 +33,7 @@ export const normalizePath = (p: Path): Path =>
 export const resolvePath = (start: Path) => (...segments: string[]): Path =>
 	path(resolve(pathToString(start), ...segments));
 
-export const joinPath = (p: Path, ...segments: string[]): Path =>
+export const joinPath = (p: Path) => (...segments: string[]): Path =>
 	path(join(pathToString(p), ...segments));
 
 export const directoryName = (path: Path): string =>
