@@ -1,3 +1,5 @@
+import { hash, ValueObject } from "immutable";
+
 import { File, fileToPath } from "./fs-entry";
 import { extensionName } from "./fs-path";
 
@@ -16,6 +18,17 @@ export const extensionToString = (extension: Extension): string =>
 
 export const extensionEquals = (e1: Extension, e2: Extension): boolean =>
 	extensionToString(e1) === extensionToString(e2);
+
+export const isExtension = (element: any): element is Extension =>
+	!!element && element._tag === "Extension";
+
+export const extensionToValueObject = (
+	extension: Extension,
+): Extension & ValueObject => ({
+	...extension,
+	equals: (other) => isExtension(other) && extensionEquals(extension, other),
+	hashCode: (): number => hash(extensionToString(extension)),
+});
 
 export const extensions = (...values: string[]): Extension[] =>
 	values.map(extension);
