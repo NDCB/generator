@@ -3,9 +3,13 @@ import consola from "consola";
 import {
 	Directory,
 	directoryHasDescendent,
+	directoryToPath,
 	directoryToString,
+	Entry,
+	entryRelativePath,
 	File,
 } from "./fs-entry";
+import { joinPath, Path } from "./fs-path";
 
 export const logger = consola.withTag("fs-site");
 
@@ -50,3 +54,28 @@ export const consideredFiles = (ignore: (file: File) => boolean) =>
 			}
 		}
 	};
+
+export interface Pathname {
+	readonly _tag: "Pathname";
+	readonly value: string;
+}
+
+export const pathname = (value: string): Pathname => ({
+	_tag: "Pathname",
+	value,
+});
+
+export const pathnameToString = (pathname: Pathname): string => pathname.value;
+
+/**
+ * @precondition directoryHasDescendent(root)(entry)
+ */
+export const pathnameFromRoot = (root: Directory) => {
+	const relativeTo = entryRelativePath(root);
+	return (entry: Entry): Pathname => pathname(relativeTo(entry));
+};
+
+export const pathFromPathname = (root: Directory) => {
+	const join = joinPath(directoryToPath(root));
+	return (pathname: Pathname): Path => join(pathnameToString(pathname));
+};
