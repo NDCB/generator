@@ -199,13 +199,15 @@ export const isRootDirectory = (directory: Directory): boolean =>
 export const parentDirectory = (entry: Entry): Directory =>
 	directory(parentPath(entryToPath(entry)));
 
-export const fileInDirectory = (directory: Directory) => (
-	fileBaseName: string,
-): File => file(joinPath(directoryToPath(directory), fileBaseName));
-
-export const directoryInDirectory = (d: Directory) => (
-	directoryBaseName: string,
-): Directory => directory(joinPath(directoryToPath(d), directoryBaseName));
+export const fileInDirectory = (directory: Directory) => {
+	const join = joinPath(directoryToPath(directory));
+	return (fileBaseName: string): File => file(join(fileBaseName));
+};
+export const directoryInDirectory = (d: Directory) => {
+	const join = joinPath(directoryToPath(d));
+	return (directoryBaseName: string): Directory =>
+		directory(join(directoryBaseName));
+};
 
 export const upwardDirectoriesFromDirectory = function*(
 	directory: Directory,
