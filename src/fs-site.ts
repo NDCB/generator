@@ -1,4 +1,13 @@
-import { Directory, directoryHasDescendent, File } from "./fs-entry";
+import consola from "consola";
+
+import {
+	Directory,
+	directoryHasDescendent,
+	directoryToString,
+	File,
+} from "./fs-entry";
+
+export const logger = consola.withTag("fs-site");
 
 export const rootsAreMutuallyExclusive = (...roots: Directory[]): boolean => {
 	for (let i = 0; i < roots.length - 1; i++) {
@@ -17,6 +26,18 @@ export const filesInRoots = (
 ) =>
 	function*(...roots: Directory[]): Iterable<File> {
 		for (const root of roots) {
+			yield* downwardFilesReader(root);
+		}
+	};
+
+export const filesInRootsWithLogging = (
+	downwardFilesReader: (directory: Directory) => Iterable<File>,
+) =>
+	function*(...roots: Directory[]): Iterable<File> {
+		for (const root of roots) {
+			logger.info(
+				`Reading downward files from root ${directoryToString(root)}`,
+			);
 			yield* downwardFilesReader(root);
 		}
 	};
