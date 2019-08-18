@@ -9,6 +9,8 @@ import {
 	entryBaseName,
 	entryRelativePath,
 	File,
+	fileExists,
+	fileInDirectory,
 	fileToString,
 	matchEntry,
 	parentDirectory,
@@ -127,6 +129,15 @@ export const ignoreLeadingUnderscoreWithLogging = (
 	}
 	return !!cause;
 };
+
+export const gitignoreFile = (directory: Directory): File =>
+	fileInDirectory(directory)(".gitignore");
+
+/**
+ * @postcondition fileExists(gitignoreFile(directory))
+ */
+export const hasGitignoreFile = (directory: Directory): boolean =>
+	fileExists(gitignoreFile(directory));
 
 export const ignoreUsingGitignore = (
 	fileReader: (file: File) => FileContents,
