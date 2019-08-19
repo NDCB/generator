@@ -1,6 +1,7 @@
 import flatten from "arr-flatten";
 import consola from "consola";
 import { Map, OrderedSet, Set, ValueObject } from "immutable";
+import iterable from "itiriri";
 import { extname } from "path";
 
 import {
@@ -11,8 +12,8 @@ import {
 	directoryToString,
 	Entry,
 	entryRelativePath,
-	File,
 	file,
+	File,
 	fileExists,
 	fileInDirectory,
 	fileName,
@@ -42,33 +43,26 @@ export const rootsAreMutuallyExclusive = (...roots: Directory[]): boolean => {
 
 export const filesInRoots = (
 	downwardFilesReader: (directory: Directory) => Iterable<File>,
-) =>
-	function*(roots: OrderedSet<Directory & ValueObject>): Iterable<File> {
-		for (const root of roots) {
-			yield* downwardFilesReader(root);
-		}
-	};
+) => (roots: OrderedSet<Directory & ValueObject>): Iterable<File> =>
+	iterable(roots)
+		.map(downwardFilesReader)
+		.flat((i) => i);
 
 export const filesInRootsWithLogging = (
 	downwardFilesReader: (directory: Directory) => Iterable<File>,
-) =>
-	function*(roots: OrderedSet<Directory & ValueObject>): Iterable<File> {
-		for (const root of roots) {
+) => (roots: OrderedSet<Directory & ValueObject>): Iterable<File> =>
+	iterable(roots)
+		.map((root) => {
 			logger.info(
 				`Reading downward files from root ${directoryToString(root)}`,
 			);
-			yield* downwardFilesReader(root);
-		}
-	};
+			return downwardFilesReader(root);
+		})
+		.flat((i) => i);
 
-export const consideredFiles = (ignore: (file: File) => boolean) =>
-	function*(files: Iterable<File>): Iterable<File> {
-		for (const file of files) {
-			if (!ignore(file)) {
-				yield file;
-			}
-		}
-	};
+export const consideredFiles = (ignore: (file: File) => boolean) => (
+	files: Iterable<File>,
+): Iterable<File> => iterable(files).filter((file) => !ignore(file));
 
 export interface Pathname {
 	readonly _tag: "Pathname";
@@ -181,5 +175,5 @@ export const sourceFile = (roots: OrderedSet<Directory & ValueObject>) => (
 		destinationToSource,
 	);
 	return (pathname: Pathname): File =>
-		[...getPossibleSourceFiles(pathname)].find(fileExists);
+		iterable(getPossibleSourceFiles(pathname)).find(fileExists);
 };
