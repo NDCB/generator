@@ -23,6 +23,11 @@ export interface FileData {
 	readonly value: Data;
 }
 
+export const fileData = (value: Data): FileData => ({
+	_tag: "FileData",
+	value,
+});
+
 export const fileDataToData = (fileData: FileData): Data => fileData.value;
 
 export const mergeParsers = (
@@ -55,8 +60,10 @@ export const readFileDataByExtension = (
 	parsers: Map<Extension & ValueObject, (contents: FileContents) => Data>,
 ) => {
 	const parseByExtension = parseFileDataByExtension(parsers);
-	return (fileReader: (file: File) => FileContents) => (file: File): Data =>
-		parseByExtension(extensionToValueObject(fileExtension(file)))(
-			fileReader(file),
+	return (fileReader: (file: File) => FileContents) => (file: File): FileData =>
+		fileData(
+			parseByExtension(extensionToValueObject(fileExtension(file)))(
+				fileReader(file),
+			),
 		);
 };
