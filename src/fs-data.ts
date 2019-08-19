@@ -1,5 +1,5 @@
 export interface Data {
-	[key: string]:
+	readonly [key: string]:
 		| null
 		| boolean
 		| string
