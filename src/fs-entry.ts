@@ -8,6 +8,7 @@ import {
 	Stats as Status,
 	statSync,
 } from "fs-extra";
+import { hash, ValueObject } from "immutable";
 
 import {
 	baseName,
@@ -61,6 +62,17 @@ export const directoryToString = (directory: Directory): string =>
 
 export const directoryEquals = (d1: Directory, d2: Directory): boolean =>
 	pathEquals(directoryToPath(d1), directoryToPath(d2));
+
+export const isDirectory = (element: any): element is Directory =>
+	!!element && element._tag === "Directory";
+
+export const directoryToValueObject = (
+	directory: Directory,
+): Directory & ValueObject => ({
+	...directory,
+	equals: (other) => isDirectory(other) && directoryEquals(directory, other),
+	hashCode: () => hash(directoryToString(directory)),
+});
 
 export type Entry = File | Directory;
 
