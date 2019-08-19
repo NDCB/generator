@@ -1,4 +1,4 @@
-import { hash, ValueObject } from "immutable";
+import { hash, Set, ValueObject } from "immutable";
 
 import { File, fileToPath } from "./fs-entry";
 import { extensionName } from "./fs-path";
@@ -32,6 +32,18 @@ export const extensionToValueObject = (
 
 export const extensions = (...values: string[]): Extension[] =>
 	values.map(extension);
+
+export const extensionSet = (values: Set<string>): Set<Extension> =>
+	values.map(extension);
+
+export const extensionSetToValueObjects = (
+	extensions: Set<Extension>,
+): Set<Extension & ValueObject> => extensions.map(extensionToValueObject);
+
+export const extensionValueObjectSet = (
+	...values: string[]
+): Set<Extension & ValueObject> =>
+	extensionSetToValueObjects(extensionSet(Set<string>(values)));
 
 export const fileExtension = (file: File): Extension =>
 	extension(extensionName(fileToPath(file)));
