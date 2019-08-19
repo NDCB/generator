@@ -1,6 +1,6 @@
 import flatten from "arr-flatten";
 import consola from "consola";
-import { Map, Set, ValueObject } from "immutable";
+import { Map, OrderedSet, Set, ValueObject } from "immutable";
 import { extname } from "path";
 
 import {
@@ -43,7 +43,7 @@ export const rootsAreMutuallyExclusive = (...roots: Directory[]): boolean => {
 export const filesInRoots = (
 	downwardFilesReader: (directory: Directory) => Iterable<File>,
 ) =>
-	function*(...roots: Directory[]): Iterable<File> {
+	function*(roots: OrderedSet<Directory & ValueObject>): Iterable<File> {
 		for (const root of roots) {
 			yield* downwardFilesReader(root);
 		}
@@ -52,7 +52,7 @@ export const filesInRoots = (
 export const filesInRootsWithLogging = (
 	downwardFilesReader: (directory: Directory) => Iterable<File>,
 ) =>
-	function*(...roots: Directory[]): Iterable<File> {
+	function*(roots: OrderedSet<Directory & ValueObject>): Iterable<File> {
 		for (const root of roots) {
 			logger.info(
 				`Reading downward files from root ${directoryToString(root)}`,
@@ -124,7 +124,9 @@ export const sourceExtensions = (
 	return destinationToSource.get(destinationValue) || Set([destinationValue]);
 };
 
-export const possibleSourceFiles = (...roots: Directory[]) => {
+export const possibleSourceFiles = (
+	roots: OrderedSet<Directory & ValueObject>,
+) => {
 	const toPaths = roots.map(pathFromPathname);
 	return (
 		destinationToSource: Map<
@@ -169,13 +171,13 @@ export const possibleSourceFiles = (...roots: Directory[]) => {
 	};
 };
 
-export const sourceFile = (...roots: Directory[]) => (
+export const sourceFile = (roots: OrderedSet<Directory & ValueObject>) => (
 	destinationToSource: Map<
 		Extension & ValueObject,
 		Set<Extension & ValueObject>
 	>,
 ) => {
-	const getPossibleSourceFiles = possibleSourceFiles(...roots)(
+	const getPossibleSourceFiles = possibleSourceFiles(roots)(
 		destinationToSource,
 	);
 	return (pathname: Pathname): File =>
