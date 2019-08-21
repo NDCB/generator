@@ -89,6 +89,9 @@ export const pathFromPathname = (root: Directory) => {
 	return (pathname: Pathname): Path => join(pathnameToString(pathname));
 };
 
+export const pathnameIsEmpty = (pathname: Pathname): boolean =>
+	!pathnameToString(pathname).trim();
+
 export const pathnameHasExtension = (pathname: Pathname): boolean =>
 	!!extname(pathnameToString(pathname));
 
@@ -135,31 +138,42 @@ export const possibleSourceFiles = (
 			const paths = toPaths.map((toPath) => toPath(pathname));
 			const baseFiles = paths.map(file);
 			yield* baseFiles;
-			if (pathnameHasExtension(pathname)) {
-				yield* flatten(
-					baseFiles.map((file) => [
-						...fileWithExtensions(file)(
-							getSourceExtensions(pathnameExtension(pathname)),
-						),
-					]),
-				);
-			} else {
-				yield* flatten(
-					baseFiles.map((file) => [
-						fileWithExtension(file)(htmlExtension),
-						...fileWithExtensions(file)(htmlSourceExtensions),
-					]),
-				);
+			if (!pathnameIsEmpty(pathname)) {
+				if (pathnameHasExtension(pathname)) {
+					yield* baseFiles
+						.map((file) =>
+							OrderedSet([
+								...fileWithExtensions(file)(
+									getSourceExtensions(pathnameExtension(pathname)),
+								),
+							]),
+						)
+						.flatten()
+						.toArray();
+				} else {
+					yield* baseFiles
+						.map((file) =>
+							OrderedSet([
+								fileWithExtension(file)(htmlExtension),
+								...fileWithExtensions(file)(htmlSourceExtensions),
+							]),
+						)
+						.flatten()
+						.toArray();
+				}
 			}
 			const indexes = paths.map((path) =>
 				fileInDirectory(directory(path))("index.html"),
 			);
-			yield* indexes;
-			const indexesSource = flatten(
-				indexes.map((index) => [
-					...fileWithExtensions(index)(htmlSourceExtensions),
-				]),
-			);
+			const indexesSource = indexes
+				.map((index) =>
+					OrderedSet([
+						index,
+						...fileWithExtensions(index)(htmlSourceExtensions),
+					]),
+				)
+				.flatten()
+				.toArray();
 			yield* indexesSource;
 		};
 	};
