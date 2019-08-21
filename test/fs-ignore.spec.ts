@@ -2,8 +2,13 @@ import { assert } from "chai";
 
 import { directory, file, fileToString } from "../src/fs-entry";
 import { extension, extensionToString } from "../src/fs-extension";
-import { ignoreExtension, ignoreLeadingUnderscore } from "../src/fs-ignore";
+import {
+	ignoreExtension,
+	ignoreLeadingUnderscore,
+	ignoreUsingGitignore,
+} from "../src/fs-ignore";
 import { path } from "../src/fs-path";
+import { fileContents, fileContentsToString } from "../src/fs-reader";
 
 describe("ignoreExtension", () => {
 	const ignoredExtension = extension(".pug");
@@ -71,4 +76,47 @@ describe("ignoreLeadingUnderscore", () => {
 			);
 		});
 	}
+});
+
+describe("ignoreUsingGitignore", () => {
+	const gitignoreFile = file(path("root/.gitignore"));
+	const gitignoreContents = fileContents(`*.log\nnode_modules`);
+	const rule = ignoreUsingGitignore(() => gitignoreContents)(gitignoreFile);
+	const testCases = [
+		{
+			file: file(path("outside/of/root")),
+			expected: false,
+		},
+		{
+			file: file(path("root/index.html")),
+			expected: false,
+		},
+		{
+			file: file(path("root/error.log")),
+			expected: true,
+		},
+		{
+			file: file(path("root/node_modules")),
+			expected: true,
+		},
+		{
+			file: file(path("root/node_modules/.bin")),
+			expected: true,
+		},
+	];
+	context(
+		`ignoring ${fileContentsToString(gitignoreContents).replace(
+			"\n",
+			";",
+		)} using ${fileToString(gitignoreFile)}`,
+		() => {
+			for (const { file, expected } of testCases) {
+				it(`${expected ? "ignores" : "does not ignore"} file ${fileToString(
+					file,
+				)}`, () => {
+					assert.strictEqual(rule(file), expected);
+				});
+			}
+		},
+	);
 });
