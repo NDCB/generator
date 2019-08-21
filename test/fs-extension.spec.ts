@@ -59,4 +59,16 @@ describe("extensionToValueObject", () => {
 			assert.isFalse(a.equals(d));
 		});
 	});
+	describe("hashCode", () => {
+		const [a, b, c] = [".html", ".html", ".md"]
+			.map(extension)
+			.map(extensionToValueObject);
+		it("implies difference", () => {
+			assert.notStrictEqual(a.hashCode(), c.hashCode());
+		});
+		it("satisfies equality implication", () => {
+			assert.strictEqual(a.hashCode(), b.hashCode());
+			assert.isTrue(a.equals(b));
+		});
+	});
 });
