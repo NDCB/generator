@@ -1,8 +1,8 @@
 import { assert } from "chai";
 
-import { file, fileToString } from "../src/fs-entry";
+import { directory, file, fileToString } from "../src/fs-entry";
 import { extension, extensionToString } from "../src/fs-extension";
-import { ignoreExtension } from "../src/fs-ignore";
+import { ignoreExtension, ignoreLeadingUnderscore } from "../src/fs-ignore";
 import { path } from "../src/fs-path";
 
 describe("ignoreExtension", () => {
@@ -35,4 +35,40 @@ describe("ignoreExtension", () => {
 			});
 		}
 	});
+});
+
+describe("ignoreLeadingUnderscore", () => {
+	const testCases = [
+		{
+			file: file(path("directory/file.html")),
+			upwardDirectories: () => [directory(path("directory"))],
+			expected: false,
+		},
+		{
+			file: file(path("directory/subdirectory/_file.pug")),
+			upwardDirectories: () => [
+				directory(path("directory/subdirectory")),
+				directory(path("directory")),
+			],
+			expected: true,
+		},
+		{
+			file: file(path("directory/_subdirectory/file.pug")),
+			upwardDirectories: () => [
+				directory(path("directory/_subdirectory")),
+				directory(path("directory")),
+			],
+			expected: true,
+		},
+	];
+	for (const { file, upwardDirectories, expected } of testCases) {
+		it(`${expected ? "ignores" : "does not ignore"} file ${fileToString(
+			file,
+		)}`, () => {
+			assert.strictEqual(
+				ignoreLeadingUnderscore(upwardDirectories)(file),
+				expected,
+			);
+		});
+	}
 });
