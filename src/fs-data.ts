@@ -45,12 +45,42 @@ export const handledExtensionsToParsers = (
 	handledExtensions: Set<Extension & ValueObject>,
 	parser: (contents: FileContents) => Data,
 ): Map<Extension & ValueObject, (contents: FileContents) => Data> =>
-	handledExtensions.toMap().map(() => parser);
+	handledExtensions
+		.toMap()
+		.asMutable()
+		.map(() => parser)
+		.asImmutable();
+
+export interface DataParserModule {
+	readonly extensions: Set<Extension & ValueObject>;
+	readonly parser: (contents: FileContents) => Data;
+}
+
+export const dataParserModuleToMap = ({
+	extensions,
+	parser,
+}: DataParserModule): Map<
+	Extension & ValueObject,
+	(contents: FileContents) => Data
+> => handledExtensionsToParsers(extensions, parser);
 
 export const mergeMappedParsers = (
 	parsers: Set<Map<Extension & ValueObject, (contents: FileContents) => Data>>,
 ): Map<Extension & ValueObject, (contents: FileContents) => Data> =>
-	parsers.reduce((reduction, value) => reduction.merge(value));
+	parsers
+		.reduce(
+			(reduction, value) => reduction.merge(value),
+			Map<
+				Extension & ValueObject,
+				(contents: FileContents) => Data
+			>().asMutable(),
+		)
+		.asImmutable();
+
+export const mergeParserModules = (
+	...modules: DataParserModule[]
+): Map<Extension & ValueObject, (contents: FileContents) => Data> =>
+	mergeMappedParsers(Set(modules.map(dataParserModuleToMap)));
 
 export const parseFileDataByExtension = (
 	parsers: Map<Extension & ValueObject, (contents: FileContents) => Data>,
