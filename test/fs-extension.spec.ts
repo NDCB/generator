@@ -1,6 +1,10 @@
 import { assert } from "chai";
 
-import { extension, isExtension } from "../src/fs-extension";
+import {
+	extension,
+	extensionToValueObject,
+	isExtension,
+} from "../src/fs-extension";
 
 describe("isExtension", () => {
 	const testCases = [
@@ -30,4 +34,29 @@ describe("isExtension", () => {
 			assert.strictEqual(isExtension(element), expected);
 		});
 	}
+});
+
+describe("extensionToValueObject", () => {
+	describe("equals", () => {
+		const [a, b, c, d] = [".html", ".html", ".html", ".md"]
+			.map(extension)
+			.map(extensionToValueObject);
+		it("is reflexive", () => {
+			for (const e of [a, b, c, d]) {
+				assert.isTrue(e.equals(e));
+			}
+		});
+		it("is symmetric", () => {
+			assert.isTrue(a.equals(b));
+			assert.isTrue(b.equals(a));
+		});
+		it("is transitive", () => {
+			assert.isTrue(a.equals(b));
+			assert.isTrue(b.equals(c));
+			assert.isTrue(a.equals(c));
+		});
+		it("is false for different extensions", () => {
+			assert.isFalse(a.equals(d));
+		});
+	});
 });
