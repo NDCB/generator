@@ -1,10 +1,15 @@
 import { assert } from "chai";
 
+import { file, fileToString } from "../src/fs-entry";
 import {
 	extension,
+	extensionEquals,
+	extensionToString,
 	extensionToValueObject,
+	fileExtension,
 	isExtension,
 } from "../src/fs-extension";
+import { path } from "../src/fs-path";
 
 describe("isExtension", () => {
 	const testCases = [
@@ -71,4 +76,28 @@ describe("extensionToValueObject", () => {
 			assert.isTrue(a.equals(b));
 		});
 	});
+});
+
+describe("fileExtension", () => {
+	const testCases = [
+		{
+			file: file(path("index.html")),
+			expected: extension(".html"),
+		},
+		{
+			file: file(path("index.md")),
+			expected: extension(".md"),
+		},
+		{
+			file: file(path("directory/index.html")),
+			expected: extension(".html"),
+		},
+	];
+	for (const { file, expected } of testCases) {
+		it(`retrieves the extension ${extensionToString(
+			expected,
+		)} for file ${fileToString(file)}`, () => {
+			assert.isTrue(extensionEquals(fileExtension(file), expected));
+		});
+	}
 });
