@@ -1,4 +1,6 @@
 import { Map, Set, ValueObject } from "immutable";
+import slug from "slug";
+
 import { File } from "./fs-entry";
 import {
 	Extension,
@@ -29,6 +31,8 @@ export const fileData = (value: Data): FileData => ({
 });
 
 export const fileDataToData = (fileData: FileData): Data => fileData.value;
+
+export const slugify = (token: string): string => slug(token, { lower: true });
 
 export const mergeParsers = (
 	...parsers: Array<(contents: FileContents) => Data>
