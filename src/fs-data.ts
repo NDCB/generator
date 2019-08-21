@@ -1,4 +1,6 @@
 import { Map, Set, ValueObject } from "immutable";
+import slug from "slug";
+
 import { File } from "./fs-entry";
 import {
 	Extension,
@@ -30,6 +32,8 @@ export const fileData = (value: Data): FileData => ({
 
 export const fileDataToData = (fileData: FileData): Data => fileData.value;
 
+export const slugify = (token: string): string => slug(token, { lower: true });
+
 export const mergeParsers = (
 	...parsers: Array<(contents: FileContents) => Data>
 ) => (contents: FileContents): Data =>
@@ -41,12 +45,42 @@ export const handledExtensionsToParsers = (
 	handledExtensions: Set<Extension & ValueObject>,
 	parser: (contents: FileContents) => Data,
 ): Map<Extension & ValueObject, (contents: FileContents) => Data> =>
-	handledExtensions.toMap().map(() => parser);
+	handledExtensions
+		.toMap()
+		.asMutable()
+		.map(() => parser)
+		.asImmutable();
+
+export interface DataParserModule {
+	readonly extensions: Set<Extension & ValueObject>;
+	readonly parser: (contents: FileContents) => Data;
+}
+
+export const dataParserModuleToMap = ({
+	extensions,
+	parser,
+}: DataParserModule): Map<
+	Extension & ValueObject,
+	(contents: FileContents) => Data
+> => handledExtensionsToParsers(extensions, parser);
 
 export const mergeMappedParsers = (
 	parsers: Set<Map<Extension & ValueObject, (contents: FileContents) => Data>>,
 ): Map<Extension & ValueObject, (contents: FileContents) => Data> =>
-	parsers.reduce((reduction, value) => reduction.merge(value));
+	parsers
+		.reduce(
+			(reduction, value) => reduction.merge(value),
+			Map<
+				Extension & ValueObject,
+				(contents: FileContents) => Data
+			>().asMutable(),
+		)
+		.asImmutable();
+
+export const mergeParserModules = (
+	...modules: DataParserModule[]
+): Map<Extension & ValueObject, (contents: FileContents) => Data> =>
+	mergeMappedParsers(Set(modules.map(dataParserModuleToMap)));
 
 export const parseFileDataByExtension = (
 	parsers: Map<Extension & ValueObject, (contents: FileContents) => Data>,

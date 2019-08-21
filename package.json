@@ -32,6 +32,7 @@
     "@types/js-yaml": "^3.12.1",
     "@types/mocha": "^5.2.7",
     "@types/node": "^10.13.4",
+    "@types/slug": "^0.9.1",
     "chai": "^4.2.0",
     "mocha": "^6.2.0",
     "nyc": "^14.1.1",
@@ -50,6 +51,7 @@
     "ignore": "^5.1.4",
     "immutable": "^4.0.0-rc.12",
     "itiriri": "^2.0.1",
-    "js-yaml": "^3.13.1"
+    "js-yaml": "^3.13.1",
+    "slug": "^1.1.0"
   }
 }
