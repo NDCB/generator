@@ -1,7 +1,7 @@
 import { Set, ValueObject } from "immutable";
 import { safeLoad } from "js-yaml";
 
-import { Data } from "./fs-data";
+import { Data, DataParserModule } from "./fs-data";
 import { Extension, extensionValueObjectSet } from "./fs-extension";
 import { FileContents, fileContentsToString } from "./fs-reader";
 
@@ -14,7 +14,7 @@ export const ymlExtensions: Set<
 	Extension & ValueObject
 > = extensionValueObjectSet(".yml", ".yaml");
 
-export const ymlFileDataParser = {
+export const ymlFileDataParser: DataParserModule = {
 	extensions: ymlExtensions,
 	parser: parseYmlFileData,
 };
