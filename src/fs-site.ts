@@ -1,7 +1,7 @@
 import consola from "consola";
 import { Map, OrderedSet, Set, ValueObject } from "immutable";
 import iterable from "itiriri";
-import { extname } from "path";
+import { basename, extname } from "path";
 
 import {
 	Directory,
@@ -95,6 +95,21 @@ export const pathnameHasExtension = (pathname: Pathname): boolean =>
 
 export const pathnameExtension = (pathname: Pathname): Extension =>
 	extension(extname(pathnameToString(pathname)));
+
+export const pathnameWithExtension = (p: Pathname) => {
+	const withoutExtension = basename(
+		pathnameToString(p),
+		extname(pathnameToString(p)),
+	);
+	return (extension: Extension): Pathname =>
+		pathname(withoutExtension + extensionToString(extension));
+};
+
+export const pathnameWithExtensions = (pathname: Pathname) => {
+	const withExtension = pathnameWithExtension(pathname);
+	return (extensions: Set<Extension & ValueObject>): Set<Pathname> =>
+		extensions.map(withExtension);
+};
 
 export const fileWithExtension = (file: File) => {
 	const inDirectory = fileInDirectory(parentDirectory(file));
