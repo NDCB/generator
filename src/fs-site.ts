@@ -33,29 +33,30 @@ export const rootsAreMutuallyExclusive = (
 ): boolean =>
 	roots
 		.toSeq()
-		.map((r1) => roots.map((r2) => [r1, r2]))
-		.flatten()
+		.flatMap((r1) => roots.map((r2) => [r1, r2]))
 		.filter(([r1, r2]) => !r1.equals(r2))
 		.every(([r1, r2]) => !directoryHasDescendent(r1)(r2));
 
 export const filesInRoots = (
 	downwardFilesReader: (directory: Directory) => Iterable<File>,
-) => (roots: OrderedSet<Directory & ValueObject>): Iterable<File> =>
-	iterable(roots)
-		.map(downwardFilesReader)
-		.flat((i) => i);
+) =>
+	function*(roots: Set<Directory & ValueObject>): Iterable<File> {
+		for (const root of roots) {
+			yield* downwardFilesReader(root);
+		}
+	};
 
 export const filesInRootsWithLogging = (
 	downwardFilesReader: (directory: Directory) => Iterable<File>,
-) => (roots: OrderedSet<Directory & ValueObject>): Iterable<File> =>
-	iterable(roots)
-		.map((root) => {
+) =>
+	function*(roots: Set<Directory & ValueObject>): Iterable<File> {
+		for (const root of roots) {
 			logger.info(
 				`Reading downward files from root ${directoryToString(root)}`,
 			);
-			return downwardFilesReader(root);
-		})
-		.flat((i) => i);
+			yield* downwardFilesReader(root);
+		}
+	};
 
 export const consideredFiles = (ignore: (file: File) => boolean) => (
 	files: Iterable<File>,
@@ -138,24 +139,22 @@ export const possibleSourceFiles = (
 			if (!pathnameIsEmpty(pathname)) {
 				if (pathnameHasExtension(pathname)) {
 					yield* baseFiles
-						.map((file) =>
+						.flatMap((file) =>
 							OrderedSet([
 								...fileWithExtensions(file)(
 									getSourceExtensions(pathnameExtension(pathname)),
 								),
 							]),
 						)
-						.flatten()
 						.toArray();
 				} else {
 					yield* baseFiles
-						.map((file) =>
+						.flatMap((file) =>
 							OrderedSet([
 								fileWithExtension(file)(htmlExtension),
 								...fileWithExtensions(file)(htmlSourceExtensions),
 							]),
 						)
-						.flatten()
 						.toArray();
 				}
 			}
@@ -163,13 +162,12 @@ export const possibleSourceFiles = (
 				fileInDirectory(directory(path))("index.html"),
 			);
 			const indexesSource = indexes
-				.map((index) =>
+				.flatMap((index) =>
 					OrderedSet([
 						index,
 						...fileWithExtensions(index)(htmlSourceExtensions),
 					]),
 				)
-				.flatten()
 				.toArray();
 			yield* indexesSource;
 		};
