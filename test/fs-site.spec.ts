@@ -1,5 +1,5 @@
 import { assert } from "chai";
-import { Map, OrderedSet, Set, ValueObject } from "immutable";
+import { Collection, Map, OrderedSet, Set, ValueObject } from "immutable";
 
 import {
 	directory,
@@ -21,10 +21,36 @@ import {
 	pathname,
 	pathnameToString,
 	possibleSourceFiles,
+	rootsAreMutuallyExclusive,
 } from "../src/fs-site";
 
-const rootsAsString = (roots: OrderedSet<Directory & ValueObject>) =>
+const rootsAsString = (roots: Collection.Set<Directory & ValueObject>) =>
 	roots.map(directoryToString).join(";");
+
+describe("rootsAreMutuallyExclusive", () => {
+	const roots = (values: string[]): Set<Directory & ValueObject> =>
+		Set(
+			values
+				.map(path)
+				.map(directory)
+				.map(directoryToValueObject),
+		);
+	const testCases = [
+		{
+			roots: roots(["content", "layout"]),
+			expected: true,
+		},
+		{
+			roots: roots(["content", "content/fr-CA", "layout"]),
+			expected: false,
+		},
+	];
+	for (const { roots, expected } of testCases) {
+		it(`is ${expected} for ${rootsAsString(roots)}`, () => {
+			assert.strictEqual(rootsAreMutuallyExclusive(roots), expected);
+		});
+	}
+});
 
 const destinationToSourceAsString = (
 	map: Map<Extension & ValueObject, Set<Extension & ValueObject>>,
