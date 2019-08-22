@@ -1,7 +1,7 @@
 import consola from "consola";
 import { Map, OrderedSet, Set, ValueObject } from "immutable";
 import iterable from "itiriri";
-import { basename, extname } from "path";
+import { basename, dirname, extname } from "path";
 
 import {
 	Directory,
@@ -74,6 +74,9 @@ export const pathname = (value: string): Pathname => ({
 
 export const pathnameToString = (pathname: Pathname): string => pathname.value;
 
+export const pathnameEquals = (p1: Pathname, p2: Pathname): boolean =>
+	pathnameToString(p1) === pathnameToString(p2);
+
 /**
  * @precondition directoryHasDescendent(root)(entry)
  */
@@ -109,6 +112,16 @@ export const pathnameWithExtensions = (pathname: Pathname) => {
 	const withExtension = pathnameWithExtension(pathname);
 	return (extensions: Set<Extension & ValueObject>): Set<Pathname> =>
 		extensions.map(withExtension);
+};
+
+export const upwardPathnames = function*(p: Pathname): Iterable<Pathname> {
+	let current = p;
+	while (!pathnameIsEmpty(current)) {
+		yield current;
+		const value = dirname(pathnameToString(current));
+		current = pathname(value === "." ? "" : value);
+	}
+	yield current;
 };
 
 export const fileWithExtension = (file: File) => {

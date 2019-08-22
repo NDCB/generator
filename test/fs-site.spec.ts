@@ -19,9 +19,12 @@ import {
 import { path } from "../src/fs-path";
 import {
 	pathname,
+	Pathname,
+	pathnameEquals,
 	pathnameToString,
 	possibleSourceFiles,
 	rootsAreMutuallyExclusive,
+	upwardPathnames,
 } from "../src/fs-site";
 
 const rootsAsString = (roots: Collection.Set<Directory & ValueObject>) =>
@@ -48,6 +51,35 @@ describe("rootsAreMutuallyExclusive", () => {
 	for (const { roots, expected } of testCases) {
 		it(`is ${expected} for ${rootsAsString(roots)}`, () => {
 			assert.strictEqual(rootsAreMutuallyExclusive(roots), expected);
+		});
+	}
+});
+
+describe("upwardPathnames", () => {
+	const pathnames = (values: string[]): Pathname[] => values.map(pathname);
+	const testCases = [
+		{
+			pathname: pathname(""),
+			expected: pathnames([""]),
+		},
+		{
+			pathname: pathname("fr-CA"),
+			expected: pathnames(["fr-CA", ""]),
+		},
+		{
+			pathname: pathname("fr-CA/mathematiques"),
+			expected: pathnames(["fr-CA/mathematiques", "fr-CA", ""]),
+		},
+	];
+	for (const { pathname, expected } of testCases) {
+		it(`yields "${expected
+			.map(pathnameToString)
+			.join(";")}" for pathname "${pathnameToString(pathname)}"`, () => {
+			const actual = [...upwardPathnames(pathname)];
+			assert.isTrue(actual.length === expected.length);
+			actual.forEach((value, index) =>
+				assert.isTrue(pathnameEquals(value, expected[index])),
+			);
 		});
 	}
 });
