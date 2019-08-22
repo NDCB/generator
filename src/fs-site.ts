@@ -1,4 +1,3 @@
-import flatten from "arr-flatten";
 import consola from "consola";
 import { Map, OrderedSet, Set, ValueObject } from "immutable";
 import iterable from "itiriri";
