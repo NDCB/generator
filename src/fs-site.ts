@@ -28,17 +28,15 @@ import { joinPath, Path } from "./fs-path";
 
 export const logger = consola.withTag("fs-site");
 
-export const rootsAreMutuallyExclusive = (...roots: Directory[]): boolean => {
-	for (let i = 0; i < roots.length - 1; i++) {
-		const predicate = directoryHasDescendent(roots[i]);
-		for (let j = i + 1; j < roots.length; j++) {
-			if (predicate(roots[j])) {
-				return false;
-			}
-		}
-	}
-	return true;
-};
+export const rootsAreMutuallyExclusive = (
+	roots: Set<Directory & ValueObject>,
+): boolean =>
+	roots
+		.toSeq()
+		.map((r1) => roots.map((r2) => [r1, r2]))
+		.flatten()
+		.filter(([r1, r2]) => !r1.equals(r2))
+		.every(([r1, r2]) => !directoryHasDescendent(r1)(r2));
 
 export const filesInRoots = (
 	downwardFilesReader: (directory: Directory) => Iterable<File>,
