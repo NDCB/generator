@@ -1,7 +1,7 @@
 import consola from "consola";
 import { Map, OrderedSet, Set, ValueObject } from "immutable";
 import iterable from "itiriri";
-import { basename, dirname, extname } from "path";
+import { basename, dirname, extname, join } from "path";
 
 import {
 	Directory,
@@ -99,6 +99,9 @@ export const pathnameHasExtension = (pathname: Pathname): boolean =>
 export const pathnameExtension = (pathname: Pathname): Extension =>
 	extension(extname(pathnameToString(pathname)));
 
+/**
+ * @precondition !pathnameIsEmpty(p)
+ */
 export const pathnameWithExtension = (p: Pathname) => {
 	const withoutExtension = basename(
 		pathnameToString(p),
@@ -123,6 +126,10 @@ export const upwardPathnames = function*(p: Pathname): Iterable<Pathname> {
 	}
 	yield current;
 };
+
+export const joinPathname = (p: Pathname) => (
+	...segments: string[]
+): Pathname => pathname(join(pathnameToString(p), ...segments));
 
 export const fileWithExtension = (file: File) => {
 	const inDirectory = fileInDirectory(parentDirectory(file));
