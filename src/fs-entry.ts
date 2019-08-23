@@ -244,12 +244,15 @@ export const upwardDirectories: (
 	directory: upwardDirectoriesFromDirectory,
 });
 
+/**
+ * @precondition directoryHasDescendent(root)(entry)
+ */
 export const upwardDirectoriesUntil = (root: Directory) => (
 	entry: Entry,
 ): Iterable<Directory> =>
-	Seq(upwardDirectories(entry)).takeWhile(
-		(directory) => !directoryEquals(directory, root),
-	);
+	Seq(upwardDirectories(entry))
+		.takeWhile((directory) => !directoryEquals(directory, root))
+		.concat(root);
 
 export const copyFile = (file: File) => (destination: Directory): void =>
 	copySync(
