@@ -1,6 +1,7 @@
 import consola from "consola";
 
 import { readdirSync, readFileSync } from "fs-extra";
+import { Seq } from "immutable";
 import {
 	Directory,
 	directoryInDirectory,
@@ -52,28 +53,30 @@ export const readFile = (encoding: Encoding) => (file: File): FileContents =>
 export const logFileRead = (fileReader: (file: File) => FileContents) => (
 	file: File,
 ): FileContents => {
-	logger.info(`Reading file ${fileToString(file)}`);
+	logger.info(`Reading file "${fileToString(file)}"`);
 	return fileReader(file);
 };
 
 export const readDirectory = (encoding: Encoding) => (
 	directory: Directory,
-): Entry[] => {
+): Seq.Indexed<Entry> => {
 	const asFileInReadDirectory = fileInDirectory(directory);
 	const asDirectoryInReadDirectory = directoryInDirectory(directory);
-	return readdirSync(pathToString(directoryToPath(directory)), {
-		withFileTypes: true,
-		encoding: encodingToString(encoding),
-	}).map((directoryEntry) => {
+	return Seq(
+		readdirSync(pathToString(directoryToPath(directory)), {
+			withFileTypes: true,
+			encoding: encodingToString(encoding),
+		}),
+	).map((directoryEntry) => {
 		if (directoryEntry.isFile()) {
 			return asFileInReadDirectory(directoryEntry.name);
 		} else if (directoryEntry.isDirectory()) {
 			return asDirectoryInReadDirectory(directoryEntry.name);
 		} else {
 			throw new Error(
-				`Failed to match pattern for entry named ${
+				`Failed to match pattern for entry named "${
 					directoryEntry.name
-				} in directory ${directoryToString(directory)}`,
+				}" in directory "${directoryToString(directory)}"`,
 			);
 		}
 	});
@@ -82,12 +85,12 @@ export const readDirectory = (encoding: Encoding) => (
 export const logDirectoryRead = (
 	directoryReader: (directory: Directory) => Entry[],
 ) => (directory: Directory): Entry[] => {
-	logger.info(`Reading directory ${directoryToString(directory)}`);
+	logger.info(`Reading directory "${directoryToString(directory)}"`);
 	return directoryReader(directory);
 };
 
 export const readDownwardFiles = (
-	directoryReader: (directory: Directory) => Entry[],
+	directoryReader: (directory: Directory) => Iterable<Entry>,
 ) =>
 	function*(directory: Directory): Iterable<File> {
 		const directoriesToRead: Directory[] = [directory];
@@ -99,7 +102,7 @@ export const readDownwardFiles = (
 					directoriesToRead.push(entry);
 				} else {
 					throw new Error(
-						`Failed to match pattern for entry ${entryToString(entry)}`,
+						`Failed to match pattern for entry "${entryToString(entry)}"`,
 					);
 				}
 			}

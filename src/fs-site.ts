@@ -1,11 +1,9 @@
 import consola from "consola";
 import { Map, OrderedSet, Seq, Set, ValueObject } from "immutable";
-import iterable from "itiriri";
 import { basename, dirname, extname, join } from "path";
 
 import {
 	Directory,
-	directory,
 	directoryHasDescendent,
 	directoryToPath,
 	directoryToString,
@@ -39,28 +37,22 @@ export const rootsAreMutuallyExclusive = (
 
 export const filesInRoots = (
 	downwardFilesReader: (directory: Directory) => Iterable<File>,
-) =>
-	function*(roots: Set<Directory & ValueObject>): Iterable<File> {
-		for (const root of roots) {
-			yield* downwardFilesReader(root);
-		}
-	};
+) => (roots: Set<Directory & ValueObject>): Seq.Set<File> =>
+	roots.toSeq().flatMap(downwardFilesReader);
 
 export const filesInRootsWithLogging = (
 	downwardFilesReader: (directory: Directory) => Iterable<File>,
-) =>
-	function*(roots: Set<Directory & ValueObject>): Iterable<File> {
-		for (const root of roots) {
-			logger.info(
-				`Reading downward files from root ${directoryToString(root)}`,
-			);
-			yield* downwardFilesReader(root);
-		}
-	};
+) => (roots: Set<Directory & ValueObject>): Seq.Set<File> =>
+	roots.toSeq().flatMap((root) => {
+		logger.info(
+			`Reading downward files from root "${directoryToString(root)}"`,
+		);
+		return downwardFilesReader(root);
+	});
 
 export const consideredFiles = (ignore: (file: File) => boolean) => (
 	files: Iterable<File>,
-): Iterable<File> => iterable(files).filter((file) => !ignore(file));
+): Seq.Indexed<File> => Seq(files).filter((file) => !ignore(file));
 
 export interface Pathname {
 	readonly _tag: "Pathname";
