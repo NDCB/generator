@@ -1,5 +1,5 @@
 import consola from "consola";
-import { Map, OrderedSet, Set, ValueObject } from "immutable";
+import { Map, OrderedSet, Seq, Set, ValueObject } from "immutable";
 import iterable from "itiriri";
 import { basename, dirname, extname, join } from "path";
 
@@ -103,18 +103,20 @@ export const pathnameExtension = (pathname: Pathname): Extension =>
  * @precondition !pathnameIsEmpty(p)
  */
 export const pathnameWithExtension = (p: Pathname) => {
-	const withoutExtension = basename(
-		pathnameToString(p),
-		extname(pathnameToString(p)),
-	);
+	const pathnameString = pathnameToString(p);
+	const name = basename(pathnameString, extname(pathnameString));
+	const directory = dirname(pathnameString);
 	return (extension: Extension): Pathname =>
-		pathname(withoutExtension + extensionToString(extension));
+		pathname(join(directory, name + extensionToString(extension)));
 };
 
+/**
+ * @precondition !pathnameIsEmpty(p)
+ */
 export const pathnameWithExtensions = (pathname: Pathname) => {
 	const withExtension = pathnameWithExtension(pathname);
-	return (extensions: Set<Extension & ValueObject>): Set<Pathname> =>
-		extensions.map(withExtension);
+	return (extensions: Set<Extension & ValueObject>): Seq.Set<Pathname> =>
+		extensions.toSeq().map(withExtension);
 };
 
 export const upwardPathnames = function*(p: Pathname): Iterable<Pathname> {
@@ -154,9 +156,23 @@ export const sourceExtensions = (
 	return destinationToSource.get(destinationValue) || Set([destinationValue]);
 };
 
-export const possibleSourceFiles = (
-	roots: OrderedSet<Directory & ValueObject>,
+/**
+ * @precondition !pathnameIsEmpty(pathname) && pathnameHasExtension(pathname)
+ */
+export const sourcePathnames = (
+	destinationToSource: Map<
+		Extension & ValueObject,
+		Set<Extension & ValueObject>
+	>,
 ) => {
+	const getSourceExtensions = sourceExtensions(destinationToSource);
+	return (pathname: Pathname): Seq.Set<Pathname> =>
+		pathnameWithExtensions(pathname)(
+			getSourceExtensions(pathnameExtension(pathname)),
+		);
+};
+
+export const possibleSourceFiles = (roots: Set<Directory & ValueObject>) => {
 	const toPaths = roots.map(pathFromPathname);
 	return (
 		destinationToSource: Map<
@@ -165,47 +181,27 @@ export const possibleSourceFiles = (
 		>,
 	) => {
 		const getSourceExtensions = sourceExtensions(destinationToSource);
-		const htmlExtension = extension(".html");
-		const htmlSourceExtensions = getSourceExtensions(htmlExtension);
-		return function*(pathname: Pathname): Iterable<File> {
-			const paths = toPaths.map((toPath) => toPath(pathname));
-			const baseFiles = paths.map(file);
-			yield* baseFiles;
-			if (!pathnameIsEmpty(pathname)) {
-				if (pathnameHasExtension(pathname)) {
-					yield* baseFiles
-						.flatMap((file) =>
-							OrderedSet([
-								...fileWithExtensions(file)(
+		return (pathname: Pathname) =>
+			Seq([pathname])
+				.concat(
+					!pathnameIsEmpty(pathname) && !pathnameHasExtension(pathname)
+						? [
+								pathnameWithExtension(pathname)(extension(".html")),
+								joinPathname(pathname)("index.html"),
+						  ]
+						: joinPathname(pathname)("index.html"),
+				)
+				.flatMap((pathname) =>
+					!pathnameIsEmpty(pathname) && pathnameHasExtension(pathname)
+						? Seq([pathname]).concat(
+								pathnameWithExtensions(pathname)(
 									getSourceExtensions(pathnameExtension(pathname)),
 								),
-							]),
-						)
-						.toArray();
-				} else {
-					yield* baseFiles
-						.flatMap((file) =>
-							OrderedSet([
-								fileWithExtension(file)(htmlExtension),
-								...fileWithExtensions(file)(htmlSourceExtensions),
-							]),
-						)
-						.toArray();
-				}
-			}
-			const indexes = paths.map((path) =>
-				fileInDirectory(directory(path))("index.html"),
-			);
-			const indexesSource = indexes
-				.flatMap((index) =>
-					OrderedSet([
-						index,
-						...fileWithExtensions(index)(htmlSourceExtensions),
-					]),
+						  )
+						: Seq([pathname]),
 				)
-				.toArray();
-			yield* indexesSource;
-		};
+				.flatMap((pathname) => toPaths.map((toPath) => toPath(pathname)))
+				.map(file);
 	};
 };
 
@@ -219,5 +215,5 @@ export const sourceFile = (roots: OrderedSet<Directory & ValueObject>) => (
 		destinationToSource,
 	);
 	return (pathname: Pathname): File =>
-		iterable(getPossibleSourceFiles(pathname)).find(fileExists);
+		getPossibleSourceFiles(pathname).find(fileExists);
 };
