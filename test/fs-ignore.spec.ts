@@ -31,11 +31,11 @@ describe("ignoreExtension", () => {
 			expected: true,
 		},
 	];
-	context(`ignoring ${extensionToString(ignoredExtension)}`, () => {
+	context(`ignoring "${extensionToString(ignoredExtension)}"`, () => {
 		for (const { file, expected } of testCases) {
-			it(`${expected ? "ignores" : "does not ignore"} file ${fileToString(
+			it(`${expected ? "ignores" : "does not ignore"} file "${fileToString(
 				file,
-			)}`, () => {
+			)}"`, () => {
 				assert.strictEqual(rule(file), expected);
 			});
 		}
@@ -67,9 +67,9 @@ describe("ignoreLeadingUnderscore", () => {
 		},
 	];
 	for (const { file, upwardDirectories, expected } of testCases) {
-		it(`${expected ? "ignores" : "does not ignore"} file ${fileToString(
+		it(`${expected ? "ignores" : "does not ignore"} file "${fileToString(
 			file,
-		)}`, () => {
+		)}"`, () => {
 			assert.strictEqual(
 				ignoreLeadingUnderscore(upwardDirectories)(file),
 				expected,
@@ -105,15 +105,15 @@ describe("ignoreUsingGitignore", () => {
 		},
 	];
 	context(
-		`ignoring ${fileContentsToString(gitignoreContents).replace(
+		`ignoring "${fileContentsToString(gitignoreContents).replace(
 			"\n",
 			";",
-		)} using ${fileToString(gitignoreFile)}`,
+		)}" using "${fileToString(gitignoreFile)}"`,
 		() => {
 			for (const { file, expected } of testCases) {
-				it(`${expected ? "ignores" : "does not ignore"} file ${fileToString(
+				it(`${expected ? "ignores" : "does not ignore"} file "${fileToString(
 					file,
-				)}`, () => {
+				)}"`, () => {
 					assert.strictEqual(rule(file), expected);
 				});
 			}

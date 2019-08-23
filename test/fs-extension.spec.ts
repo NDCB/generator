@@ -35,7 +35,7 @@ describe("isExtension", () => {
 		},
 	];
 	for (const { element, expected } of testCases) {
-		it(`is ${expected} for element ${JSON.stringify(element)}`, () => {
+		it(`is ${expected} for element "${JSON.stringify(element)}"`, () => {
 			assert.strictEqual(isExtension(element), expected);
 		});
 	}
@@ -94,9 +94,9 @@ describe("fileExtension", () => {
 		},
 	];
 	for (const { file, expected } of testCases) {
-		it(`retrieves the extension ${extensionToString(
+		it(`retrieves the extension "${extensionToString(
 			expected,
-		)} for file ${fileToString(file)}`, () => {
+		)}" for file "${fileToString(file)}"`, () => {
 			assert.isTrue(extensionEquals(fileExtension(file), expected));
 		});
 	}

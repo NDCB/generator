@@ -49,7 +49,7 @@ describe("rootsAreMutuallyExclusive", () => {
 		},
 	];
 	for (const { roots, expected } of testCases) {
-		it(`is ${expected} for ${rootsAsString(roots)}`, () => {
+		it(`is ${expected} for "${rootsAsString(roots)}"`, () => {
 			assert.strictEqual(rootsAreMutuallyExclusive(roots), expected);
 		});
 	}
@@ -113,9 +113,9 @@ describe("possibleSourceFiles", () => {
 	const sourceFiles = (pathname) => [...getter(pathname)];
 	const toFile = (value: string) => file(path(value));
 	context(
-		`using roots ${rootsAsString(roots)} and map ${destinationToSourceAsString(
-			destinationToSource,
-		)}`,
+		`using roots "${rootsAsString(
+			roots,
+		)}" and map "${destinationToSourceAsString(destinationToSource)}"`,
 		() => {
 			const testCases = [
 				{
@@ -189,9 +189,9 @@ describe("possibleSourceFiles", () => {
 				},
 			];
 			for (const { pathname, expected } of testCases) {
-				it(`retrieves source files for pathname ${pathnameToString(
+				it(`retrieves source files for pathname "${pathnameToString(
 					pathname,
-				)}`, () => {
+				)}"`, () => {
 					const actual = sourceFiles(pathname);
 					assert.isTrue(
 						actual.length === expected.length,
@@ -203,7 +203,7 @@ describe("possibleSourceFiles", () => {
 					])) {
 						assert.isTrue(
 							fileEquals(f1, f2),
-							`${fileToString(f1)} differs from ${fileToString(f2)}`,
+							`"${fileToString(f1)}" differs from "${fileToString(f2)}"`,
 						);
 					}
 				});
