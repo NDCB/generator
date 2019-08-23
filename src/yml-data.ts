@@ -12,7 +12,7 @@ export const parseYmlFileData = (contents: FileContents): Data =>
 
 export const ymlExtensions: Set<
 	Extension & ValueObject
-> = extensionValueObjectSet(".yml", ".yaml");
+> = extensionValueObjectSet([".yml", ".yaml"]);
 
 export const ymlFileDataParser: DataParserModule = {
 	extensions: ymlExtensions,
