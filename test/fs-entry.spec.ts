@@ -9,6 +9,7 @@ import {
 	File,
 	file,
 	fileToString,
+	matchEntry,
 	upwardDirectoriesFromDirectory,
 	upwardDirectoriesFromFile,
 	upwardDirectoriesUntil,
@@ -164,9 +165,10 @@ describe("upwardDirectoriesUntil", () => {
 	];
 	for (const { entry, until, expected } of testCases) {
 		testDirectoryArrayEquality(
-			`yields "${directoriesAsString(expected)}" for entry "${entryToString(
-				entry,
-			)}" until "${directoryToString(until)}"`,
+			`yields "${directoriesAsString(expected)}" for ${matchEntry({
+				file: () => "file",
+				directory: () => "directory",
+			})(entry)} "${entryToString(entry)}" until "${directoryToString(until)}"`,
 			expected,
 			() => upwardDirectoriesUntil(until)(entry),
 		);
