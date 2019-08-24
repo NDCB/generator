@@ -102,7 +102,9 @@ export const readDownwardFiles = (
 					directoriesToRead.push(entry);
 				} else {
 					throw new Error(
-						`Failed to match pattern for entry "${entryToString(entry)}"`,
+						`Unexpectedly failed to match pattern for entry "${entryToString(
+							entry,
+						)}"`,
 					);
 				}
 			}

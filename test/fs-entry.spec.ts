@@ -15,11 +15,51 @@ import {
 } from "../src/fs-entry";
 import { resolvedPath } from "../src/fs-path";
 
+const asFile = (value: string): File => file(resolvedPath(value));
+
+const asDirectory = (value: string): Directory =>
+	directory(resolvedPath(value));
+
+const directoriesAsString = (directories: Directory[]): string =>
+	directories.map(directoryToString).join(";");
+
+const testDirectoryArrayEquality = (
+	caseMessage: string,
+	expected: Directory[],
+	getActual: () => Iterable<Directory>,
+) =>
+	it(caseMessage, () => {
+		const actual = [...getActual()];
+		const displayResults = () =>
+			`Actual: "${directoriesAsString(
+				actual,
+			)}"\nExpected: "${directoriesAsString(expected)}"`;
+		assert.strictEqual(
+			actual.length,
+			expected.length,
+			`Actual and expected directories differ in length.\n${displayResults()}`,
+		);
+		for (const directory of expected) {
+			assert.isDefined(
+				actual.find((other) => directoryEquals(other, directory)),
+				`Directory "${directoryToString(
+					directory,
+				)}" is missing.\n${displayResults()}`,
+			);
+		}
+		expected
+			.map((directory, index) => [directory, actual[index]])
+			.forEach(([d1, d2]) =>
+				assert.isTrue(
+					directoryEquals(d1, d2),
+					`Directory "${directoryToString(
+						d1,
+					)}" is out of order.\n${displayResults()}`,
+				),
+			);
+	});
+
 describe("upwardDirectoriesFromDirectory", () => {
-	const asDirectory = (value: string): Directory =>
-		directory(resolvedPath(value));
-	const directoriesAsString = (directories: Directory[]): string =>
-		directories.map(directoryToString).join(";");
 	const testCases = [
 		{
 			directory: "/",
@@ -38,47 +78,17 @@ describe("upwardDirectoriesFromDirectory", () => {
 		expected: expected.map(asDirectory),
 	}));
 	for (const { directory, expected } of testCases) {
-		it(`yields "${directoriesAsString(
+		testDirectoryArrayEquality(
+			`yields "${directoriesAsString(
+				expected,
+			)}" for directory "${directoryToString(directory)}"`,
 			expected,
-		)}" for directory "${directoryToString(directory)}"`, () => {
-			const actual = [...upwardDirectoriesFromDirectory(directory)];
-			const displayResults = () =>
-				`Actual: "${directoriesAsString(
-					actual,
-				)}"\nExpected: "${directoriesAsString(expected)}"`;
-			assert.strictEqual(
-				actual.length,
-				expected.length,
-				`Actual and expected directories differ in length.\n${displayResults()}`,
-			);
-			for (const directory of expected) {
-				assert.isDefined(
-					actual.find((other) => directoryEquals(other, directory)),
-					`Directory "${directoryToString(
-						directory,
-					)}" is missing.\n${displayResults()}`,
-				);
-			}
-			expected
-				.map((directory, index) => [directory, actual[index]])
-				.forEach(([d1, d2]) =>
-					assert.isTrue(
-						directoryEquals(d1, d2),
-						`Directory "${directoryToString(
-							d1,
-						)}" is out of order.\n${displayResults()}`,
-					),
-				);
-		});
+			() => upwardDirectoriesFromDirectory(directory),
+		);
 	}
 });
 
 describe("upwardDirectoriesFromFile", () => {
-	const asFile = (value: string): File => file(resolvedPath(value));
-	const asDirectory = (value: string): Directory =>
-		directory(resolvedPath(value));
-	const directoriesAsString = (directories: Directory[]): string =>
-		directories.map(directoryToString).join(";");
 	const testCases = [
 		{
 			file: "/index.html",
@@ -97,47 +107,17 @@ describe("upwardDirectoriesFromFile", () => {
 		expected: expected.map(asDirectory),
 	}));
 	for (const { file, expected } of testCases) {
-		it(`yields "${directoriesAsString(expected)}" for file "${fileToString(
-			file,
-		)}"`, () => {
-			const actual = [...upwardDirectoriesFromFile(file)];
-			const displayResults = () =>
-				`Actual: "${directoriesAsString(
-					actual,
-				)}"\nExpected: "${directoriesAsString(expected)}"`;
-			assert.strictEqual(
-				actual.length,
-				expected.length,
-				`Actual and expected directories differ in length.\n${displayResults()}`,
-			);
-			for (const directory of expected) {
-				assert.isDefined(
-					actual.find((other) => directoryEquals(other, directory)),
-					`Directory "${directoryToString(
-						directory,
-					)}" is missing.\n${displayResults()}`,
-				);
-			}
-			expected
-				.map((directory, index) => [directory, actual[index]])
-				.forEach(([d1, d2]) =>
-					assert.isTrue(
-						directoryEquals(d1, d2),
-						`Directory "${directoryToString(
-							d1,
-						)}" is out of order.\n${displayResults()}`,
-					),
-				);
-		});
+		testDirectoryArrayEquality(
+			`yields "${directoriesAsString(expected)}" for file "${fileToString(
+				file,
+			)}"`,
+			expected,
+			() => upwardDirectoriesFromFile(file),
+		);
 	}
 });
 
 describe("upwardDirectoriesUntil", () => {
-	const asFile = (value: string): File => file(resolvedPath(value));
-	const asDirectory = (value: string): Directory =>
-		directory(resolvedPath(value));
-	const directoriesAsString = (directories: Directory[]): string =>
-		directories.map(directoryToString).join(";");
 	const testCases = [
 		...[
 			{
@@ -183,37 +163,12 @@ describe("upwardDirectoriesUntil", () => {
 		})),
 	];
 	for (const { entry, until, expected } of testCases) {
-		it(`yields "${directoriesAsString(expected)}" for entry "${entryToString(
-			entry,
-		)}" until "${directoryToString(until)}"`, () => {
-			const actual = [...upwardDirectoriesUntil(until)(entry)];
-			const displayResults = () =>
-				`Actual: "${directoriesAsString(
-					actual,
-				)}"\nExpected: "${directoriesAsString(expected)}"`;
-			assert.strictEqual(
-				actual.length,
-				expected.length,
-				`Actual and expected directories differ in length.\n${displayResults()}`,
-			);
-			for (const directory of expected) {
-				assert.isDefined(
-					actual.find((other) => directoryEquals(other, directory)),
-					`Directory "${directoryToString(
-						directory,
-					)}" is missing.\n${displayResults()}`,
-				);
-			}
-			expected
-				.map((directory, index) => [directory, actual[index]])
-				.forEach(([d1, d2]) =>
-					assert.isTrue(
-						directoryEquals(d1, d2),
-						`Directory "${directoryToString(
-							d1,
-						)}" is out of order.\n${displayResults()}`,
-					),
-				);
-		});
+		testDirectoryArrayEquality(
+			`yields "${directoriesAsString(expected)}" for entry "${entryToString(
+				entry,
+			)}" until "${directoryToString(until)}"`,
+			expected,
+			() => upwardDirectoriesUntil(until)(entry),
+		);
 	}
 });
