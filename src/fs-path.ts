@@ -8,6 +8,8 @@ import {
 	resolve,
 } from "path";
 
+import { strictEquals } from "./util";
+
 /**
  * An absolute path in the file system. There may not be an entry at its
  * location.
@@ -22,13 +24,15 @@ export const path = (value: string): Path => ({ _tag: "Path", value });
 export const pathToString = (path: Path): string => path.value;
 
 export const pathEquals = (p1: Path, p2: Path): boolean =>
-	pathToString(p1) === pathToString(p2);
+	strictEquals(p1.value, p2.value);
 
 export const resolvedPath = (...segments: string[]): Path =>
 	path(resolve(...segments));
 
 export const normalizePath = (p: Path): Path =>
 	path(normalize(pathToString(p)));
+
+export const normalizedPath = (p: string): Path => path(normalize(p));
 
 export const resolvePath = (start: Path) => (...segments: string[]): Path =>
 	path(resolve(pathToString(start), ...segments));

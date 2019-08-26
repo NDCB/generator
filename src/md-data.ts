@@ -7,7 +7,7 @@ import { parseTableOfContentsData } from "./md-toc";
 
 export const mdExtensions: Set<
 	Extension & ValueObject
-> = extensionValueObjectSet(".md", ".markdown");
+> = extensionValueObjectSet([".md", ".markdown"]);
 
 export const mdFileDataParser: DataParserModule = {
 	extensions: mdExtensions,

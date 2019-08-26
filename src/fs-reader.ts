@@ -59,7 +59,7 @@ export const logFileRead = (fileReader: (file: File) => FileContents) => (
 
 export const readDirectory = (encoding: Encoding) => (
 	directory: Directory,
-): Seq.Indexed<Entry> => {
+): Iterable<Entry> => {
 	const asFileInReadDirectory = fileInDirectory(directory);
 	const asDirectoryInReadDirectory = directoryInDirectory(directory);
 	return Seq(
@@ -74,17 +74,17 @@ export const readDirectory = (encoding: Encoding) => (
 			return asDirectoryInReadDirectory(directoryEntry.name);
 		} else {
 			throw new Error(
-				`Failed to match pattern for entry named "${
-					directoryEntry.name
-				}" in directory "${directoryToString(directory)}"`,
+				`Entry named "${directoryEntry.name}" in directory "${directoryToString(
+					directory,
+				)}" is neither a file nor a directory`,
 			);
 		}
 	});
 };
 
 export const logDirectoryRead = (
-	directoryReader: (directory: Directory) => Entry[],
-) => (directory: Directory): Entry[] => {
+	directoryReader: (directory: Directory) => Iterable<Entry>,
+) => (directory: Directory): Iterable<Entry> => {
 	logger.info(`Reading directory "${directoryToString(directory)}"`);
 	return directoryReader(directory);
 };
@@ -102,7 +102,9 @@ export const readDownwardFiles = (
 					directoriesToRead.push(entry);
 				} else {
 					throw new Error(
-						`Failed to match pattern for entry "${entryToString(entry)}"`,
+						`Unexpectedly failed to match pattern for entry "${entryToString(
+							entry,
+						)}"`,
 					);
 				}
 			}

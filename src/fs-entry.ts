@@ -8,7 +8,7 @@ import {
 	Stats as Status,
 	statSync,
 } from "fs-extra";
-import { hash, ValueObject } from "immutable";
+import { hash, Seq, ValueObject } from "immutable";
 
 import {
 	baseName,
@@ -178,7 +178,9 @@ export const matchEntry = <T>(pattern: EntryPattern<T>) => (
 		return pattern.directory(entry);
 	} else {
 		throw new Error(
-			`Failed to match pattern for entry ${entryToString(entry)}`,
+			`Unexpectedly failed to match pattern for entry "${entryToString(
+				entry,
+			)}"`,
 		);
 	}
 };
@@ -242,15 +244,15 @@ export const upwardDirectories: (
 	directory: upwardDirectoriesFromDirectory,
 });
 
-export const upwardDirectoriesUntil = (root: Directory) =>
-	function*(entry: Entry): Iterable<Directory> {
-		for (const directory of upwardDirectories(entry)) {
-			yield directory;
-			if (directoryEquals(root, directory)) {
-				break;
-			}
-		}
-	};
+/**
+ * @precondition directoryHasDescendent(root)(entry)
+ */
+export const upwardDirectoriesUntil = (root: Directory) => (
+	entry: Entry,
+): Iterable<Directory> =>
+	Seq(upwardDirectories(entry))
+		.takeWhile((directory) => !directoryEquals(directory, root))
+		.concat(root);
 
 export const copyFile = (file: File) => (destination: Directory): void =>
 	copySync(

@@ -101,13 +101,13 @@ export const ignoreExtensionWithLogging = (extension: Extension) =>
 	);
 
 export const ignoreExtensions: (
-	...extensions: Extension[]
+	extensions: Iterable<Extension>,
 ) => (file: File) => boolean = fileHasAnyExtension;
 
-export const ignoreExtensionsWithLogging = (...extensions: Extension[]) =>
+export const ignoreExtensionsWithLogging = (extensions: Iterable<Extension>) =>
 	logIfFileIgnored(
 		logFileIgnoredForHavingExtension,
-		ignoreExtensions(...extensions),
+		ignoreExtensions(extensions),
 	);
 
 export const entryHasLeadingUnderscore = (entry: Entry): boolean =>
