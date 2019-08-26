@@ -16,7 +16,7 @@ import {
 	extensionToString,
 	extensionToValueObject,
 } from "../src/fs-extension";
-import { path } from "../src/fs-path";
+import { normalizedPath } from "../src/fs-path";
 import {
 	pathname,
 	Pathname,
@@ -34,7 +34,7 @@ describe("rootsAreMutuallyExclusive", () => {
 	const roots = (values: string[]): Set<Directory & ValueObject> =>
 		Set(
 			values
-				.map(path)
+				.map(normalizedPath)
 				.map(directory)
 				.map(directoryToValueObject),
 		);
@@ -59,18 +59,21 @@ describe("upwardPathnames", () => {
 	const pathnames = (values: string[]): Pathname[] => values.map(pathname);
 	const testCases = [
 		{
-			pathname: pathname(""),
-			expected: pathnames([""]),
+			pathname: "",
+			expected: [""],
 		},
 		{
-			pathname: pathname("fr-CA"),
-			expected: pathnames(["fr-CA", ""]),
+			pathname: "fr-CA",
+			expected: ["fr-CA", ""],
 		},
 		{
-			pathname: pathname("fr-CA/mathematiques"),
-			expected: pathnames(["fr-CA/mathematiques", "fr-CA", ""]),
+			pathname: "fr-CA/mathematiques",
+			expected: ["fr-CA/mathematiques", "fr-CA", ""],
 		},
-	];
+	].map(({ pathname: p, expected }) => ({
+		pathname: pathname(p),
+		expected: pathnames(expected),
+	}));
 	for (const { pathname, expected } of testCases) {
 		it(`yields "${expected
 			.map(pathnameToString)
@@ -100,7 +103,7 @@ const destinationToSourceAsString = (
 describe("possibleSourceFiles", () => {
 	const roots = OrderedSet(
 		["content", "layout"]
-			.map(path)
+			.map(normalizedPath)
 			.map(directory)
 			.map(directoryToValueObject),
 	);
@@ -110,8 +113,8 @@ describe("possibleSourceFiles", () => {
 		[e(".css"), Set([e(".scss"), e(".less")])],
 	]);
 	const getter = possibleSourceFiles(roots)(destinationToSource);
-	const sourceFiles = (pathname) => [...getter(pathname)];
-	const toFile = (value: string) => file(path(value));
+	const sourceFiles = pathname => [...getter(pathname)];
+	const toFile = (value: string) => file(normalizedPath(value));
 	context(
 		`using roots "${rootsAsString(
 			roots,
@@ -119,7 +122,7 @@ describe("possibleSourceFiles", () => {
 		() => {
 			const testCases = [
 				{
-					pathname: pathname(""),
+					pathname: "",
 					expected: [
 						"content",
 						"layout",
@@ -127,10 +130,10 @@ describe("possibleSourceFiles", () => {
 						"layout/index.html",
 						"content/index.md",
 						"layout/index.md",
-					].map(toFile),
+					],
 				},
 				{
-					pathname: pathname("index"),
+					pathname: "index",
 					expected: [
 						"content/index",
 						"layout/index",
@@ -142,10 +145,10 @@ describe("possibleSourceFiles", () => {
 						"layout/index/index.html",
 						"content/index/index.md",
 						"layout/index/index.md",
-					].map(toFile),
+					],
 				},
 				{
-					pathname: pathname("fr-CA"),
+					pathname: "fr-CA",
 					expected: [
 						"content/fr-CA",
 						"layout/fr-CA",
@@ -157,10 +160,10 @@ describe("possibleSourceFiles", () => {
 						"layout/fr-CA/index.html",
 						"content/fr-CA/index.md",
 						"layout/fr-CA/index.md",
-					].map(toFile),
+					],
 				},
 				{
-					pathname: pathname("index.html"),
+					pathname: "index.html",
 					expected: [
 						"content/index.html",
 						"layout/index.html",
@@ -170,10 +173,10 @@ describe("possibleSourceFiles", () => {
 						"layout/index.html/index.html",
 						"content/index.html/index.md",
 						"layout/index.html/index.md",
-					].map(toFile),
+					],
 				},
 				{
-					pathname: pathname("main.css"),
+					pathname: "main.css",
 					expected: [
 						"content/main.css",
 						"layout/main.css",
@@ -185,9 +188,12 @@ describe("possibleSourceFiles", () => {
 						"layout/main.css/index.html",
 						"content/main.css/index.md",
 						"layout/main.css/index.md",
-					].map(toFile),
+					],
 				},
-			];
+			].map(({ pathname: p, expected }) => ({
+				pathname: pathname(p),
+				expected: expected.map(toFile),
+			}));
 			for (const { pathname, expected } of testCases) {
 				it(`retrieves source files for pathname "${pathnameToString(
 					pathname,

@@ -32,6 +32,8 @@ export const resolvedPath = (...segments: string[]): Path =>
 export const normalizePath = (p: Path): Path =>
 	path(normalize(pathToString(p)));
 
+export const normalizedPath = (p: string): Path => path(normalize(p));
+
 export const resolvePath = (start: Path) => (...segments: string[]): Path =>
 	path(resolve(pathToString(start), ...segments));
 
