@@ -1,5 +1,84 @@
 import { assert } from "chai";
-import { normalizedHeadingsFromList } from "../src/md-toc";
+import {
+	Heading,
+	normalizedHeadingsFromList,
+	parseHeadings,
+} from "../src/md-toc";
+
+describe("parseHeadings", () => {
+	const slugify = heading => heading;
+	const headingsAsString = (headings: Heading[]): string =>
+		headings.map(({ level, heading }) => `${level}: ${heading}`).join(";");
+	const testCases = [
+		{
+			contents: `
+# 1
+## 2
+### 3
+#### 4
+##### 5
+###### 6
+			`,
+			expected: [
+				{
+					level: 1,
+				},
+				{
+					level: 2,
+				},
+				{
+					level: 3,
+				},
+				{
+					level: 4,
+				},
+				{
+					level: 5,
+				},
+				{
+					level: 6,
+				},
+			],
+		},
+		{
+			contents: `
+# 1
+####### 7
+## 2
+######### 9
+########## 10
+### 3
+`,
+			expected: [
+				{
+					level: 1,
+				},
+				{
+					level: 2,
+				},
+				{
+					level: 3,
+				},
+			],
+		},
+	].map(({ contents, expected }) => ({
+		contents,
+		expected: expected.map(({ level }) => ({
+			level,
+			heading: `${level}`,
+			slug: slugify(`${level}`),
+			sections: [],
+		})),
+	}));
+	const getHeadings = parseHeadings(slugify);
+	for (const { contents, expected } of testCases) {
+		it(`yields "${headingsAsString(expected)}" for "${contents
+			.replace(/\n/g, "\\n")
+			.trim()}"`, () => {
+			assert.deepStrictEqual(getHeadings(contents), expected);
+		});
+	}
+});
 
 describe("normalizedHeadingsFromList", () => {
 	const valuesAsHeadings = (

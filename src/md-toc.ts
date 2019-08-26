@@ -13,7 +13,7 @@ export interface Heading extends Data {
 // https://spec.commonmark.org/0.29/#atx-headings
 export const atxHeadingRegExp: RegExp = /^[ ]{0,3}(#{1,6})[ \t]+(.*?)([ ]+#*)?$/gm;
 
-export const headings = (slugify: (token: string) => string) => (
+export const parseHeadings = (slugify: (token: string) => string) => (
 	mainContents: string,
 ): Heading[] => {
 	const headings: Heading[] = [];
@@ -72,7 +72,7 @@ export const tableOfContents = (slugify: (token: string) => string) => (
 	mainContents: string,
 ): Heading => {
 	const items: Heading[] = normalizedHeadingsFromList(
-		headings(slugify)(mainContents),
+		parseHeadings(slugify)(mainContents),
 	);
 	const parents = Stack<Heading>().asMutable();
 	for (const heading of items) {
