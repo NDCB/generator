@@ -1,4 +1,5 @@
 import { assert } from "chai";
+
 import {
 	Heading,
 	normalizedHeadingsFromList,
@@ -6,7 +7,7 @@ import {
 } from "../src/md-toc";
 
 describe("parseHeadings", () => {
-	const slugify = heading => heading;
+	const slugify = (heading) => heading;
 	const headingsAsString = (headings: Heading[]): string =>
 		headings.map(({ level, heading }) => `${level}: ${heading}`).join(";");
 	const testCases = [
@@ -83,7 +84,7 @@ describe("parseHeadings", () => {
 describe("normalizedHeadingsFromList", () => {
 	const valuesAsHeadings = (
 		values: number[],
-	): Array<{ readonly level: number }> => values.map(level => ({ level }));
+	): Array<{ readonly level: number }> => values.map((level) => ({ level }));
 	const headingsAsValues = (
 		headings: Array<{ readonly level: number }>,
 	): number[] => headings.map(({ level }) => level);

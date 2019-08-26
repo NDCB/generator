@@ -1,4 +1,5 @@
 import { assert } from "chai";
+
 import { hasMatter } from "../src/md-matter";
 
 describe("hasMatter", () => {
