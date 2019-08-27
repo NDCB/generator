@@ -30,3 +30,34 @@ export const countryCodeToValueObject = (
 
 export const isValidCountryCodeToken = (token: string): boolean =>
 	/^[A-Z]{2}$/.test(token);
+
+export interface LanguageCode {
+	readonly _tag: "LanguageCode";
+	readonly value: string;
+}
+
+export const languageCode = (value: string): LanguageCode => ({
+	_tag: "LanguageCode",
+	value,
+});
+
+export const isLanguageCode = (element: any): element is LanguageCode =>
+	!!element && element._tag === "LanguageCode";
+
+export const languageCodeEquals = (
+	l1: LanguageCode,
+	l2: LanguageCode,
+): boolean => strictEquals(l1.value, l2.value);
+
+export const languageCodeToString = (code: LanguageCode): string => code.value;
+
+export const languageCodeToValueObject = (
+	code: LanguageCode,
+): LanguageCode & ValueObject => ({
+	...code,
+	equals: (other) => isLanguageCode(other) && languageCodeEquals(other, code),
+	hashCode: () => hash(languageCodeToString(code)),
+});
+
+export const isValidLanguageCodeToken = (token: string): boolean =>
+	/^[a-z]{2}$/.test(token);
