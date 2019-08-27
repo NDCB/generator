@@ -7,6 +7,12 @@ export interface CountryCode {
 	readonly value: string;
 }
 
+export const isValidCountryCodeToken = (token: string): boolean =>
+	/^[A-Z]{2}$/.test(token);
+
+/**
+ * @precondition isValidCountryCodeToken(value)
+ */
 export const countryCode = (value: string): CountryCode => ({
 	_tag: "CountryCode",
 	value,
@@ -28,14 +34,17 @@ export const countryCodeToValueObject = (
 	hashCode: () => hash(countryCodeToString(code)),
 });
 
-export const isValidCountryCodeToken = (token: string): boolean =>
-	/^[A-Z]{2}$/.test(token);
-
 export interface LanguageCode {
 	readonly _tag: "LanguageCode";
 	readonly value: string;
 }
 
+export const isValidLanguageCodeToken = (token: string): boolean =>
+	/^[a-z]{2}$/.test(token);
+
+/**
+ * @precondition isValidLanguageCodeToken(value)
+ */
 export const languageCode = (value: string): LanguageCode => ({
 	_tag: "LanguageCode",
 	value,
@@ -59,9 +68,6 @@ export const languageCodeToValueObject = (
 	hashCode: () => hash(languageCodeToString(code)),
 });
 
-export const isValidLanguageCodeToken = (token: string): boolean =>
-	/^[a-z]{2}$/.test(token);
-
 export interface LocaleCode {
 	readonly _tag: "LocaleCode";
 	readonly language: LanguageCode;
@@ -73,14 +79,48 @@ export const localeCode = (
 	country: CountryCode,
 ): LocaleCode => ({ _tag: "LocaleCode", language, country });
 
+export const isValidLocaleCodeToken = (token: string): boolean =>
+	/^[a-z]{2}-[A-Z]{2}$/.test(token);
+
 export const localeToken = (
 	language: LanguageCode,
 	country: CountryCode,
 ): string =>
 	`${languageCodeToString(language)}-${countryCodeToString(country)}`;
 
-export const isValidLocaleCodeToken = (token: string): boolean =>
-	/^[a-z]{2}-[A-Z]{2}$/.test(token);
+/**
+ * @precondition isValidLanguageCode(language) && isValidCountryCode(country)
+ */
+export const parseLanguageAndCountryCodesFromTokens = (
+	language: string,
+	country: string,
+): [LanguageCode, CountryCode] => [
+	languageCode(language),
+	countryCode(country),
+];
+
+/**
+ * @precondition isValidLocaleCodeToken(token)
+ */
+export const parseLanguageAndCountryCodesFromLocaleToken = (
+	token: string,
+): [LanguageCode, CountryCode] => {
+	const tokens = token.split("-");
+	return parseLanguageAndCountryCodesFromTokens(tokens[0], tokens[1]);
+};
+
+export const localeCodeByLanguageAndCountryCodes = ([language, country]: [
+	LanguageCode,
+	CountryCode,
+]): LocaleCode => localeCode(language, country);
+
+/**
+ * @precondition isValidLocaleCodeToken(token)
+ */
+export const localeCodeFromToken = (token: string): LocaleCode =>
+	localeCodeByLanguageAndCountryCodes(
+		parseLanguageAndCountryCodesFromLocaleToken(token),
+	);
 
 export const isLocaleCode = (element: any): element is LocaleCode =>
 	!!element && element._tag === "LocaleCode";
