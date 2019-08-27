@@ -61,3 +61,41 @@ export const languageCodeToValueObject = (
 
 export const isValidLanguageCodeToken = (token: string): boolean =>
 	/^[a-z]{2}$/.test(token);
+
+export interface LocaleCode {
+	readonly _tag: "LocaleCode";
+	readonly language: LanguageCode;
+	readonly country: CountryCode;
+}
+
+export const localeCode = (
+	language: LanguageCode,
+	country: CountryCode,
+): LocaleCode => ({ _tag: "LocaleCode", language, country });
+
+export const localeToken = (
+	language: LanguageCode,
+	country: CountryCode,
+): string =>
+	`${languageCodeToString(language)}-${countryCodeToString(country)}`;
+
+export const isValidLocaleCodeToken = (token: string): boolean =>
+	/^[a-z]{2}-[A-Z]{2}$/.test(token);
+
+export const isLocaleCode = (element: any): element is LocaleCode =>
+	!!element && element._tag === "LocaleCode";
+
+export const localeCodeEquals = (l1: LocaleCode, l2: LocaleCode): boolean =>
+	languageCodeEquals(l1.language, l2.language) &&
+	countryCodeEquals(l1.country, l2.country);
+
+export const localeCodeToString = (code: LocaleCode): string =>
+	localeToken(code.language, code.country);
+
+export const localeCodeToValueObject = (
+	code: LocaleCode,
+): LocaleCode & ValueObject => ({
+	...code,
+	equals: (other) => isLocaleCode(other) && localeCodeEquals(other, code),
+	hashCode: () => hash(localeCodeToString(code)),
+});
