@@ -1,5 +1,15 @@
-import { hash, ValueObject } from "immutable";
+import { hash, Map, Seq, Set, ValueObject } from "immutable";
 
+import {
+	Directory,
+	directoryToString,
+	Entry,
+	entryBaseName,
+	entryIsFile,
+	File,
+	fileEquals,
+	fileName,
+} from "./fs-entry";
 import { strictEquals } from "./util";
 
 export interface CountryCode {
@@ -139,3 +149,30 @@ export const localeCodeToValueObject = (
 	equals: (other) => isLocaleCode(other) && localeCodeEquals(other, code),
 	hashCode: () => hash(localeCodeToString(code)),
 });
+
+export const declaredLocaleFilesByLocaleCode = (
+	directoryReader: (directory: Directory) => Iterable<Entry>,
+) => (localesDirectory: Directory): Map<LocaleCode & ValueObject, File> => {
+	const localeFiles = Seq(directoryReader(localesDirectory))
+		.filter(entryIsFile)
+		.filter((file) => isValidLocaleCodeToken(fileName(file)))
+		.toSet();
+	if (localeFiles.count() > localeFiles.map((file) => fileName(file)).count()) {
+		const conflictingFiles = localeFiles
+			.toSeq()
+			.flatMap((f1) => localeFiles.map((f2) => [f1, f2]))
+			.filter(([f1, f2]) => !fileEquals(f1, f2))
+			.filter(([f1, f2]) => strictEquals(fileName(f1), fileName(f2)))
+			.map(([f1, f2]) => `(${entryBaseName(f1)}:${entryBaseName(f2)})`);
+		throw new Error(
+			`Conflicting locale files by name "${conflictingFiles.join(
+				";",
+			)}" in directory "${directoryToString(localesDirectory)}"`,
+		);
+	}
+	return localeFiles
+		.toMap()
+		.mapKeys((_, file) =>
+			localeCodeToValueObject(localeCodeFromToken(fileName(file))),
+		);
+};
