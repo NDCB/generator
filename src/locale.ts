@@ -176,3 +176,27 @@ export const declaredLocaleFilesByLocaleCode = (
 			localeCodeToValueObject(localeCodeFromToken(fileName(file))),
 		);
 };
+
+export const isValidMultiplicityToken = (token: string): boolean =>
+	/^ *(((-?\d+\.?\d*)\.\.(-?\d+\.?\d*|\*))|(-?\d+\.?\d*)) *$/.test(token);
+
+/**
+ * @precondition isValidMultiplicityToken(token)
+ */
+export const parseMultiplicityToken = (token: string) => {
+	const tokens = token.split("..").map((value) => value.trim());
+	const minimumIncluded = parseFloat(tokens[0]);
+	const maximumExcluded =
+		tokens.length > 1
+			? strictEquals(tokens[1], "*")
+				? Infinity
+				: parseFloat(tokens[1])
+			: Math.floor(minimumIncluded + 1);
+	if (maximumExcluded < minimumIncluded) {
+		throw new Error(
+			`Multiplicity token "${token}" which parses to [${minimumIncluded},${maximumExcluded}) does not admit any values.`,
+		);
+	}
+	return (value: number): boolean =>
+		minimumIncluded <= value && value < maximumExcluded;
+};
