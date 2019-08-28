@@ -1,5 +1,6 @@
-import { hash, Map, Seq, Set, ValueObject } from "immutable";
+import { hash, Map, OrderedSet, Seq, Set, ValueObject } from "immutable";
 
+import { Data, FileData, fileDataToData } from "./fs-data";
 import {
 	Directory,
 	directoryToString,
@@ -172,7 +173,7 @@ export const declaredLocaleFilesByLocaleCode = (
 	}
 	return localeFiles
 		.toMap()
-		.mapKeys((_, file) =>
+		.mapKeys((file) =>
 			localeCodeToValueObject(localeCodeFromToken(fileName(file))),
 		);
 };
@@ -199,4 +200,41 @@ export const parseMultiplicityToken = (token: string) => {
 	}
 	return (value: number): boolean =>
 		minimumIncluded <= value && value < maximumExcluded;
+};
+
+export const parseSimplePhraseTemplates = (data: Data): Map<string, string> =>
+	Map<string, string>().withMutations((map) => {
+		Object.keys(data)
+			.filter((phrase) => strictEquals(typeof data[phrase], "string"))
+			.forEach((phrase) => map.set(phrase, data[phrase] as string));
+	});
+
+export const parseQuantifiedPhraseTemplates = (
+	data: Data,
+): Map<string, (quantity: number) => string> =>
+	Set(Object.keys(data))
+		.filter((phrase) => strictEquals(typeof data[phrase], "object"))
+		.toMap()
+		.map((phrase) =>
+			OrderedSet(Object.keys(data[phrase]))
+				.filter((token) => strictEquals(typeof data[phrase][token], "string"))
+				.toMap()
+				.mapKeys(parseMultiplicityToken)
+				.map((token) => data[phrase][token] as string),
+		)
+		.map((templateByMultiplicity) => (quantity: number) =>
+			templateByMultiplicity.find((_, test) => test(quantity)),
+		);
+
+export const parsePhraseTemplates = (
+	fileData: FileData,
+): {
+	simplePhrases: Map<string, string>;
+	quantifiedPhrases: Map<string, (quantity: number) => string>;
+} => {
+	const data = fileDataToData(fileData);
+	return {
+		simplePhrases: parseSimplePhraseTemplates(data),
+		quantifiedPhrases: parseQuantifiedPhraseTemplates(data),
+	};
 };

@@ -15,6 +15,8 @@ import {
 	localeCodeToString,
 	localeCodeToValueObject,
 	parseMultiplicityToken,
+	parseQuantifiedPhraseTemplates,
+	parseSimplePhraseTemplates,
 } from "../src/locale";
 
 describe("declaredLocaleFilesByLocaleCode", () => {
@@ -226,6 +228,80 @@ describe("parseMultiplicityToken", () => {
 	for (const { token } of throwingTestCases) {
 		it(`throws for token "${token}"`, () => {
 			assert.throws(() => parseMultiplicityToken(token));
+		});
+	}
+});
+
+describe("parseSimplePhraseTemplates", () => {
+	const testCases = [
+		{
+			data: {
+				s1: "rs1",
+				q1: { "0": "rq1:0..1", "1": "rq1:1..2" },
+				s2: "rs2",
+				q2: { "1": "rq2:1..2", "2..*": "rq2:2..*" },
+			},
+			expected: Map([["s1", "rs1"], ["s2", "rs2"]]),
+		},
+	];
+	for (const { data, expected } of testCases) {
+		it(`returns ${expected
+			.toArray()
+			.map(([template, phrase]) => `("${template}"->"${phrase}")`)
+			.join(";")} for ${JSON.stringify(data)}`, () => {
+			assert.isTrue(expected.equals(parseSimplePhraseTemplates(data)));
+		});
+	}
+});
+
+describe("parseQuantifiedPhraseTemplates", () => {
+	const testCases = [
+		{
+			data: {
+				s1: "rs1",
+				q1: { "0": "rq1:0..1", "1": "rq1:1..2" },
+				s2: "rs2",
+				q2: { "1": "rq2:1..2", "2..*": "rq2:2..*" },
+			},
+			assertions: [
+				{
+					phrase: "q1",
+					quantity: 0,
+					template: "rq1:0..1",
+				},
+				{
+					phrase: "q1",
+					quantity: 1,
+					template: "rq1:1..2",
+				},
+				{
+					phrase: "q2",
+					quantity: 1,
+					template: "rq2:1..2",
+				},
+				{
+					phrase: "q2",
+					quantity: 2,
+					template: "rq2:2..*",
+				},
+				{
+					phrase: "q2",
+					quantity: 5,
+					template: "rq2:2..*",
+				},
+			],
+		},
+	];
+	for (const { data, assertions } of testCases) {
+		context(`with ${JSON.stringify(data)}`, () => {
+			for (const { phrase, quantity, template } of assertions) {
+				it(`returns "${template}" for "${phrase}" with quantity ${quantity}`, () => {
+					assert.strictEqual(
+						parseQuantifiedPhraseTemplates(data).get(phrase)(quantity),
+						template,
+					);
+				});
+			}
 		});
 	}
 });
