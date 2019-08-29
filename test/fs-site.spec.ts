@@ -1,14 +1,21 @@
 import { assert } from "chai";
-import { Collection, Map, OrderedSet, Set, ValueObject } from "immutable";
+import { Map, OrderedSet, Set, ValueObject } from "immutable";
+
+import { assertArrayEquals, iterableToString } from "./util";
 
 import {
 	directory,
 	Directory,
+	directoryEquals,
 	directoryToString,
 	directoryToValueObject,
+	Entry,
+	entryToString,
 	file,
+	File,
 	fileEquals,
 	fileToString,
+	matchEntry,
 } from "../src/fs-entry";
 import {
 	extension,
@@ -16,19 +23,91 @@ import {
 	extensionToString,
 	extensionToValueObject,
 } from "../src/fs-extension";
-import { normalizedPath } from "../src/fs-path";
+import { normalizedPath, resolvedPath } from "../src/fs-path";
 import {
+	destinationFile,
+	normalizedPathname,
 	pathname,
 	Pathname,
 	pathnameEquals,
+	pathnameFromRoot,
 	pathnameToString,
 	possibleSourceFiles,
 	rootsAreMutuallyExclusive,
+	upwardDirectoriesUntilEitherRoot,
 	upwardPathnames,
 } from "../src/fs-site";
 
-const rootsAsString = (roots: Collection.Set<Directory & ValueObject>) =>
-	roots.map(directoryToString).join(";");
+const asFile = (value: string): File => file(resolvedPath(value));
+
+const asDirectory = (value: string): Directory =>
+	directory(resolvedPath(value));
+
+describe("pathnameFromRoot", () => {
+	const testCases = [
+		{
+			root: "content",
+			entry: "content",
+			expected: "",
+		},
+		{
+			root: "content",
+			entry: "content/fr-CA/index.html",
+			expected: "fr-CA/index.html",
+		},
+	].map(({ root, entry, expected }) => ({
+		root: directory(normalizedPath(root)),
+		entry: file(normalizedPath(entry)),
+		expected: normalizedPathname(expected),
+	}));
+	for (const { root, entry, expected } of testCases) {
+		it(`returns "${pathnameToString(expected)}" for entry "${entryToString(
+			entry,
+		)}" from root "${directoryToString(root)}"`, () => {
+			assert.isTrue(pathnameEquals(expected, pathnameFromRoot(root)(entry)));
+		});
+	}
+});
+
+describe("destinationFile", () => {
+	const extensionFromValue = extension;
+	const testCases = [
+		{
+			roots: ["content", "layout"],
+			destination: "build",
+			source: "content/fr-CA/index.md",
+			extension: ".html",
+			expected: "build/fr-CA/index.html",
+		},
+		{
+			roots: ["content", "layout"],
+			destination: "build",
+			source: "content/fr-CA/mathematiques/article.md",
+			extension: ".html",
+			expected: "build/fr-CA/mathematiques/article.html",
+		},
+	].map(({ roots, destination, source, extension, expected }) => ({
+		roots: Set(roots.map(asDirectory).map(directoryToValueObject)),
+		destination: asDirectory(destination),
+		source: asFile(source),
+		extension: extensionFromValue(extension),
+		expected: asFile(expected),
+	}));
+	for (const { roots, destination, source, extension, expected } of testCases) {
+		it(`returns "${fileToString(expected)}" for source "${fileToString(
+			source,
+		)}" with roots "${iterableToString(directoryToString)(
+			roots,
+		)}" and destination extension "${extensionToString(extension)}"`, () => {
+			assert.isTrue(
+				fileEquals(
+					expected,
+					destinationFile(roots)(destination)(source, extension),
+				),
+			);
+		});
+	}
+});
 
 describe("rootsAreMutuallyExclusive", () => {
 	const roots = (values: string[]): Set<Directory & ValueObject> =>
@@ -49,10 +128,65 @@ describe("rootsAreMutuallyExclusive", () => {
 		},
 	];
 	for (const { roots, expected } of testCases) {
-		it(`is ${expected} for "${rootsAsString(roots)}"`, () => {
+		it(`is ${expected} for "${iterableToString(directoryToString)(
+			roots,
+		)}"`, () => {
 			assert.strictEqual(rootsAreMutuallyExclusive(roots), expected);
 		});
 	}
+});
+
+describe("upwardDirectoriesUntilEitherRoot", () => {
+	const roots = Set(
+		["content", "layout"].map(asDirectory).map(directoryToValueObject),
+	);
+	context(`with roots "${iterableToString(directoryToString)(roots)}"`, () => {
+		const testCases = [
+			{
+				file: "content/index.md",
+				expected: ["content"],
+			},
+			{
+				file: "/not-root/directory/index.md",
+				expected: ["/not-root/directory", "/not-root", "/"],
+			},
+		]
+			.map(({ file, expected }) => ({
+				entry: asFile(file) as Entry,
+				expected: expected.map(asDirectory),
+			}))
+			.concat(
+				[
+					{
+						directory: "content/fr-CA",
+						expected: ["content/fr-CA", "content"],
+					},
+					{
+						directory: "/not-root/directory/fr-CA",
+						expected: [
+							"/not-root/directory/fr-CA",
+							"/not-root/directory",
+							"/not-root",
+							"/",
+						],
+					},
+				].map(({ directory, expected }) => ({
+					entry: asDirectory(directory) as Entry,
+					expected: expected.map(asDirectory),
+				})),
+			);
+		for (const { entry, expected } of testCases) {
+			it(`yields "${expected
+				.map(directoryToString)
+				.join(";")}" for ${matchEntry({
+				file: () => "file",
+				directory: () => "directory",
+			})(entry)} "${entryToString(entry)}"`, () => {
+				const actual = [...upwardDirectoriesUntilEitherRoot(roots)(entry)];
+				assertArrayEquals(directoryEquals, directoryToString)(actual, expected);
+			});
+		}
+	});
 });
 
 describe("upwardPathnames", () => {
@@ -79,10 +213,7 @@ describe("upwardPathnames", () => {
 			.map(pathnameToString)
 			.join(";")}" for pathname "${pathnameToString(pathname)}"`, () => {
 			const actual = [...upwardPathnames(pathname)];
-			assert.isTrue(actual.length === expected.length);
-			actual.forEach((value, index) =>
-				assert.isTrue(pathnameEquals(value, expected[index])),
-			);
+			assertArrayEquals(pathnameEquals, pathnameToString)(actual, expected);
 		});
 	}
 });
@@ -113,10 +244,10 @@ describe("possibleSourceFiles", () => {
 		[e(".css"), Set([e(".scss"), e(".less")])],
 	]);
 	const getter = possibleSourceFiles(roots)(destinationToSource);
-	const sourceFiles = pathname => [...getter(pathname)];
+	const sourceFiles = (pathname) => [...getter(pathname)];
 	const toFile = (value: string) => file(normalizedPath(value));
 	context(
-		`using roots "${rootsAsString(
+		`using roots "${iterableToString(directoryToString)(
 			roots,
 		)}" and map "${destinationToSourceAsString(destinationToSource)}"`,
 		() => {
@@ -199,19 +330,7 @@ describe("possibleSourceFiles", () => {
 					pathname,
 				)}"`, () => {
 					const actual = sourceFiles(pathname);
-					assert.isTrue(
-						actual.length === expected.length,
-						"Actual and expected source files differ in length",
-					);
-					for (const [f1, f2] of actual.map((source, index) => [
-						source,
-						expected[index],
-					])) {
-						assert.isTrue(
-							fileEquals(f1, f2),
-							`"${fileToString(f1)}" differs from "${fileToString(f2)}"`,
-						);
-					}
+					assertArrayEquals(fileEquals, fileToString)(actual, expected);
 				});
 			}
 		},
