@@ -1,8 +1,9 @@
 import { hash, Set, ValueObject } from "immutable";
+import { lookup as mimeType } from "mime-types";
 
 import { Extension, extensionEquals } from "./fs-extension";
 import { FileContents } from "./fs-reader";
-import { Pathname, pathnameExtension } from "./fs-site";
+import { Pathname, pathnameExtension, pathnameToString } from "./fs-site";
 import { strictEquals } from "./util";
 
 export interface DocumentType {
@@ -57,6 +58,9 @@ export const documentLocation = (document: Document): Pathname =>
 
 export const documentExtension = (document: Document): Extension =>
 	pathnameExtension(documentLocation(document));
+
+export const documentMimeType = (document: Document): string =>
+	mimeType(pathnameToString(documentLocation(document))) || "text/plain";
 
 export interface DocumentProcessor {
 	readonly handlesDocument: (document: Document) => boolean;
