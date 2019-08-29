@@ -1,4 +1,8 @@
 import { hash, ValueObject } from "immutable";
+
+import { Extension } from "./fs-extension";
+import { FileContents } from "./fs-reader";
+import { Pathname, pathnameExtension } from "./fs-site";
 import { strictEquals } from "./util";
 
 export interface DocumentType {
@@ -28,3 +32,23 @@ export const documentTypeToValueObject = (
 	equals: (other) => isDocumentType(other) && documentTypeEquals(type, other),
 	hashCode: () => hash(documentTypeToString(type)),
 });
+
+export interface Document {
+	readonly _tag: "Document";
+	readonly contents: FileContents;
+	readonly location: Pathname;
+}
+
+export const document = (
+	contents: FileContents,
+	location: Pathname,
+): Document => ({ _tag: "Document", contents, location });
+
+export const documentContents = (document: Document): FileContents =>
+	document.contents;
+
+export const documentLocation = (document: Document): Pathname =>
+	document.location;
+
+export const documentExtension = (document: Document): Extension =>
+	pathnameExtension(documentLocation(document));
