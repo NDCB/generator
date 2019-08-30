@@ -32,7 +32,9 @@ import {
 	pathnameEquals,
 	pathnameFromRoot,
 	pathnameToString,
+	possibleInheritedFiles,
 	possibleSourceFiles,
+	possibleSourcePathnames,
 	rootsAreMutuallyExclusive,
 	upwardDirectoriesUntilEitherRoot,
 	upwardPathnames,
@@ -42,6 +44,8 @@ const asFile = (value: string): File => file(resolvedPath(value));
 
 const asDirectory = (value: string): Directory =>
 	directory(resolvedPath(value));
+
+const asPathname = (value: string): Pathname => pathname(value);
 
 describe("pathnameFromRoot", () => {
 	const testCases = [
@@ -331,6 +335,112 @@ describe("possibleSourceFiles", () => {
 				)}"`, () => {
 					const actual = sourceFiles(pathname);
 					assertArrayEquals(fileEquals, fileToString)(actual, expected);
+				});
+			}
+		},
+	);
+});
+
+describe("possibleInheritedFiles", () => {
+	const roots = Set(["content", "layout"])
+		.map(asDirectory)
+		.map(directoryToValueObject);
+	const upwardDirectories = upwardDirectoriesUntilEitherRoot(roots);
+	const toExtension = (value: string): Extension & ValueObject =>
+		extensionToValueObject(extension(value));
+	const destinationToSource = Map([[".html", [".md"]]]).mapEntries(
+		([destination, sources]) => [
+			toExtension(destination),
+			Set(sources).map(toExtension),
+		],
+	);
+	const pathnames = possibleSourcePathnames(destinationToSource);
+	context(
+		`with pathname extension mapping "${destinationToSource
+			.map(
+				(sources, destination) =>
+					`${extensionToString(destination)}->${iterableToString(
+						extensionToString,
+					)(sources)}`,
+			)
+			.join()}" and roots "${iterableToString(directoryToString)(roots)}"`,
+		() => {
+			const possibleFiles = possibleInheritedFiles(pathnames)(
+				upwardDirectories,
+			);
+			const testCases = [
+				{
+					file: "content/en-CA/mathematics/article.md",
+					pathname: "examples/example",
+					inherited: [
+						"content/en-CA/mathematics/examples/example",
+						"content/en-CA/examples/example",
+						"content/examples/example",
+						"content/en-CA/mathematics/examples/example.html",
+						"content/en-CA/examples/example.html",
+						"content/examples/example.html",
+						"content/en-CA/mathematics/examples/example.md",
+						"content/en-CA/examples/example.md",
+						"content/examples/example.md",
+						"content/en-CA/mathematics/examples/example/index.html",
+						"content/en-CA/examples/example/index.html",
+						"content/examples/example/index.html",
+						"content/en-CA/mathematics/examples/example/index.md",
+						"content/en-CA/examples/example/index.md",
+						"content/examples/example/index.md",
+					],
+				},
+				{
+					file: "content/en-CA/article.md",
+					pathname: "examples/example",
+					inherited: [
+						"content/en-CA/examples/example",
+						"content/examples/example",
+						"content/en-CA/examples/example.html",
+						"content/examples/example.html",
+						"content/en-CA/examples/example.md",
+						"content/examples/example.md",
+						"content/en-CA/examples/example/index.html",
+						"content/examples/example/index.html",
+						"content/en-CA/examples/example/index.md",
+						"content/examples/example/index.md",
+					],
+				},
+				{
+					file: "content/article.md",
+					pathname: "examples/example",
+					inherited: [
+						"content/examples/example",
+						"content/examples/example.html",
+						"content/examples/example.md",
+						"content/examples/example/index.html",
+						"content/examples/example/index.md",
+					],
+				},
+				{
+					file: "content/article.md",
+					pathname: "examples/example",
+					inherited: [
+						"content/examples/example",
+						"content/examples/example.html",
+						"content/examples/example.md",
+						"content/examples/example/index.html",
+						"content/examples/example/index.md",
+					],
+				},
+			].map(({ file, pathname, inherited }) => ({
+				file: asFile(file),
+				pathname: asPathname(pathname),
+				inherited: inherited.map(asFile),
+			}));
+			for (const { file, pathname, inherited } of testCases) {
+				it(`yields "${iterableToString(fileToString)(
+					inherited,
+				)}" for pathname "${pathnameToString(
+					pathname,
+				)}" from file "${fileToString(file)}"`, () => {
+					const actual = [...possibleFiles(file)(pathname)];
+					assertArrayEquals(fileEquals, fileToString)(actual, inherited);
 				});
 			}
 		},
