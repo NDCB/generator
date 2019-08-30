@@ -7,6 +7,7 @@ import {
 	extensionToString,
 	extensionToValueObject,
 } from "../src/fs-extension";
+import { iterableToString } from "./util";
 
 describe("mergeParserModules", () => {
 	const modules: Array<DataParserModule & { readonly data: number }> = [
@@ -32,7 +33,7 @@ describe("mergeParserModules", () => {
 		`using modules "${modules
 			.map(
 				({ extensions, data }) =>
-					`(${extensions.map(extensionToString).join(";")})->${data}`,
+					`(${iterableToString(extensionToString)(extensions)})->${data}`,
 			)
 			.join(";")}"`,
 		() => {
