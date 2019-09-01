@@ -57,13 +57,13 @@ const asExtension = (value: string): Extension & ValueObject =>
 describe("pathnameFromRoot", () => {
 	const testCases = [
 		{
-			root: "content",
-			entry: "content",
+			root: "/content",
+			entry: "/content",
 			expected: "",
 		},
 		{
-			root: "content",
-			entry: "content/fr-CA/index.html",
+			root: "/content",
+			entry: "/content/fr-CA/index.html",
 			expected: "fr-CA/index.html",
 		},
 	].map(({ root, entry, expected }) => ({
@@ -219,18 +219,18 @@ describe("destinationFile", () => {
 	const extensionFromValue = extension;
 	const testCases = [
 		{
-			roots: ["content", "layout"],
-			destination: "build",
-			source: "content/fr-CA/index.md",
+			roots: ["/content", "/layout"],
+			destination: "/build",
+			source: "/content/fr-CA/index.md",
 			extension: ".html",
-			expected: "build/fr-CA/index.html",
+			expected: "/build/fr-CA/index.html",
 		},
 		{
-			roots: ["content", "layout"],
-			destination: "build",
-			source: "content/fr-CA/mathematiques/article.md",
+			roots: ["/content", "/layout"],
+			destination: "/build",
+			source: "/content/fr-CA/mathematiques/article.md",
 			extension: ".html",
-			expected: "build/fr-CA/mathematiques/article.html",
+			expected: "/build/fr-CA/mathematiques/article.html",
 		},
 	].map(({ roots, destination, source, extension, expected }) => ({
 		roots: Set(roots.map(asDirectory).map(directoryToValueObject)),
@@ -265,11 +265,11 @@ describe("rootsAreMutuallyExclusive", () => {
 		);
 	const testCases = [
 		{
-			roots: roots(["content", "layout"]),
+			roots: roots(["/content", "/layout"]),
 			expected: true,
 		},
 		{
-			roots: roots(["content", "content/fr-CA", "layout"]),
+			roots: roots(["/content", "/content/fr-CA", "/layout"]),
 			expected: false,
 		},
 	];
@@ -284,13 +284,13 @@ describe("rootsAreMutuallyExclusive", () => {
 
 describe("upwardDirectoriesUntilEitherRoot", () => {
 	const roots = Set(
-		["content", "layout"].map(asDirectory).map(directoryToValueObject),
+		["/content", "/layout"].map(asDirectory).map(directoryToValueObject),
 	);
 	context(`with roots "${iterableToString(directoryToString)(roots)}"`, () => {
 		const testCases = [
 			{
-				file: "content/index.md",
-				expected: ["content"],
+				file: "/content/index.md",
+				expected: ["/content"],
 			},
 			{
 				file: "/not-root/directory/index.md",
@@ -304,8 +304,8 @@ describe("upwardDirectoriesUntilEitherRoot", () => {
 			.concat(
 				[
 					{
-						directory: "content/fr-CA",
-						expected: ["content/fr-CA", "content"],
+						directory: "/content/fr-CA",
+						expected: ["/content/fr-CA", "/content"],
 					},
 					{
 						directory: "/not-root/directory/fr-CA",
@@ -379,7 +379,7 @@ const destinationToSourceAsString = (
 
 describe("possibleSourceFiles", () => {
 	const roots = OrderedSet(
-		["content", "layout"]
+		["/content", "/layout"]
 			.map(normalizedPath)
 			.map(directory)
 			.map(directoryToValueObject),
@@ -401,70 +401,70 @@ describe("possibleSourceFiles", () => {
 				{
 					pathname: "",
 					expected: [
-						"content",
-						"layout",
-						"content/index.html",
-						"layout/index.html",
-						"content/index.md",
-						"layout/index.md",
+						"/content",
+						"/layout",
+						"/content/index.html",
+						"/layout/index.html",
+						"/content/index.md",
+						"/layout/index.md",
 					],
 				},
 				{
 					pathname: "index",
 					expected: [
-						"content/index",
-						"layout/index",
-						"content/index.html",
-						"layout/index.html",
-						"content/index.md",
-						"layout/index.md",
-						"content/index/index.html",
-						"layout/index/index.html",
-						"content/index/index.md",
-						"layout/index/index.md",
+						"/content/index",
+						"/layout/index",
+						"/content/index.html",
+						"/layout/index.html",
+						"/content/index.md",
+						"/layout/index.md",
+						"/content/index/index.html",
+						"/layout/index/index.html",
+						"/content/index/index.md",
+						"/layout/index/index.md",
 					],
 				},
 				{
 					pathname: "fr-CA",
 					expected: [
-						"content/fr-CA",
-						"layout/fr-CA",
-						"content/fr-CA.html",
-						"layout/fr-CA.html",
-						"content/fr-CA.md",
-						"layout/fr-CA.md",
-						"content/fr-CA/index.html",
-						"layout/fr-CA/index.html",
-						"content/fr-CA/index.md",
-						"layout/fr-CA/index.md",
+						"/content/fr-CA",
+						"/layout/fr-CA",
+						"/content/fr-CA.html",
+						"/layout/fr-CA.html",
+						"/content/fr-CA.md",
+						"/layout/fr-CA.md",
+						"/content/fr-CA/index.html",
+						"/layout/fr-CA/index.html",
+						"/content/fr-CA/index.md",
+						"/layout/fr-CA/index.md",
 					],
 				},
 				{
 					pathname: "index.html",
 					expected: [
-						"content/index.html",
-						"layout/index.html",
-						"content/index.md",
-						"layout/index.md",
-						"content/index.html/index.html",
-						"layout/index.html/index.html",
-						"content/index.html/index.md",
-						"layout/index.html/index.md",
+						"/content/index.html",
+						"/layout/index.html",
+						"/content/index.md",
+						"/layout/index.md",
+						"/content/index.html/index.html",
+						"/layout/index.html/index.html",
+						"/content/index.html/index.md",
+						"/layout/index.html/index.md",
 					],
 				},
 				{
 					pathname: "main.css",
 					expected: [
-						"content/main.css",
-						"layout/main.css",
-						"content/main.scss",
-						"layout/main.scss",
-						"content/main.less",
-						"layout/main.less",
-						"content/main.css/index.html",
-						"layout/main.css/index.html",
-						"content/main.css/index.md",
-						"layout/main.css/index.md",
+						"/content/main.css",
+						"/layout/main.css",
+						"/content/main.scss",
+						"/layout/main.scss",
+						"/content/main.less",
+						"/layout/main.less",
+						"/content/main.css/index.html",
+						"/layout/main.css/index.html",
+						"/content/main.css/index.md",
+						"/layout/main.css/index.md",
 					],
 				},
 			].map(({ pathname: p, expected }) => ({
@@ -484,7 +484,7 @@ describe("possibleSourceFiles", () => {
 });
 
 describe("possibleInheritedFiles", () => {
-	const roots = Set(["content", "layout"])
+	const roots = Set(["/content", "/layout"])
 		.map(asDirectory)
 		.map(directoryToValueObject);
 	const upwardDirectories = upwardDirectoriesUntilEitherRoot(roots);
@@ -512,62 +512,62 @@ describe("possibleInheritedFiles", () => {
 			);
 			const testCases = [
 				{
-					file: "content/en-CA/mathematics/article.md",
+					file: "/content/en-CA/mathematics/article.md",
 					pathname: "examples/example",
 					inherited: [
-						"content/en-CA/mathematics/examples/example",
-						"content/en-CA/examples/example",
-						"content/examples/example",
-						"content/en-CA/mathematics/examples/example.html",
-						"content/en-CA/examples/example.html",
-						"content/examples/example.html",
-						"content/en-CA/mathematics/examples/example.md",
-						"content/en-CA/examples/example.md",
-						"content/examples/example.md",
-						"content/en-CA/mathematics/examples/example/index.html",
-						"content/en-CA/examples/example/index.html",
-						"content/examples/example/index.html",
-						"content/en-CA/mathematics/examples/example/index.md",
-						"content/en-CA/examples/example/index.md",
-						"content/examples/example/index.md",
+						"/content/en-CA/mathematics/examples/example",
+						"/content/en-CA/examples/example",
+						"/content/examples/example",
+						"/content/en-CA/mathematics/examples/example.html",
+						"/content/en-CA/examples/example.html",
+						"/content/examples/example.html",
+						"/content/en-CA/mathematics/examples/example.md",
+						"/content/en-CA/examples/example.md",
+						"/content/examples/example.md",
+						"/content/en-CA/mathematics/examples/example/index.html",
+						"/content/en-CA/examples/example/index.html",
+						"/content/examples/example/index.html",
+						"/content/en-CA/mathematics/examples/example/index.md",
+						"/content/en-CA/examples/example/index.md",
+						"/content/examples/example/index.md",
 					],
 				},
 				{
-					file: "content/en-CA/article.md",
+					file: "/content/en-CA/article.md",
 					pathname: "examples/example",
 					inherited: [
-						"content/en-CA/examples/example",
-						"content/examples/example",
-						"content/en-CA/examples/example.html",
-						"content/examples/example.html",
-						"content/en-CA/examples/example.md",
-						"content/examples/example.md",
-						"content/en-CA/examples/example/index.html",
-						"content/examples/example/index.html",
-						"content/en-CA/examples/example/index.md",
-						"content/examples/example/index.md",
+						"/content/en-CA/examples/example",
+						"/content/examples/example",
+						"/content/en-CA/examples/example.html",
+						"/content/examples/example.html",
+						"/content/en-CA/examples/example.md",
+						"/content/examples/example.md",
+						"/content/en-CA/examples/example/index.html",
+						"/content/examples/example/index.html",
+						"/content/en-CA/examples/example/index.md",
+						"/content/examples/example/index.md",
 					],
 				},
 				{
-					file: "content/article.md",
+					file: "/content/article.md",
 					pathname: "examples/example",
 					inherited: [
-						"content/examples/example",
-						"content/examples/example.html",
-						"content/examples/example.md",
-						"content/examples/example/index.html",
-						"content/examples/example/index.md",
+						"/content/examples/example",
+						"/content/examples/example.html",
+						"/content/examples/example.md",
+						"/content/examples/example/index.html",
+						"/content/examples/example/index.md",
 					],
 				},
 				{
-					file: "content/article.md",
+					file: "/content/article.md",
 					pathname: "examples/example",
 					inherited: [
-						"content/examples/example",
-						"content/examples/example.html",
-						"content/examples/example.md",
-						"content/examples/example/index.html",
-						"content/examples/example/index.md",
+						"/content/examples/example",
+						"/content/examples/example.html",
+						"/content/examples/example.md",
+						"/content/examples/example/index.html",
+						"/content/examples/example/index.md",
 					],
 				},
 			].map(({ file, pathname, inherited }) => ({
