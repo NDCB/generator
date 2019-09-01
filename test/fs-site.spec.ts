@@ -26,16 +26,20 @@ import {
 import { normalizedPath, resolvedPath } from "../src/fs-path";
 import {
 	destinationFile,
+	destinationToSourceExtensions,
 	normalizedPathname,
 	pathname,
 	Pathname,
 	pathnameEquals,
 	pathnameFromRoot,
+	pathnameFromRoots,
 	pathnameToString,
 	possibleInheritedFiles,
 	possibleSourceFiles,
 	possibleSourcePathnames,
 	rootsAreMutuallyExclusive,
+	sourceFileHref,
+	sourceToDestinationExtensions,
 	upwardDirectoriesUntilEitherRoot,
 	upwardPathnames,
 } from "../src/fs-site";
@@ -46,6 +50,9 @@ const asDirectory = (value: string): Directory =>
 	directory(resolvedPath(value));
 
 const asPathname = (value: string): Pathname => pathname(value);
+
+const asExtension = (value: string): Extension & ValueObject =>
+	extensionToValueObject(extension(value));
 
 describe("pathnameFromRoot", () => {
 	const testCases = [
@@ -71,6 +78,141 @@ describe("pathnameFromRoot", () => {
 			assert.isTrue(pathnameEquals(expected, pathnameFromRoot(root)(entry)));
 		});
 	}
+});
+
+describe("sourceToDestinationExtensions & destinationToSourceExtensions", () => {
+	const testCases = [
+		{
+			destinationToSource: Map([
+				[".html", [".md", ".markdown"]],
+				[".css", [".scss", ".less"]],
+			]),
+			sourceToDestination: Map([
+				[".md", ".html"],
+				[".markdown", ".html"],
+				[".scss", ".css"],
+				[".less", ".css"],
+			]),
+		},
+	].map(({ destinationToSource, sourceToDestination }) => ({
+		destinationToSource: destinationToSource.mapEntries(
+			([destination, sources]) => [
+				asExtension(destination),
+				Set(sources.map(asExtension)),
+			],
+		),
+		sourceToDestination: sourceToDestination.mapEntries(
+			([source, destination]) => [
+				asExtension(source),
+				asExtension(destination),
+			],
+		),
+	}));
+	for (const { destinationToSource, sourceToDestination } of testCases) {
+		context(
+			`with "${sourceToDestination
+				.map(
+					(destination, source) =>
+						`(${extensionToString(source)}->${extensionToString(destination)})`,
+				)
+				.join(";")}"`,
+			() => {
+				it("yields the correct sourceToDestination", () => {
+					assert.isTrue(
+						sourceToDestination.equals(
+							sourceToDestinationExtensions(destinationToSource),
+						),
+					);
+				});
+				it("yields the correct destinationToSource", () => {
+					assert.isTrue(
+						destinationToSource.equals(
+							destinationToSourceExtensions(sourceToDestination),
+						),
+					);
+				});
+				it("is the inverse of sourceToDestination", () => {
+					assert.isTrue(
+						destinationToSource.equals(
+							destinationToSourceExtensions(
+								sourceToDestinationExtensions(destinationToSource),
+							),
+						),
+					);
+				});
+				it("is the inverse of destinationToSource", () => {
+					assert.isTrue(
+						sourceToDestination.equals(
+							sourceToDestinationExtensions(
+								destinationToSourceExtensions(sourceToDestination),
+							),
+						),
+					);
+				});
+			},
+		);
+	}
+});
+
+describe("sourceFileHref", () => {
+	const sourceToDestination = Map([
+		[".md", ".html"],
+		[".markdown", ".html"],
+		[".scss", ".css"],
+		[".less", ".css"],
+	]).mapEntries(([source, destination]) => [
+		asExtension(source),
+		asExtension(destination),
+	]);
+	const roots = Set(["/content", "/layout"])
+		.map(asDirectory)
+		.map(directoryToValueObject);
+	const pathname = pathnameFromRoots(roots);
+	const sourceHref = sourceFileHref(sourceToDestination)(pathname);
+	context(
+		`with "${sourceToDestination
+			.map(
+				(destination, source) =>
+					`(${extensionToString(source)}->${extensionToString(destination)})`,
+			)
+			.join(";")}" and roots "${iterableToString(directoryToString)(roots)}"`,
+		() => {
+			const testCases = [
+				{
+					file: "/content/index.md",
+					href: "/",
+				},
+				{
+					file: "/content/fr-CA/index.md",
+					href: "/fr-CA",
+				},
+				{
+					file: "/content/fr-CA/article.md",
+					href: "/fr-CA/article.html",
+				},
+				{
+					file: "/content/index.pug",
+					href: "/index.pug",
+				},
+				{
+					file: "/content/image.jpg",
+					href: "/image.jpg",
+				},
+				{
+					file: "/layout/main.scss",
+					href: "/main.css",
+				},
+			].map(({ file, href }) => ({
+				file: asFile(file),
+				href,
+			}));
+			for (const { file, href } of testCases) {
+				it(`returns "${href}" for file "${fileToString(file)}"`, () => {
+					assert.strictEqual(sourceHref(file), href);
+				});
+			}
+		},
+	);
 });
 
 describe("destinationFile", () => {

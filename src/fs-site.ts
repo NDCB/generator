@@ -1,6 +1,7 @@
 import consola from "consola";
 import { Map, Seq, Set, ValueObject } from "immutable";
 import { basename, dirname, extname, join, normalize } from "path";
+import { resolve as resolveUrl } from "url";
 
 import {
 	Directory,
@@ -23,6 +24,7 @@ import {
 	extension,
 	extensionToString,
 	extensionToValueObject,
+	fileExtension,
 } from "./fs-extension";
 import { joinPath, Path } from "./fs-path";
 import { allPairs, strictEquals } from "./util";
@@ -122,6 +124,9 @@ export const fileFromPathname = (root: Directory) => {
 export const pathnameIsEmpty = (pathname: Pathname): boolean =>
 	!pathnameToString(pathname).trim();
 
+export const pathnameIsIndex = (pathname: Pathname): boolean =>
+	strictEquals(basename(pathnameToString(pathname)), "index.html");
+
 export const pathnameHasExtension = (pathname: Pathname): boolean =>
 	!!extname(pathnameToString(pathname));
 
@@ -148,13 +153,16 @@ export const pathnameWithExtensions = (pathname: Pathname) => {
 		extensions.toSeq().map(withExtension);
 };
 
+export const parentPathname = (pathname: Pathname): Pathname =>
+	normalizedPathname(dirname(pathnameToString(pathname)));
+
 export const upwardPathnames = function*(
 	pathname: Pathname,
 ): Iterable<Pathname> {
 	let current = pathname;
 	while (!pathnameIsEmpty(current)) {
 		yield current;
-		current = normalizedPathname(dirname(pathnameToString(current)));
+		current = parentPathname(current);
 	}
 	yield current;
 };
@@ -174,6 +182,52 @@ export const fileWithExtensions = (file: File) => {
 	const withExtension = fileWithExtension(file);
 	return (extensions: Set<Extension & ValueObject>): Iterable<File> =>
 		extensions.map(withExtension);
+};
+
+export const sourceToDestinationExtensions = (
+	destinationToSource: Map<
+		Extension & ValueObject,
+		Set<Extension & ValueObject>
+	>,
+): Map<Extension & ValueObject, Extension & ValueObject> =>
+	Map<Extension & ValueObject, Extension & ValueObject>().withMutations(
+		(map) => {
+			destinationToSource.forEach((sources, destination) =>
+				sources.forEach((source) => map.set(source, destination)),
+			);
+		},
+	);
+
+export const destinationToSourceExtensions = (
+	sourceToDestination: Map<Extension & ValueObject, Extension & ValueObject>,
+): Map<Extension & ValueObject, Set<Extension & ValueObject>> =>
+	Map<Extension & ValueObject, Set<Extension & ValueObject>>().withMutations(
+		(map) =>
+			sourceToDestination.forEach((destination, source) =>
+				map.set(
+					destination,
+					map.has(destination)
+						? map.get(destination).add(source)
+						: Set([source]),
+				),
+			),
+	);
+
+export const pathnameToAbsoluteHref = (pathname: Pathname): string =>
+	resolveUrl("/", pathnameToString(pathname));
+
+export const sourceFileHref = (
+	sourceToDestination: Map<Extension & ValueObject, Extension & ValueObject>,
+) => (pathname: (file: File) => Pathname) => (file: File): string => {
+	const extension = extensionToValueObject(fileExtension(file));
+	const destinationPathname = pathnameWithExtension(pathname(file))(
+		sourceToDestination.get(extension) || extension,
+	);
+	return pathnameToAbsoluteHref(
+		pathnameIsIndex(destinationPathname)
+			? parentPathname(destinationPathname)
+			: destinationPathname,
+	);
 };
 
 export const sourceExtensions = (
