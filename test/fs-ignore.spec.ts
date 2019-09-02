@@ -1,36 +1,49 @@
 import { assert } from "chai";
 
-import { directory, file, fileToString } from "../src/fs-entry";
+import {
+	directory,
+	Directory,
+	file,
+	File,
+	fileToString,
+} from "../src/fs-entry";
 import { extension, extensionToString } from "../src/fs-extension";
 import {
 	ignoreExtension,
 	ignoreLeadingUnderscore,
 	ignoreUsingGitignore,
 } from "../src/fs-ignore";
-import { path } from "../src/fs-path";
+import { normalizedPath, path } from "../src/fs-path";
 import { fileContents, fileContentsToString } from "../src/fs-reader";
+
+const asFile = (value: string): File => file(normalizedPath(value));
+const asDirectory = (value: string): Directory =>
+	directory(normalizedPath(value));
 
 describe("ignoreExtension", () => {
 	const ignoredExtension = extension(".pug");
 	const rule = ignoreExtension(ignoredExtension);
 	const testCases = [
 		{
-			file: file(path("index.html")),
+			file: "/index.html",
 			expected: false,
 		},
 		{
-			file: file(path("directory/index.html")),
+			file: "/directory/index.html",
 			expected: false,
 		},
 		{
-			file: file(path("template.pug")),
+			file: "/template.pug",
 			expected: true,
 		},
 		{
-			file: file(path("directory/template.pug")),
+			file: "/directory/template.pug",
 			expected: true,
 		},
-	];
+	].map(({ file, expected }) => ({
+		file: asFile(file),
+		expected,
+	}));
 	context(`ignoring "${extensionToString(ignoredExtension)}"`, () => {
 		for (const { file, expected } of testCases) {
 			it(`${expected ? "ignores" : "does not ignore"} file "${fileToString(
@@ -45,27 +58,25 @@ describe("ignoreExtension", () => {
 describe("ignoreLeadingUnderscore", () => {
 	const testCases = [
 		{
-			file: file(path("directory/file.html")),
-			upwardDirectories: () => [directory(path("directory"))],
+			file: "/directory/file.html",
+			upwardDirectories: ["/directory"],
 			expected: false,
 		},
 		{
-			file: file(path("directory/subdirectory/_file.pug")),
-			upwardDirectories: () => [
-				directory(path("directory/subdirectory")),
-				directory(path("directory")),
-			],
+			file: "/directory/subdirectory/_file.pug",
+			upwardDirectories: ["/directory/subdirectory", "/directory"],
 			expected: true,
 		},
 		{
-			file: file(path("directory/_subdirectory/file.pug")),
-			upwardDirectories: () => [
-				directory(path("directory/_subdirectory")),
-				directory(path("directory")),
-			],
+			file: "/directory/_subdirectory/file.pug",
+			upwardDirectories: ["/directory/_subdirectory", "/directory"],
 			expected: true,
 		},
-	];
+	].map(({ file, upwardDirectories, expected }) => ({
+		file: asFile(file),
+		upwardDirectories: () => upwardDirectories.map(asDirectory),
+		expected,
+	}));
 	for (const { file, upwardDirectories, expected } of testCases) {
 		it(`${expected ? "ignores" : "does not ignore"} file "${fileToString(
 			file,
@@ -79,31 +90,31 @@ describe("ignoreLeadingUnderscore", () => {
 });
 
 describe("ignoreUsingGitignore", () => {
-	const gitignoreFile = file(path("root/.gitignore"));
+	const gitignoreFile = asFile("/root/.gitignore");
 	const gitignoreContents = fileContents(`*.log\nnode_modules`);
 	const rule = ignoreUsingGitignore(() => gitignoreContents)(gitignoreFile);
 	const testCases = [
 		{
-			file: file(path("outside/of/root")),
+			file: "/outside/of/root",
 			expected: false,
 		},
 		{
-			file: file(path("root/index.html")),
+			file: "/root/index.html",
 			expected: false,
 		},
 		{
-			file: file(path("root/error.log")),
+			file: "/root/error.log",
 			expected: true,
 		},
 		{
-			file: file(path("root/node_modules")),
+			file: "/root/node_modules",
 			expected: true,
 		},
 		{
-			file: file(path("root/node_modules/.bin")),
+			file: "/root/node_modules/.bin",
 			expected: true,
 		},
-	];
+	].map(({ file, expected }) => ({ file: asFile(file), expected }));
 	context(
 		`ignoring "${fileContentsToString(gitignoreContents).replace(
 			"\n",
