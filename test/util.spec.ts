@@ -1,6 +1,6 @@
 import { assert } from "chai";
 
-import { allPairs } from "../src/util";
+import { allPairs, depthFirstTraversal } from "../src/util";
 
 describe("allPairs", () => {
 	const testCases = [
@@ -32,6 +32,41 @@ describe("allPairs", () => {
 			([x, y]) => `[${x}, ${y}]`,
 		)}" for input "${input}"`, () => {
 			assert.deepStrictEqual([...allPairs(input)], expected);
+		});
+	}
+});
+
+describe("depthFirstTraversal", () => {
+	const testCases: Array<{
+		start: number;
+		adjacency: (element: number) => Iterable<number>;
+		expected: Iterable<number>;
+	}> = [
+		{
+			start: 0,
+			adjacency: (element: number): Iterable<number> => {
+				switch (element) {
+					case 0:
+						return [1, 4];
+					case 1:
+						return [2, 3];
+					case 4:
+						return [5];
+					case 5:
+						return [6];
+					default:
+						return [];
+				}
+			},
+			expected: [0, 1, 2, 3, 4, 5, 6],
+		},
+	];
+	for (const { start, adjacency, expected } of testCases) {
+		it(`traverses the graph in depth-first order`, () => {
+			assert.deepStrictEqual(
+				[...depthFirstTraversal(start, adjacency)],
+				expected,
+			);
 		});
 	}
 });
