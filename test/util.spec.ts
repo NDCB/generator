@@ -1,6 +1,6 @@
 import { assert } from "chai";
 
-import { allPairs, depthFirstTraversal } from "../src/util";
+import { allPairs, depthFirstTreeTraversal } from "../src/util";
 
 describe("allPairs", () => {
 	const testCases = [
@@ -36,7 +36,7 @@ describe("allPairs", () => {
 	}
 });
 
-describe("depthFirstTraversal", () => {
+describe("depthFirstTreeTraversal", () => {
 	const testCases: Array<{
 		start: number;
 		adjacency: (element: number) => Iterable<number>;
@@ -64,7 +64,7 @@ describe("depthFirstTraversal", () => {
 	for (const { start, adjacency, expected } of testCases) {
 		it(`traverses the graph in depth-first order`, () => {
 			assert.deepStrictEqual(
-				[...depthFirstTraversal(start, adjacency)],
+				[...depthFirstTreeTraversal(start, adjacency)],
 				expected,
 			);
 		});
