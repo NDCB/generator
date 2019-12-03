@@ -27,3 +27,22 @@ export const depthFirstTreeTraversal = function*<T>(
 		yield element;
 	}
 };
+
+/**
+ * Performs a breadth-first traversal of vertices of a tree.
+ * @param root The root vertex.
+ * @param children The retrieval function for children vertices to traverse.
+ * @returns An iterable over the vertices of the tree in breadth-first traversal
+ * order.
+ */
+export const breadthFirstTraversal = function*<T>(
+	root: T,
+	children: (element: T) => Iterable<T>,
+): Iterable<T> {
+	const elementsToTraverse = [root];
+	while (elementsToTraverse.length > 0) {
+		const element = elementsToTraverse.shift();
+		elementsToTraverse.push(...[...children(element)]);
+		yield element;
+	}
+};
