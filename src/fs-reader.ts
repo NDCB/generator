@@ -1,6 +1,6 @@
 import consola from "consola";
 
-import { readdirSync, readFileSync } from "fs-extra";
+import { Dirent, readdirSync, readFileSync } from "fs-extra";
 import { Seq } from "immutable";
 import {
 	Directory,
@@ -57,29 +57,35 @@ export const logFileRead = (fileReader: (file: File) => FileContents) => (
 	return fileReader(file);
 };
 
+const directoryEntryAsEntry = (directory: Directory) => {
+	const asFileInReadDirectory = fileInDirectory(directory);
+	const asDirectoryInReadDirectory = directoryInDirectory(directory);
+	return (directoryEntry: Dirent): Entry => {
+		const { name } = directoryEntry;
+		if (directoryEntry.isFile()) {
+			return asFileInReadDirectory(name);
+		} else if (directoryEntry.isDirectory()) {
+			return asDirectoryInReadDirectory(name);
+		} else {
+			throw new Error(
+				`Entry named "${name}" in directory "${directoryToString(
+					directory,
+				)}" is neither a file nor a directory`,
+			);
+		}
+	};
+};
+
 export const readDirectory = (encoding: Encoding) => (
 	directory: Directory,
 ): Iterable<Entry> => {
-	const asFileInReadDirectory = fileInDirectory(directory);
-	const asDirectoryInReadDirectory = directoryInDirectory(directory);
+	const asEntry = directoryEntryAsEntry(directory);
 	return Seq(
 		readdirSync(pathToString(directoryToPath(directory)), {
 			withFileTypes: true,
 			encoding: encodingToString(encoding),
 		}),
-	).map((directoryEntry) => {
-		if (directoryEntry.isFile()) {
-			return asFileInReadDirectory(directoryEntry.name);
-		} else if (directoryEntry.isDirectory()) {
-			return asDirectoryInReadDirectory(directoryEntry.name);
-		} else {
-			throw new Error(
-				`Entry named "${directoryEntry.name}" in directory "${directoryToString(
-					directory,
-				)}" is neither a file nor a directory`,
-			);
-		}
-	});
+	).map(asEntry);
 };
 
 export const logDirectoryRead = (
