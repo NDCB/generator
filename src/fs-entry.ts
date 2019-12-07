@@ -8,7 +8,7 @@ import {
 	Stats as Status,
 	statSync,
 } from "fs-extra";
-import { hash, Seq, ValueObject } from "immutable";
+import { hash, Seq, Set, ValueObject } from "immutable";
 
 import {
 	baseName,
@@ -205,6 +205,13 @@ export const ensureEntryExists: (entry: Entry) => void = matchEntry({
 export const directoryHasDescendent = (directory: Directory) => {
 	const predicate = hasSubPath(directoryToPath(directory));
 	return (descendent: Entry): boolean => predicate(entryToPath(descendent));
+};
+
+export const directoriesHaveDescendent = (
+	directories: Set<Directory & ValueObject>,
+) => {
+	const hasDescendent = directories.map(directoryHasDescendent);
+	return (entry: Entry): boolean => hasDescendent.some((test) => test(entry));
 };
 
 export const hasParentDirectory = (entry: Entry): boolean => {
