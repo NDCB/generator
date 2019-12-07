@@ -42,6 +42,15 @@ export const fileToString = (file: File): string =>
 export const fileEquals = (f1: File, f2: File): boolean =>
 	pathEquals(fileToPath(f1), fileToPath(f2));
 
+export const isFile = (element: any): element is File =>
+	!!element && element._tag === "File";
+
+export const fileToValueObject = (file: File): File & ValueObject => ({
+	...file,
+	equals: (other) => isFile(other) && fileEquals(file, other),
+	hashCode: () => hash(fileToString(file)),
+});
+
 /**
  * A directory in the file system. The directory may not exist.
  */
