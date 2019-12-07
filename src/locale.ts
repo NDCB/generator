@@ -30,7 +30,7 @@ export const countryCode = (value: string): CountryCode => ({
 });
 
 export const isCountryCode = (element: any): element is CountryCode =>
-	!!element && element._tag === "CountryCode";
+	!!element && strictEquals(element._tag, "CountryCode");
 
 export const countryCodeEquals = (c1: CountryCode, c2: CountryCode): boolean =>
 	strictEquals(c1.value, c2.value);
@@ -62,7 +62,7 @@ export const languageCode = (value: string): LanguageCode => ({
 });
 
 export const isLanguageCode = (element: any): element is LanguageCode =>
-	!!element && element._tag === "LanguageCode";
+	!!element && strictEquals(element._tag, "LanguageCode");
 
 export const languageCodeEquals = (
 	l1: LanguageCode,
@@ -134,7 +134,7 @@ export const localeCodeFromToken = (token: string): LocaleCode =>
 	);
 
 export const isLocaleCode = (element: any): element is LocaleCode =>
-	!!element && element._tag === "LocaleCode";
+	!!element && strictEquals(element._tag, "LocaleCode");
 
 export const localeCodeEquals = (l1: LocaleCode, l2: LocaleCode): boolean =>
 	languageCodeEquals(l1.language, l2.language) &&

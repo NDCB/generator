@@ -21,7 +21,7 @@ export const extensionEquals = (e1: Extension, e2: Extension): boolean =>
 	strictEquals(e1.value, e2.value);
 
 export const isExtension = (element: any): element is Extension =>
-	!!element && element._tag === "Extension";
+	!!element && strictEquals(element._tag, "Extension");
 
 export const extensionToValueObject = (
 	extension: Extension,

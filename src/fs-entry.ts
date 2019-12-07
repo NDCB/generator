@@ -23,6 +23,7 @@ import {
 	pathToString,
 	relativePath,
 } from "./fs-path";
+import { strictEquals } from "./util";
 
 /**
  * A file in the file system. The file may not exist.
@@ -43,7 +44,7 @@ export const fileEquals = (f1: File, f2: File): boolean =>
 	pathEquals(fileToPath(f1), fileToPath(f2));
 
 export const isFile = (element: any): element is File =>
-	!!element && element._tag === "File";
+	!!element && strictEquals(element._tag, "File");
 
 export const fileToValueObject = (file: File): File & ValueObject => ({
 	...file,
@@ -73,7 +74,7 @@ export const directoryEquals = (d1: Directory, d2: Directory): boolean =>
 	pathEquals(directoryToPath(d1), directoryToPath(d2));
 
 export const isDirectory = (element: any): element is Directory =>
-	!!element && element._tag === "Directory";
+	!!element && strictEquals(element._tag, "Directory");
 
 export const directoryToValueObject = (
 	directory: Directory,
@@ -91,10 +92,10 @@ export const entryToString = (entry: Entry): string =>
 	pathToString(entryToPath(entry));
 
 export const entryIsFile = (entry: Entry): entry is File =>
-	entry._tag === "File";
+	strictEquals(entry._tag, "File");
 
 export const entryIsDirectory = (entry: Entry): entry is Directory =>
-	entry._tag === "Directory";
+	strictEquals(entry._tag, "Directory");
 
 export const entryToFile = (entry: Entry): File => file(entryToPath(entry));
 
