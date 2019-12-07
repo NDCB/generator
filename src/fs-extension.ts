@@ -34,8 +34,8 @@ export const extensionToValueObject = (
 export const extensions = (values: Iterable<string>): Iterable<Extension> =>
 	Seq(values).map(extension);
 
-export const extensionSet = (values: Set<string>): Set<Extension> =>
-	values.map(extension);
+export const extensionSet = (values: Iterable<string>): Set<Extension> =>
+	Set(values).map(extension);
 
 export const extensionSetToValueObjects = (
 	extensions: Iterable<Extension>,
@@ -47,7 +47,7 @@ export const extensionSetToValueObjects = (
 export const extensionValueObjectSet = (
 	values: Iterable<string>,
 ): Set<Extension & ValueObject> =>
-	extensionSetToValueObjects(extensionSet(Set<string>(values)));
+	extensionSetToValueObjects(extensionSet(values));
 
 export const fileExtension = (file: File): Extension =>
 	extension(extensionName(fileToPath(file)));
