@@ -12,12 +12,13 @@ import { FileContents } from "./fs-reader";
 export interface Data {
 	readonly [key: string]:
 		| null
+		| unknown
 		| boolean
 		| string
 		| number
 		| Date
 		| Data
-		| Array<null | boolean | string | number | Date | Data>;
+		| Data[];
 }
 
 export interface FileData {
