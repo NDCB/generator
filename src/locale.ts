@@ -1,6 +1,9 @@
 import { hash, Map, OrderedSet, Seq, Set, ValueObject } from "immutable";
 
-import { Data, FileData, fileDataToData } from "./fs-data";
+import isoCountries from "i18n-iso-countries";
+import isoLanguages from "iso-639-1";
+
+import { Data } from "./fs-data";
 import {
 	Directory,
 	directoryToString,
@@ -10,6 +13,7 @@ import {
 	File,
 	fileEquals,
 	fileName,
+	fileToValueObject,
 } from "./fs-entry";
 import { strictEquals } from "./util";
 
@@ -19,7 +23,7 @@ export interface CountryCode {
 }
 
 export const isValidCountryCodeToken = (token: string): boolean =>
-	/^[A-Z]{2}$/.test(token);
+	/^[A-Z]{2}$/.test(token) && isoCountries.isValid(token);
 
 /**
  * @precondition isValidCountryCodeToken(value)
@@ -51,7 +55,7 @@ export interface LanguageCode {
 }
 
 export const isValidLanguageCodeToken = (token: string): boolean =>
-	/^[a-z]{2}$/.test(token);
+	/^[a-z]{2}$/.test(token) && isoLanguages.validate(token);
 
 /**
  * @precondition isValidLanguageCodeToken(value)
@@ -90,8 +94,15 @@ export const localeCode = (
 	country: CountryCode,
 ): LocaleCode => ({ _tag: "LocaleCode", language, country });
 
-export const isValidLocaleCodeToken = (token: string): boolean =>
-	/^[a-z]{2}-[A-Z]{2}$/.test(token);
+export const isValidLocaleCodeToken = (token: string): boolean => {
+	if (/^[a-z]{2}-[A-Z]{2}$/.test(token)) {
+		const tokens = token.split("-");
+		return (
+			isValidLanguageCodeToken(tokens[0]) && isValidCountryCodeToken(tokens[1])
+		);
+	}
+	return false;
+};
 
 export const localeToken = (
 	language: LanguageCode,
@@ -157,6 +168,7 @@ export const declaredLocaleFilesByLocaleCode = (
 	const localeFiles = Seq(directoryReader(localesDirectory))
 		.filter(entryIsFile)
 		.filter((file) => isValidLocaleCodeToken(fileName(file)))
+		.map(fileToValueObject)
 		.toSet();
 	if (localeFiles.count() > localeFiles.map((file) => fileName(file)).count()) {
 		const conflictingFiles = localeFiles
@@ -195,7 +207,8 @@ export const parseMultiplicityToken = (token: string) => {
 			: Math.floor(minimumIncluded + 1);
 	if (maximumExcluded < minimumIncluded) {
 		throw new Error(
-			`Multiplicity token "${token}" which parses to [${minimumIncluded},${maximumExcluded}) does not admit any values.`,
+			`Multiplicity token "${token}" which parses to ` +
+				`[${minimumIncluded},${maximumExcluded}) does not admit any values.`,
 		);
 	}
 	return (value: number): boolean =>
@@ -227,14 +240,11 @@ export const parseQuantifiedPhraseTemplates = (
 		);
 
 export const parsePhraseTemplates = (
-	fileData: FileData,
+	data: Data,
 ): {
 	simplePhrases: Map<string, string>;
 	quantifiedPhrases: Map<string, (quantity: number) => string>;
-} => {
-	const data = fileDataToData(fileData);
-	return {
-		simplePhrases: parseSimplePhraseTemplates(data),
-		quantifiedPhrases: parseQuantifiedPhraseTemplates(data),
-	};
-};
+} => ({
+	simplePhrases: parseSimplePhraseTemplates(data),
+	quantifiedPhrases: parseQuantifiedPhraseTemplates(data),
+});
