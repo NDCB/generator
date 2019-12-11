@@ -14,6 +14,7 @@ import {
 	localeCodeFromToken,
 	localeCodeToString,
 	localeCodeToValueObject,
+	localizeMoment,
 	parseMultiplicityToken,
 	parseQuantifiedPhraseTemplates,
 	parseSimplePhraseTemplates,
@@ -24,11 +25,17 @@ describe("declaredLocaleFilesByLocaleCode", () => {
 	const testCases = [
 		{
 			files: ["fr-CA.yml", "en-CA.yml"],
-			expected: [["fr-CA", "fr-CA.yml"], ["en-CA", "en-CA.yml"]],
+			expected: [
+				["fr-CA", "fr-CA.yml"],
+				["en-CA", "en-CA.yml"],
+			],
 		},
 		{
 			files: ["fr-CA.yml", "en-CA.yml", "not-a-locale.json"],
-			expected: [["fr-CA", "fr-CA.yml"], ["en-CA", "en-CA.yml"]],
+			expected: [
+				["fr-CA", "fr-CA.yml"],
+				["en-CA", "en-CA.yml"],
+			],
 		},
 	].map(({ files, expected }) => ({
 		directoryReader: () =>
@@ -241,7 +248,10 @@ describe("parseSimplePhraseTemplates", () => {
 				s2: "rs2",
 				q2: { "1": "rq2:1..2", "2..*": "rq2:2..*" },
 			},
-			expected: Map([["s1", "rs1"], ["s2", "rs2"]]),
+			expected: Map([
+				["s1", "rs1"],
+				["s2", "rs2"],
+			]),
 		},
 	];
 	for (const { data, expected } of testCases) {
@@ -301,6 +311,45 @@ describe("parseQuantifiedPhraseTemplates", () => {
 						template,
 					);
 				});
+			}
+		});
+	}
+});
+
+describe("localizeMoment", () => {
+	const testCases = [
+		{
+			locale: "fr-CA",
+			throws: false,
+		},
+		{
+			locale: "en-CA",
+			throws: false,
+		},
+		{
+			locale: "en",
+			throws: false,
+		},
+		{
+			locale: "en-CH",
+			throws: false,
+		},
+		{
+			locale: "aa-CA",
+			throws: true,
+		},
+	].map(({ locale, throws }) => ({
+		locale: localeCodeFromToken(locale),
+		throws,
+	}));
+	for (const { locale, throws } of testCases) {
+		it(`${throws ? "throws" : "does not throw"} for locale ${localeCodeToString(
+			locale,
+		)}`, () => {
+			if (throws) {
+				assert.throws(() => localizeMoment(locale));
+			} else {
+				assert.doesNotThrow(() => localizeMoment(locale));
 			}
 		});
 	}

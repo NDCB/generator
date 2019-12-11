@@ -1,5 +1,6 @@
 import { hash, Map, OrderedSet, Seq, Set, ValueObject } from "immutable";
 
+import dayjs from "dayjs";
 import isoCountries from "i18n-iso-countries";
 import isoLanguages from "iso-639-1";
 
@@ -248,3 +249,27 @@ export const parsePhraseTemplates = (
 	simplePhrases: parseSimplePhraseTemplates(data),
 	quantifiedPhrases: parseQuantifiedPhraseTemplates(data),
 });
+
+export const localizeMoment = (code: LocaleCode) => {
+	const { language, country } = code;
+	const languageCode = languageCodeToString(language);
+	const countryCode = countryCodeToString(country);
+	let localeToken;
+	try {
+		localeToken = `${languageCode}-${countryCode.toLowerCase()}`;
+		require(`dayjs/locale/${localeToken}`);
+	} catch {
+		try {
+			localeToken = `${languageCode}`;
+			require(`dayjs/locale/${localeToken}`);
+		} catch {
+			throw new Error(
+				`Unsupported moment locale with token "${localeCodeToString(code)}".`,
+			);
+		}
+	}
+	return (template?: string) => (moment?: string) =>
+		dayjs(moment)
+			.locale(localeToken)
+			.format(template);
+};
