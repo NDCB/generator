@@ -1,8 +1,15 @@
+import consola from "consola";
+
 import { hash, Map, OrderedSet, Seq, Set, ValueObject } from "immutable";
 
 import dayjs from "dayjs";
+import LocalizedFormat from "dayjs/plugin/localizedFormat";
+dayjs.extend(LocalizedFormat);
+
 import isoCountries from "i18n-iso-countries";
 import isoLanguages from "iso-639-1";
+
+import { sprintf, vsprintf } from "sprintf-js";
 
 import { Data } from "./fs-data";
 import {
@@ -17,6 +24,8 @@ import {
 	fileToValueObject,
 } from "./fs-entry";
 import { strictEquals } from "./util";
+
+export const logger = consola.withTag("locale");
 
 export interface CountryCode {
 	readonly _tag: "CountryCode";
@@ -272,4 +281,50 @@ export const localizeMoment = (code: LocaleCode) => {
 		dayjs(moment)
 			.locale(localeToken)
 			.format(template);
+};
+
+export const undefinedTemplate = (code: LocaleCode) => (
+	template: string,
+	quantity?: number,
+): string =>
+	strictEquals(typeof quantity, "number")
+		? `Undefined template "${template}" with quantity "${quantity}" ` +
+		  `for locale "${localeCodeToString(code)}".`
+		: `Undefined template "${template}" for locale "${localeCodeToString(
+				code,
+		  )}".`;
+
+export const logUndefinedTemplate = (
+	warn: (template: string, quantity?: number) => string,
+) => (template: string, quantity?: number): string => {
+	const warning = warn(template, quantity);
+	logger.warn(warning);
+	return warning;
+};
+
+export const localize = (
+	warn: (template: string, quantity?: number) => string,
+) => (
+	code: LocaleCode,
+	data: Data,
+): {
+	__: (template: string) => (...args) => string;
+	__n: (template: string) => (quantity: number, ...args) => string;
+	__m: (format?: string) => (moment?: string) => string;
+} => {
+	const { simplePhrases, quantifiedPhrases } = parsePhraseTemplates(data);
+	return {
+		__: (template: string) => (...args) =>
+			vsprintf(simplePhrases.get(template, warn(template)), args),
+		__n: (template: string) => (quantity: number, ...args) => {
+			const quantifiedTemplate = quantifiedPhrases.get(template, () =>
+				warn(template),
+			)(quantity);
+			if (!quantifiedTemplate) {
+				return warn(template, quantity);
+			}
+			return sprintf(quantifiedTemplate, quantity, ...args);
+		},
+		__m: localizeMoment(code),
+	};
 };

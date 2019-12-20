@@ -14,10 +14,12 @@ import {
 	localeCodeFromToken,
 	localeCodeToString,
 	localeCodeToValueObject,
+	localize,
 	localizeMoment,
 	parseMultiplicityToken,
 	parseQuantifiedPhraseTemplates,
 	parseSimplePhraseTemplates,
+	undefinedTemplate,
 } from "../src/locale";
 
 describe("declaredLocaleFilesByLocaleCode", () => {
@@ -353,4 +355,111 @@ describe("localizeMoment", () => {
 			}
 		});
 	}
+});
+
+describe.only("localize", () => {
+	const mockLocaleCode = localeCodeFromToken("fr-CA");
+	const mockData = {
+		// Simple phrases
+		Home: "Accueil",
+		"Hello %s.": "Bonjour %s.",
+		"Published: %s.": "Publié: %s.",
+		// Quantified phrases
+		"%u published articles.": {
+			"0": "%u article publié.",
+			"1": "%u article publié.",
+			"2..*": "%u articles publiés.",
+		},
+		"%u pages written by %s.": {
+			"0": "%u page écrite par %s.",
+			"1": "%u page écrite par %s.",
+			"2..*": "%u pages écrites par %s.",
+		},
+	};
+	const { __, __n, __m } = localize(undefinedTemplate(mockLocaleCode))(
+		mockLocaleCode,
+		mockData,
+	);
+	describe("__", () => {
+		const testCases = [
+			{
+				template: "Home",
+				args: [],
+				expected: "Accueil",
+			},
+			{
+				template: "Hello %s.",
+				args: ["Monde"],
+				expected: "Bonjour Monde.",
+			},
+			{
+				template: "Undefined",
+				args: [],
+				expected: undefinedTemplate(mockLocaleCode)("Undefined"),
+			},
+		];
+		for (const { template, args, expected } of testCases) {
+			it(`localizes "${template}" with arguments "${args}" to "${expected}"`, () => {
+				assert.strictEqual(__(template)(...args), expected);
+			});
+		}
+	});
+	describe("__n", () => {
+		const testCases = [
+			{
+				template: "%u published articles.",
+				quantity: 0,
+				args: [],
+				expected: "0 article publié.",
+			},
+			{
+				template: "%u published articles.",
+				quantity: 1,
+				args: [],
+				expected: "1 article publié.",
+			},
+			{
+				template: "%u published articles.",
+				quantity: 10,
+				args: [],
+				expected: "10 articles publiés.",
+			},
+			{
+				template: "%u pages written by %s.",
+				quantity: 0,
+				args: ["John Doe"],
+				expected: "0 page écrite par John Doe.",
+			},
+			{
+				template: "%u pages written by %s.",
+				quantity: 1,
+				args: ["John Doe"],
+				expected: "1 page écrite par John Doe.",
+			},
+			{
+				template: "%u pages written by %s.",
+				quantity: 10,
+				args: ["John Doe"],
+				expected: "10 pages écrites par John Doe.",
+			},
+			{
+				template: "%u pages written by %s.",
+				quantity: -1,
+				args: ["John Doe"],
+				expected: undefinedTemplate(mockLocaleCode)(
+					"%u pages written by %s.",
+					-1,
+				),
+			},
+		];
+		for (const { template, quantity, args, expected } of testCases) {
+			it(
+				`localizes "${template}" with quantity "${quantity}" and arguments ` +
+					`"${args}" to "${expected}"`,
+				() => {
+					assert.strictEqual(__n(template)(quantity, ...args), expected);
+				},
+			);
+		}
+	});
 });
