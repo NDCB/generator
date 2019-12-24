@@ -38,6 +38,7 @@ import {
 	possibleSourceFiles,
 	possibleSourcePathnames,
 	rootsAreMutuallyExclusive,
+	sourceExtensions,
 	sourceFileHref,
 	sourceToDestinationExtensions,
 	upwardDirectoriesUntilEitherRoot,
@@ -389,7 +390,9 @@ describe("possibleSourceFiles", () => {
 		[e(".html"), Set([e(".md")])],
 		[e(".css"), Set([e(".scss"), e(".less")])],
 	]);
-	const getter = possibleSourceFiles(roots)(destinationToSource);
+	const getter = possibleSourceFiles(roots)(
+		sourceExtensions(destinationToSource),
+	);
 	const sourceFiles = (pathname) => [...getter(pathname)];
 	const toFile = (value: string) => file(normalizedPath(value));
 	context(
@@ -490,13 +493,15 @@ describe("possibleInheritedFiles", () => {
 	const upwardDirectories = upwardDirectoriesUntilEitherRoot(roots);
 	const toExtension = (value: string): Extension & ValueObject =>
 		extensionToValueObject(extension(value));
-	const destinationToSource = Map([[".html", [".md"]]]).mapEntries(
-		([destination, sources]) => [
-			toExtension(destination),
-			Set(sources).map(toExtension),
-		],
+	const destinationToSource = Map([
+		[".html", [".md"]],
+	]).mapEntries(([destination, sources]) => [
+		toExtension(destination),
+		Set(sources).map(toExtension),
+	]);
+	const pathnames = possibleSourcePathnames(
+		sourceExtensions(destinationToSource),
 	);
-	const pathnames = possibleSourcePathnames(destinationToSource);
 	context(
 		`with pathname extension mapping "${destinationToSource
 			.map(
