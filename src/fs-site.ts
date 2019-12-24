@@ -124,8 +124,11 @@ export const fileFromPathname = (root: Directory) => {
 export const pathnameIsEmpty = (pathname: Pathname): boolean =>
 	!pathnameToString(pathname).trim();
 
+export const pathnameBaseName = (pathname: Pathname): string =>
+	basename(pathnameToString(pathname));
+
 export const pathnameIsIndex = (pathname: Pathname): boolean =>
-	strictEquals(basename(pathnameToString(pathname)), "index.html");
+	strictEquals(pathnameBaseName(pathname), "index.html");
 
 export const pathnameHasExtension = (pathname: Pathname): boolean =>
 	!!extname(pathnameToString(pathname));
@@ -201,16 +204,16 @@ export const sourceToDestinationExtensions = (
 export const destinationToSourceExtensions = (
 	sourceToDestination: Map<Extension & ValueObject, Extension & ValueObject>,
 ): Map<Extension & ValueObject, Set<Extension & ValueObject>> =>
-	Map<Extension & ValueObject, Set<Extension & ValueObject>>().withMutations(
-		(map) =>
-			sourceToDestination.forEach((destination, source) =>
-				map.set(
-					destination,
-					map.has(destination)
-						? map.get(destination).add(source)
-						: Set([source]),
-				),
+	Map<
+		Extension & ValueObject,
+		Set<Extension & ValueObject>
+	>().withMutations((map) =>
+		sourceToDestination.forEach((destination, source) =>
+			map.set(
+				destination,
+				map.has(destination) ? map.get(destination).add(source) : Set([source]),
 			),
+		),
 	);
 
 export const pathnameToAbsoluteHref = (pathname: Pathname): string =>

@@ -23,6 +23,8 @@ import {
 	fileName,
 	fileToValueObject,
 } from "./fs-entry";
+import { baseName, Path } from "./fs-path";
+import { Pathname, pathnameBaseName } from "./fs-site";
 import { strictEquals } from "./util";
 
 export const logger = consola.withTag("locale");
@@ -327,4 +329,22 @@ export const localize = (
 		},
 		__m: localizeMoment(code),
 	};
+};
+
+export const localeCodeFromPathname = (
+	upwardPathnames: (pathname: Pathname) => Iterable<Pathname>,
+) => (pathname: Pathname): LocaleCode | null => {
+	const token = Seq(upwardPathnames(pathname))
+		.map(pathnameBaseName)
+		.find(isValidLocaleCodeToken);
+	return token ? localeCodeFromToken(token) : null;
+};
+
+export const localeCodeFromPath = (
+	upwardPaths: (path: Path) => Iterable<Path>,
+) => (path: Path): LocaleCode | null => {
+	const token = Seq(upwardPaths(path))
+		.map(baseName)
+		.find(isValidLocaleCodeToken);
+	return token ? localeCodeFromToken(token) : null;
 };
