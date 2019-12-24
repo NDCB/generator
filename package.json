@@ -34,6 +34,7 @@
 		"@types/mocha": "^5.2.7",
 		"@types/node": "^10.13.4",
 		"@types/slug": "^0.9.1",
+		"@types/sprintf-js": "^1.1.2",
 		"chai": "^4.2.0",
 		"mocha": "^6.2.2",
 		"nyc": "^14.1.1",
@@ -47,11 +48,15 @@
 	},
 	"dependencies": {
 		"consola": "^2.10.1",
+		"dayjs": "^1.8.17",
 		"fs-extra": "^8.1.0",
+		"i18n-iso-countries": "^4.3.1",
 		"ignore": "^5.1.4",
 		"immutable": "^4.0.0-rc.12",
+		"iso-639-1": "^2.1.0",
 		"js-yaml": "^3.13.1",
 		"mime-types": "^2.1.24",
-		"slug": "^1.1.0"
+		"slug": "^1.1.0",
+		"sprintf-js": "^1.1.2"
 	}
 }

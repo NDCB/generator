@@ -1,6 +1,17 @@
+import consola from "consola";
+
 import { hash, Map, OrderedSet, Seq, Set, ValueObject } from "immutable";
 
-import { Data, FileData, fileDataToData } from "./fs-data";
+import dayjs from "dayjs";
+import LocalizedFormat from "dayjs/plugin/localizedFormat";
+dayjs.extend(LocalizedFormat);
+
+import isoCountries from "i18n-iso-countries";
+import isoLanguages from "iso-639-1";
+
+import { sprintf, vsprintf } from "sprintf-js";
+
+import { Data } from "./fs-data";
 import {
 	Directory,
 	directoryToString,
@@ -10,8 +21,13 @@ import {
 	File,
 	fileEquals,
 	fileName,
+	fileToValueObject,
 } from "./fs-entry";
+import { baseName, Path } from "./fs-path";
+import { Pathname, pathnameBaseName } from "./fs-site";
 import { strictEquals } from "./util";
+
+export const logger = consola.withTag("locale");
 
 export interface CountryCode {
 	readonly _tag: "CountryCode";
@@ -19,7 +35,7 @@ export interface CountryCode {
 }
 
 export const isValidCountryCodeToken = (token: string): boolean =>
-	/^[A-Z]{2}$/.test(token);
+	/^[A-Z]{2}$/.test(token) && isoCountries.isValid(token);
 
 /**
  * @precondition isValidCountryCodeToken(value)
@@ -51,7 +67,7 @@ export interface LanguageCode {
 }
 
 export const isValidLanguageCodeToken = (token: string): boolean =>
-	/^[a-z]{2}$/.test(token);
+	/^[a-z]{2}$/.test(token) && isoLanguages.validate(token);
 
 /**
  * @precondition isValidLanguageCodeToken(value)
@@ -90,8 +106,15 @@ export const localeCode = (
 	country: CountryCode,
 ): LocaleCode => ({ _tag: "LocaleCode", language, country });
 
-export const isValidLocaleCodeToken = (token: string): boolean =>
-	/^[a-z]{2}-[A-Z]{2}$/.test(token);
+export const isValidLocaleCodeToken = (token: string): boolean => {
+	if (/^[a-z]{2}-[A-Z]{2}$/.test(token)) {
+		const tokens = token.split("-");
+		return (
+			isValidLanguageCodeToken(tokens[0]) && isValidCountryCodeToken(tokens[1])
+		);
+	}
+	return false;
+};
 
 export const localeToken = (
 	language: LanguageCode,
@@ -157,6 +180,7 @@ export const declaredLocaleFilesByLocaleCode = (
 	const localeFiles = Seq(directoryReader(localesDirectory))
 		.filter(entryIsFile)
 		.filter((file) => isValidLocaleCodeToken(fileName(file)))
+		.map(fileToValueObject)
 		.toSet();
 	if (localeFiles.count() > localeFiles.map((file) => fileName(file)).count()) {
 		const conflictingFiles = localeFiles
@@ -195,7 +219,8 @@ export const parseMultiplicityToken = (token: string) => {
 			: Math.floor(minimumIncluded + 1);
 	if (maximumExcluded < minimumIncluded) {
 		throw new Error(
-			`Multiplicity token "${token}" which parses to [${minimumIncluded},${maximumExcluded}) does not admit any values.`,
+			`Multiplicity token "${token}" which parses to ` +
+				`[${minimumIncluded},${maximumExcluded}) does not admit any values.`,
 		);
 	}
 	return (value: number): boolean =>
@@ -227,14 +252,99 @@ export const parseQuantifiedPhraseTemplates = (
 		);
 
 export const parsePhraseTemplates = (
-	fileData: FileData,
+	data: Data,
 ): {
 	simplePhrases: Map<string, string>;
 	quantifiedPhrases: Map<string, (quantity: number) => string>;
+} => ({
+	simplePhrases: parseSimplePhraseTemplates(data),
+	quantifiedPhrases: parseQuantifiedPhraseTemplates(data),
+});
+
+export const localizeMoment = (code: LocaleCode) => {
+	const { language, country } = code;
+	const languageCode = languageCodeToString(language);
+	const countryCode = countryCodeToString(country);
+	let localeToken;
+	try {
+		localeToken = `${languageCode}-${countryCode.toLowerCase()}`;
+		require(`dayjs/locale/${localeToken}`);
+	} catch {
+		try {
+			localeToken = `${languageCode}`;
+			require(`dayjs/locale/${localeToken}`);
+		} catch {
+			throw new Error(
+				`Unsupported moment locale with token "${localeCodeToString(code)}".`,
+			);
+		}
+	}
+	return (template?: string) => (moment?: string) =>
+		dayjs(moment)
+			.locale(localeToken)
+			.format(template);
+};
+
+export const undefinedTemplate = (code: LocaleCode) => (
+	template: string,
+	quantity?: number,
+): string =>
+	strictEquals(typeof quantity, "number")
+		? `Undefined template "${template}" with quantity "${quantity}" ` +
+		  `for locale "${localeCodeToString(code)}".`
+		: `Undefined template "${template}" for locale "${localeCodeToString(
+				code,
+		  )}".`;
+
+export const logUndefinedTemplate = (
+	warn: (template: string, quantity?: number) => string,
+) => (template: string, quantity?: number): string => {
+	const warning = warn(template, quantity);
+	logger.warn(warning);
+	return warning;
+};
+
+export const localize = (
+	warn: (template: string, quantity?: number) => string,
+) => (
+	code: LocaleCode,
+	data: Data,
+): {
+	__: (template: string) => (...args) => string;
+	__n: (template: string) => (quantity: number, ...args) => string;
+	__m: (format?: string) => (moment?: string) => string;
 } => {
-	const data = fileDataToData(fileData);
+	const { simplePhrases, quantifiedPhrases } = parsePhraseTemplates(data);
 	return {
-		simplePhrases: parseSimplePhraseTemplates(data),
-		quantifiedPhrases: parseQuantifiedPhraseTemplates(data),
+		__: (template: string) => (...args) =>
+			vsprintf(simplePhrases.get(template, warn(template)), args),
+		__n: (template: string) => (quantity: number, ...args) => {
+			const quantifiedTemplate = quantifiedPhrases.get(template, () =>
+				warn(template),
+			)(quantity);
+			if (!quantifiedTemplate) {
+				return warn(template, quantity);
+			}
+			return sprintf(quantifiedTemplate, quantity, ...args);
+		},
+		__m: localizeMoment(code),
 	};
+};
+
+export const localeCodeFromPathname = (
+	upwardPathnames: (pathname: Pathname) => Iterable<Pathname>,
+) => (pathname: Pathname): LocaleCode | null => {
+	const token = Seq(upwardPathnames(pathname))
+		.map(pathnameBaseName)
+		.find(isValidLocaleCodeToken);
+	return token ? localeCodeFromToken(token) : null;
+};
+
+export const localeCodeFromPath = (
+	upwardPaths: (path: Path) => Iterable<Path>,
+) => (path: Path): LocaleCode | null => {
+	const token = Seq(upwardPaths(path))
+		.map(baseName)
+		.find(isValidLocaleCodeToken);
+	return token ? localeCodeFromToken(token) : null;
 };
