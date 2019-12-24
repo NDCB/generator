@@ -2,6 +2,7 @@ import consola from "consola";
 
 import { Dirent, readdirSync, readFileSync } from "fs-extra";
 import { Seq } from "immutable";
+
 import {
 	Directory,
 	directoryInDirectory,
@@ -53,8 +54,16 @@ export const readFile = (encoding: Encoding) => (file: File): FileContents =>
 export const logFileRead = (fileReader: (file: File) => FileContents) => (
 	file: File,
 ): FileContents => {
-	logger.info(`Reading file "${fileToString(file)}"`);
-	return fileReader(file);
+	const stringOfFile = fileToString(file);
+	logger.info(`Reading file "${stringOfFile}"`);
+	try {
+		const contents = fileReader(file);
+		logger.success(`Successfully read file "${stringOfFile}"`);
+		return contents;
+	} catch (error) {
+		logger.error(`Failed to read file "${stringOfFile}"`);
+		throw error;
+	}
 };
 
 const directoryEntryAsEntry = (directory: Directory) => {
