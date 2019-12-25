@@ -13,7 +13,7 @@ import {
 	file,
 	File,
 	fileExists,
-	fileInDirectory,
+	fileFromDirectory,
 	fileName,
 	parentDirectory,
 	upwardDirectories,
@@ -177,7 +177,7 @@ export const joinPathname = (p: Pathname) => (
 ): Pathname => pathname(join(pathnameToString(p), ...segments));
 
 export const fileWithExtension = (file: File) => {
-	const inDirectory = fileInDirectory(parentDirectory(file));
+	const inDirectory = fileFromDirectory(parentDirectory(file));
 	const name = fileName(file);
 	return (extension: Extension): File =>
 		inDirectory(`${name}${extensionToString(extension)}`);
