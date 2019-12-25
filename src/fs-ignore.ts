@@ -29,9 +29,8 @@ export const logger = consola.withTag("fs-ignore");
 
 export const logFileIgnoredForHavingExtension = (file: File): void =>
 	logger.info(
-		`File ${fileToString(
-			file,
-		)} ignored for having extension ${extensionToString(fileExtension(file))}`,
+		`File "${fileToString(file)}" ignored for having extension ` +
+			`"${extensionToString(fileExtension(file))}"`,
 	);
 
 export const logFileIgnoredForEntryLeadingUnderscoreCause = (cause: Entry) => (
@@ -40,15 +39,15 @@ export const logFileIgnoredForEntryLeadingUnderscoreCause = (cause: Entry) => (
 	logger.info(
 		matchEntry<string>({
 			file: () =>
-				`File ${fileToString(
+				`File "${fileToString(
 					file,
-				)} ignored for having a leading underscore in its base name`,
+				)}" ignored for having a leading underscore in its base name`,
 			directory: (cause: Directory) =>
-				`File ${fileToString(
+				`File "${fileToString(
 					file,
-				)} ignored for being in directory ${directoryToString(
+				)}" ignored for being in directory "${directoryToString(
 					cause,
-				)} with a leading underscore in its base name`,
+				)}" with a leading underscore in its base name`,
 		})(cause),
 	);
 
@@ -56,9 +55,9 @@ export const logFileIgnoredByGitignore = (gitignoreFile: File) => (
 	file: File,
 ): void =>
 	logger.info(
-		`File ${fileToString(file)} ignored by gitignore file ${fileToString(
+		`File "${fileToString(file)}" ignored by gitignore file "${fileToString(
 			gitignoreFile,
-		)}`,
+		)}"`,
 	);
 
 export const ifRuleAppliesToFile = (
