@@ -357,7 +357,7 @@ describe("localizeMoment", () => {
 	}
 });
 
-describe.only("localize", () => {
+describe("localize", () => {
 	const mockLocaleCode = localeCodeFromToken("fr-CA");
 	const mockData = {
 		// Simple phrases

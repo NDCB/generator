@@ -86,19 +86,15 @@ export const mergeParserModules = (
 export const parseFileDataByExtension = (
 	parsers: Map<Extension & ValueObject, (contents: FileContents) => Data>,
 ) => (extension: Extension) => {
-	const parser: (contents: FileContents) => Data =
-		parsers.get(extensionToValueObject(extension)) || (() => ({}));
+	const parser: (
+		contents: FileContents,
+	) => Data = parsers.get(extensionToValueObject(extension), () => ({}));
 	return (contents: FileContents): Data => parser(contents);
 };
 
 export const readFileDataByExtension = (
-	parsers: Map<Extension & ValueObject, (contents: FileContents) => Data>,
-) => {
-	const parseByExtension = parseFileDataByExtension(parsers);
-	return (fileReader: (file: File) => FileContents) => (file: File): FileData =>
-		fileData(
-			parseByExtension(extensionToValueObject(fileExtension(file)))(
-				fileReader(file),
-			),
-		);
-};
+	parse: (extension: Extension) => (contents: FileContents) => Data,
+) => (fileReader: (file: File) => FileContents) => (file: File): FileData =>
+	fileData(
+		parse(extensionToValueObject(fileExtension(file)))(fileReader(file)),
+	);
