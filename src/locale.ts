@@ -25,7 +25,7 @@ import {
 } from "./fs-entry";
 import { baseName, Path } from "./fs-path";
 import { Pathname, pathnameBaseName } from "./fs-site";
-import { strictEquals } from "./util";
+import { isNumber, isObject, isString, strictEquals } from "./util";
 
 export const logger = consola.withTag("locale");
 
@@ -230,7 +230,7 @@ export const parseMultiplicityToken = (token: string) => {
 export const parseSimplePhraseTemplates = (data: Data): Map<string, string> =>
 	Map<string, string>().withMutations((map) => {
 		Object.keys(data)
-			.filter((phrase) => strictEquals(typeof data[phrase], "string"))
+			.filter((phrase) => isString(data[phrase]))
 			.forEach((phrase) => map.set(phrase, data[phrase] as string));
 	});
 
@@ -238,14 +238,14 @@ export const parseQuantifiedPhraseTemplates = (
 	data: Data,
 ): Map<string, (quantity: number) => string> =>
 	Set(Object.keys(data))
-		.filter((phrase) => strictEquals(typeof data[phrase], "object"))
+		.filter((phrase) => isObject(data[phrase]))
 		.toMap()
 		.map((phrase) =>
 			OrderedSet(Object.keys(data[phrase]))
-				.filter((token) => strictEquals(typeof data[phrase][token], "string"))
+				.filter((token) => isString(data[phrase][token]))
 				.toMap()
 				.mapKeys(parseMultiplicityToken)
-				.map((token) => data[phrase][token] as string),
+				.map((token) => data[phrase][token]),
 		)
 		.map((templateByMultiplicity) => (quantity: number) =>
 			templateByMultiplicity.find((_, test) => test(quantity)),
@@ -289,7 +289,7 @@ export const undefinedTemplate = (code: LocaleCode) => (
 	template: string,
 	quantity?: number,
 ): string =>
-	strictEquals(typeof quantity, "number")
+	isNumber(quantity)
 		? `Undefined template "${template}" with quantity "${quantity}" ` +
 		  `for locale "${localeCodeToString(code)}".`
 		: `Undefined template "${template}" for locale "${localeCodeToString(

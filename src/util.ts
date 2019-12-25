@@ -2,6 +2,15 @@ import { Seq } from "immutable";
 
 export const strictEquals = <T>(t1: T, t2: T): boolean => t1 === t2;
 
+export const isString = (element: unknown): element is string =>
+	strictEquals(typeof element, "string");
+
+export const isNumber = (element: unknown): element is number =>
+	strictEquals(typeof element, "number");
+
+export const isObject = (element: unknown): element is object =>
+	strictEquals(typeof element, "object");
+
 export const allPairs = <T>(iterable: Iterable<T>): Iterable<[T, T]> => {
 	const sequence = Seq(iterable);
 	return sequence.flatMap((element1) =>
