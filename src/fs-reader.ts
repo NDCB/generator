@@ -100,8 +100,16 @@ export const readDirectory = (encoding: Encoding) => (
 export const logDirectoryRead = (
 	directoryReader: (directory: Directory) => Iterable<Entry>,
 ) => (directory: Directory): Iterable<Entry> => {
-	logger.info(`Reading directory "${directoryToString(directory)}"`);
-	return directoryReader(directory);
+	const stringOfDirectory = directoryToString(directory)
+	logger.info(`Reading directory "${stringOfDirectory}"`);
+	try {
+		const entries = directoryReader(directory);
+		logger.success(`Successfully read directory "${stringOfDirectory}"`);
+		return entries;
+	} catch (error) {
+		logger.error(`Failed to read directory "${stringOfDirectory}"`);
+		throw error;
+	}
 };
 
 export const readDownwardFiles = (
