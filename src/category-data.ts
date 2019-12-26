@@ -2,6 +2,7 @@ import { Seq } from "immutable";
 
 import { Data } from "./fs-data";
 import {
+	directoryFromDirectory,
 	File,
 	fileFromDirectory,
 	fileToString,
@@ -42,4 +43,30 @@ export const properArticlesData = (fileExists: (file: File) => boolean) => (
 		);
 	}
 	return articleFiles.map(properData);
+};
+
+export const subcategoriesKey = "subcategories";
+
+export const properSubcategoriesData = (sourceFile: (file: File) => File) => (
+	properData: (file: File) => Data,
+) => (categoryFile: File, categoryData: Data): Iterable<Data> => {
+	const fromCategoryDirectory = directoryFromDirectory(
+		parentDirectory(categoryFile),
+	);
+	const subcategoriesRelativePaths = categoryData[subcategoriesKey] || [];
+	if (!isStringArray(subcategoriesRelativePaths)) {
+		throw new Error(
+			`Expected the subcategories declared in file "${fileToString(
+				categoryFile,
+			)}" to be an array of strings but got "${subcategoriesRelativePaths}"`,
+		);
+	}
+	return Seq(subcategoriesRelativePaths)
+		.map((subcategory) => fromCategoryDirectory(subcategory))
+		.map(fileFromDirectory)
+		.map((toFileFromDirectory) => toFileFromDirectory("index.html"))
+		.map(sourceFile)
+		.map(fileToValueObject)
+		.toOrderedSet()
+		.map(properData);
 };
