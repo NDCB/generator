@@ -70,3 +70,15 @@ export const properSubcategoriesData = (sourceFile: (file: File) => File) => (
 		.toOrderedSet()
 		.map(properData);
 };
+
+export const allArticlesKey = "allArticles";
+
+export const allArticles = (
+	properArticles: Iterable<Data>,
+	properSubcategories: Iterable<Data>,
+): Iterable<Data> =>
+	Seq(properArticles).concat(
+		Seq(properSubcategories)
+			.map((data) => data[allArticlesKey] || [])
+			.flatten(),
+	);
