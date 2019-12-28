@@ -46,11 +46,7 @@ export const handledExtensionsToParsers = (
 	handledExtensions: Set<Extension & ValueObject>,
 	parser: (contents: FileContents) => Data,
 ): Map<Extension & ValueObject, (contents: FileContents) => Data> =>
-	handledExtensions
-		.toMap()
-		.asMutable()
-		.map(() => parser)
-		.asImmutable();
+	handledExtensions.toMap().map(() => parser);
 
 export interface DataParserModule {
 	readonly extensions: Set<Extension & ValueObject>;
