@@ -5,6 +5,7 @@ import { resolve as resolveUrl } from "url";
 
 import {
 	Directory,
+	directoryEquals,
 	directoryHasDescendent,
 	directoryToPath,
 	directoryToString,
@@ -16,6 +17,7 @@ import {
 	fileFromDirectory,
 	fileName,
 	parentDirectory,
+	topmostDirectory,
 	upwardDirectories,
 	upwardDirectoriesUntil,
 } from "./fs-entry";
@@ -52,6 +54,21 @@ export const filesInRootsWithLogging = (
 		);
 		return downwardFilesReader(root);
 	});
+
+export const entryRoot = (roots: Set<Directory & ValueObject>) => (
+	entry: Entry,
+): Directory =>
+	roots.find(
+		(root) => directoryHasDescendent(root)(entry),
+		topmostDirectory(entry),
+	);
+
+export const entryHasSameRoot = (getRoot: (entry: Entry) => Directory) => (
+	entry: Entry,
+) => {
+	const root = getRoot(entry);
+	return (other: Entry): boolean => directoryEquals(root, getRoot(other));
+};
 
 /**
  * @precondition rootsAreMutuallyExclusive(roots)
@@ -101,16 +118,16 @@ export const pathnameFromRoot = (root: Directory) => {
 	return (entry: Entry): Pathname => pathname(relativeToRoot(entry));
 };
 
-/**
- * @precondition directoriesHaveDescendent(roots)(entry)
- */
 export const pathnameFromRoots = (roots: Set<Directory & ValueObject>) => {
 	const fromRoot = roots
 		.toMap()
 		.mapKeys(directoryHasDescendent)
 		.map(pathnameFromRoot);
 	return (entry: Entry): Pathname =>
-		fromRoot.find((_, test) => test(entry))(entry);
+		fromRoot.find(
+			(_, test) => test(entry),
+			pathnameFromRoot(topmostDirectory(entry)),
+		)(entry);
 };
 
 export const pathFromPathname = (root: Directory) => {
@@ -297,6 +314,21 @@ export const sourceFile = (roots: Set<Directory & ValueObject>) => (
 	const possibilities = possibleSourceFiles(roots)(sourceExtensions);
 	return (pathname: Pathname): File =>
 		Seq(possibilities(pathname)).find(fileExists);
+};
+
+export const asSourceFile = ({
+	possibleSourceFiles, // Using result from possibleSourceFiles
+	toPathname, // Using result from pathnameFromRoots
+	sharesRoot, // Using result from entryHasSameRoot
+}: {
+	possibleSourceFiles: (pathname: Pathname) => Iterable<File>;
+	toPathname: (file: File) => Pathname;
+	sharesRoot: (file: File) => (other: File) => boolean;
+}) => (file: File): File | null => {
+	const hasSameRoot = sharesRoot(file);
+	return Seq(possibleSourceFiles(toPathname(file)))
+		.filter(fileExists)
+		.find(hasSameRoot);
 };
 
 export const destinationFile = (sourceRoots: Set<Directory & ValueObject>) => {
