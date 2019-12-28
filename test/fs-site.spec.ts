@@ -25,6 +25,7 @@ import {
 } from "../src/fs-extension";
 import { normalizedPath, resolvedPath } from "../src/fs-path";
 import {
+	destinationExtension,
 	destinationFile,
 	destinationToSourceExtensions,
 	normalizedPathname,
@@ -169,7 +170,9 @@ describe("sourceFileHref", () => {
 		.map(asDirectory)
 		.map(directoryToValueObject);
 	const pathname = pathnameFromRoots(roots);
-	const sourceHref = sourceFileHref(sourceToDestination)(pathname);
+	const sourceHref = sourceFileHref(destinationExtension(sourceToDestination))(
+		pathname,
+	);
 	context(
 		`with "${sourceToDestination
 			.map(

@@ -218,20 +218,6 @@ export const destinationToSourceExtensions = (
 export const pathnameToAbsoluteHref = (pathname: Pathname): string =>
 	resolveUrl("/", pathnameToString(pathname));
 
-export const sourceFileHref = (
-	sourceToDestination: Map<Extension & ValueObject, Extension & ValueObject>,
-) => (pathname: (file: File) => Pathname) => (file: File): string => {
-	const extension = extensionToValueObject(fileExtension(file));
-	const destinationPathname = pathnameWithExtension(pathname(file))(
-		sourceToDestination.get(extension, extension),
-	);
-	return pathnameToAbsoluteHref(
-		pathnameIsIndex(destinationPathname)
-			? parentPathname(destinationPathname)
-			: destinationPathname,
-	);
-};
-
 export const destinationExtension = (
 	sourceToDestination: Map<Extension & ValueObject, Extension & ValueObject>,
 ) => (source: Extension): Extension =>
@@ -245,6 +231,19 @@ export const sourceExtensions = (
 ) => (destination: Extension): Set<Extension & ValueObject> => {
 	const destinationValue = extensionToValueObject(destination);
 	return destinationToSource.get(destinationValue, Set([destinationValue]));
+};
+
+export const sourceFileHref = (
+	destinationExtension: (extension: Extension) => Extension,
+) => (pathname: (file: File) => Pathname) => (file: File): string => {
+	const destinationPathname = pathnameWithExtension(pathname(file))(
+		destinationExtension(fileExtension(file)),
+	);
+	return pathnameToAbsoluteHref(
+		pathnameIsIndex(destinationPathname)
+			? parentPathname(destinationPathname)
+			: destinationPathname,
+	);
 };
 
 /**
