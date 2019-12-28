@@ -22,6 +22,7 @@ import {
 	pathEquals,
 	pathToString,
 	relativePath,
+	resolvePath,
 } from "./fs-path";
 import { strictEquals } from "./util";
 
@@ -261,6 +262,13 @@ export const upwardDirectories: (
 	file: upwardDirectoriesFromFile,
 	directory: upwardDirectoriesFromDirectory,
 });
+
+/**
+ * @postcondition entryExists(entry) is sufficient for the topmost directory to
+ * exist.
+ */
+export const topmostDirectory = (entry: Entry): Directory =>
+	directory(resolvePath(entryToPath(entry))("/"));
 
 /**
  * @precondition directoryHasDescendent(root)(entry)
