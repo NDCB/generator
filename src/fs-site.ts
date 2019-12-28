@@ -259,7 +259,7 @@ export const sourcePathnames = (
 
 export const possibleSourcePathnames = (
 	sourceExtensions: (destination: Extension) => Set<Extension & ValueObject>,
-) => (pathname: Pathname) =>
+) => (pathname: Pathname): Iterable<Pathname> =>
 	Seq([pathname])
 		.concat(
 			!pathnameIsEmpty(pathname) && !pathnameHasExtension(pathname)
@@ -286,7 +286,7 @@ export const possibleSourceFiles = (roots: Set<Directory & ValueObject>) => {
 	) => {
 		const pathnames = possibleSourcePathnames(sourceExtensions);
 		return (pathname: Pathname): Iterable<File> =>
-			pathnames(pathname)
+			Seq(pathnames(pathname))
 				.flatMap((pathname) => toPaths.map((toPath) => toPath(pathname)))
 				.map(file);
 	};
@@ -313,14 +313,13 @@ export const possibleInheritedFiles = (
 	sourcePathnames: (pathname: Pathname) => Iterable<Pathname>,
 ) => (upwardDirectories: (file: File) => Iterable<Directory>) => (
 	source: File,
-) => (pathname: Pathname): Iterable<File> =>
-	Seq(sourcePathnames(pathname))
-		.flatMap((pathname) =>
-			Seq(upwardDirectories(source))
-				.map(pathFromPathname)
-				.map((toPath) => toPath(pathname)),
-		)
+) => (pathname: Pathname): Iterable<File> => {
+	const sources = Seq(sourcePathnames(pathname));
+	return Seq(upwardDirectories(source))
+		.map(pathFromPathname)
+		.flatMap((toPath) => sources.map(toPath))
 		.map(file);
+};
 
 export const inheritedFiles = (
 	possibleInheritedFiles: (
