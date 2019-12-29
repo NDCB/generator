@@ -5,6 +5,7 @@ import { resolve as resolveUrl } from "url";
 
 import {
 	Directory,
+	directoryEquals,
 	directoryHasDescendent,
 	directoryToPath,
 	directoryToString,
@@ -13,9 +14,10 @@ import {
 	file,
 	File,
 	fileExists,
-	fileInDirectory,
+	fileFromDirectory,
 	fileName,
 	parentDirectory,
+	topmostDirectory,
 	upwardDirectories,
 	upwardDirectoriesUntil,
 } from "./fs-entry";
@@ -52,6 +54,21 @@ export const filesInRootsWithLogging = (
 		);
 		return downwardFilesReader(root);
 	});
+
+export const entryRoot = (roots: Set<Directory & ValueObject>) => (
+	entry: Entry,
+): Directory =>
+	roots.find(
+		(root) => directoryHasDescendent(root)(entry),
+		topmostDirectory(entry),
+	);
+
+export const entryHasSameRoot = (getRoot: (entry: Entry) => Directory) => (
+	entry: Entry,
+) => {
+	const root = getRoot(entry);
+	return (other: Entry): boolean => directoryEquals(root, getRoot(other));
+};
 
 /**
  * @precondition rootsAreMutuallyExclusive(roots)
@@ -101,16 +118,16 @@ export const pathnameFromRoot = (root: Directory) => {
 	return (entry: Entry): Pathname => pathname(relativeToRoot(entry));
 };
 
-/**
- * @precondition directoriesHaveDescendent(roots)(entry)
- */
 export const pathnameFromRoots = (roots: Set<Directory & ValueObject>) => {
 	const fromRoot = roots
 		.toMap()
 		.mapKeys(directoryHasDescendent)
 		.map(pathnameFromRoot);
 	return (entry: Entry): Pathname =>
-		fromRoot.find((_, test) => test(entry))(entry);
+		fromRoot.find(
+			(_, test) => test(entry),
+			pathnameFromRoot(topmostDirectory(entry)),
+		)(entry);
 };
 
 export const pathFromPathname = (root: Directory) => {
@@ -177,7 +194,7 @@ export const joinPathname = (p: Pathname) => (
 ): Pathname => pathname(join(pathnameToString(p), ...segments));
 
 export const fileWithExtension = (file: File) => {
-	const inDirectory = fileInDirectory(parentDirectory(file));
+	const inDirectory = fileFromDirectory(parentDirectory(file));
 	const name = fileName(file);
 	return (extension: Extension): File =>
 		inDirectory(`${name}${extensionToString(extension)}`);
@@ -218,20 +235,6 @@ export const destinationToSourceExtensions = (
 export const pathnameToAbsoluteHref = (pathname: Pathname): string =>
 	resolveUrl("/", pathnameToString(pathname));
 
-export const sourceFileHref = (
-	sourceToDestination: Map<Extension & ValueObject, Extension & ValueObject>,
-) => (pathname: (file: File) => Pathname) => (file: File): string => {
-	const extension = extensionToValueObject(fileExtension(file));
-	const destinationPathname = pathnameWithExtension(pathname(file))(
-		sourceToDestination.get(extension, extension),
-	);
-	return pathnameToAbsoluteHref(
-		pathnameIsIndex(destinationPathname)
-			? parentPathname(destinationPathname)
-			: destinationPathname,
-	);
-};
-
 export const destinationExtension = (
 	sourceToDestination: Map<Extension & ValueObject, Extension & ValueObject>,
 ) => (source: Extension): Extension =>
@@ -247,6 +250,19 @@ export const sourceExtensions = (
 	return destinationToSource.get(destinationValue, Set([destinationValue]));
 };
 
+export const sourceFileHref = (
+	destinationExtension: (extension: Extension) => Extension,
+) => (pathname: (file: File) => Pathname) => (file: File): string => {
+	const destinationPathname = pathnameWithExtension(pathname(file))(
+		destinationExtension(fileExtension(file)),
+	);
+	return pathnameToAbsoluteHref(
+		pathnameIsIndex(destinationPathname)
+			? parentPathname(destinationPathname)
+			: destinationPathname,
+	);
+};
+
 /**
  * @precondition !pathnameIsEmpty(pathname) && pathnameHasExtension(pathname)
  */
@@ -259,7 +275,7 @@ export const sourcePathnames = (
 
 export const possibleSourcePathnames = (
 	sourceExtensions: (destination: Extension) => Set<Extension & ValueObject>,
-) => (pathname: Pathname) =>
+) => (pathname: Pathname): Iterable<Pathname> =>
 	Seq([pathname])
 		.concat(
 			!pathnameIsEmpty(pathname) && !pathnameHasExtension(pathname)
@@ -286,7 +302,7 @@ export const possibleSourceFiles = (roots: Set<Directory & ValueObject>) => {
 	) => {
 		const pathnames = possibleSourcePathnames(sourceExtensions);
 		return (pathname: Pathname): Iterable<File> =>
-			pathnames(pathname)
+			Seq(pathnames(pathname))
 				.flatMap((pathname) => toPaths.map((toPath) => toPath(pathname)))
 				.map(file);
 	};
@@ -298,6 +314,21 @@ export const sourceFile = (roots: Set<Directory & ValueObject>) => (
 	const possibilities = possibleSourceFiles(roots)(sourceExtensions);
 	return (pathname: Pathname): File =>
 		Seq(possibilities(pathname)).find(fileExists);
+};
+
+export const asSourceFile = ({
+	possibleSourceFiles, // Using result from possibleSourceFiles
+	toPathname, // Using result from pathnameFromRoots
+	sharesRoot, // Using result from entryHasSameRoot
+}: {
+	possibleSourceFiles: (pathname: Pathname) => Iterable<File>;
+	toPathname: (file: File) => Pathname;
+	sharesRoot: (file: File) => (other: File) => boolean;
+}) => (file: File): File | null => {
+	const hasSameRoot = sharesRoot(file);
+	return Seq(possibleSourceFiles(toPathname(file)))
+		.filter(fileExists)
+		.find(hasSameRoot);
 };
 
 export const destinationFile = (sourceRoots: Set<Directory & ValueObject>) => {
@@ -313,14 +344,13 @@ export const possibleInheritedFiles = (
 	sourcePathnames: (pathname: Pathname) => Iterable<Pathname>,
 ) => (upwardDirectories: (file: File) => Iterable<Directory>) => (
 	source: File,
-) => (pathname: Pathname): Iterable<File> =>
-	Seq(sourcePathnames(pathname))
-		.flatMap((pathname) =>
-			Seq(upwardDirectories(source))
-				.map(pathFromPathname)
-				.map((toPath) => toPath(pathname)),
-		)
+) => (pathname: Pathname): Iterable<File> => {
+	const sources = Seq(sourcePathnames(pathname));
+	return Seq(upwardDirectories(source))
+		.map(pathFromPathname)
+		.flatMap((toPath) => sources.map(toPath))
 		.map(file);
+};
 
 export const inheritedFiles = (
 	possibleInheritedFiles: (

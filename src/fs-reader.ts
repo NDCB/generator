@@ -5,7 +5,7 @@ import { Seq } from "immutable";
 
 import {
 	Directory,
-	directoryInDirectory,
+	directoryFromDirectory,
 	directoryToPath,
 	directoryToString,
 	Entry,
@@ -13,7 +13,7 @@ import {
 	entryIsFile,
 	entryToString,
 	File,
-	fileInDirectory,
+	fileFromDirectory,
 	fileToPath,
 	fileToString,
 } from "./fs-entry";
@@ -67,8 +67,8 @@ export const logFileRead = (fileReader: (file: File) => FileContents) => (
 };
 
 const directoryEntryAsEntry = (directory: Directory) => {
-	const asFileInReadDirectory = fileInDirectory(directory);
-	const asDirectoryInReadDirectory = directoryInDirectory(directory);
+	const asFileInReadDirectory = fileFromDirectory(directory);
+	const asDirectoryInReadDirectory = directoryFromDirectory(directory);
 	return (directoryEntry: Dirent): Entry => {
 		const { name } = directoryEntry;
 		if (directoryEntry.isFile()) {

@@ -25,6 +25,7 @@ import {
 } from "../src/fs-extension";
 import { normalizedPath, resolvedPath } from "../src/fs-path";
 import {
+	destinationExtension,
 	destinationFile,
 	destinationToSourceExtensions,
 	normalizedPathname,
@@ -169,7 +170,9 @@ describe("sourceFileHref", () => {
 		.map(asDirectory)
 		.map(directoryToValueObject);
 	const pathname = pathnameFromRoots(roots);
-	const sourceHref = sourceFileHref(sourceToDestination)(pathname);
+	const sourceHref = sourceFileHref(destinationExtension(sourceToDestination))(
+		pathname,
+	);
 	context(
 		`with "${sourceToDestination
 			.map(
@@ -521,19 +524,19 @@ describe("possibleInheritedFiles", () => {
 					pathname: "examples/example",
 					inherited: [
 						"/content/en-CA/mathematics/examples/example",
-						"/content/en-CA/examples/example",
-						"/content/examples/example",
 						"/content/en-CA/mathematics/examples/example.html",
-						"/content/en-CA/examples/example.html",
-						"/content/examples/example.html",
 						"/content/en-CA/mathematics/examples/example.md",
-						"/content/en-CA/examples/example.md",
-						"/content/examples/example.md",
 						"/content/en-CA/mathematics/examples/example/index.html",
-						"/content/en-CA/examples/example/index.html",
-						"/content/examples/example/index.html",
 						"/content/en-CA/mathematics/examples/example/index.md",
+						"/content/en-CA/examples/example",
+						"/content/en-CA/examples/example.html",
+						"/content/en-CA/examples/example.md",
+						"/content/en-CA/examples/example/index.html",
 						"/content/en-CA/examples/example/index.md",
+						"/content/examples/example",
+						"/content/examples/example.html",
+						"/content/examples/example.md",
+						"/content/examples/example/index.html",
 						"/content/examples/example/index.md",
 					],
 				},
@@ -542,21 +545,10 @@ describe("possibleInheritedFiles", () => {
 					pathname: "examples/example",
 					inherited: [
 						"/content/en-CA/examples/example",
-						"/content/examples/example",
 						"/content/en-CA/examples/example.html",
-						"/content/examples/example.html",
 						"/content/en-CA/examples/example.md",
-						"/content/examples/example.md",
 						"/content/en-CA/examples/example/index.html",
-						"/content/examples/example/index.html",
 						"/content/en-CA/examples/example/index.md",
-						"/content/examples/example/index.md",
-					],
-				},
-				{
-					file: "/content/article.md",
-					pathname: "examples/example",
-					inherited: [
 						"/content/examples/example",
 						"/content/examples/example.html",
 						"/content/examples/example.md",
@@ -573,6 +565,38 @@ describe("possibleInheritedFiles", () => {
 						"/content/examples/example.md",
 						"/content/examples/example/index.html",
 						"/content/examples/example/index.md",
+					],
+				},
+				{
+					file: "/content/article.md",
+					pathname: "examples/example",
+					inherited: [
+						"/content/examples/example",
+						"/content/examples/example.html",
+						"/content/examples/example.md",
+						"/content/examples/example/index.html",
+						"/content/examples/example/index.md",
+					],
+				},
+				{
+					file: "/content/category/subcategory/index.md",
+					pathname: "index",
+					inherited: [
+						"/content/category/subcategory/index",
+						"/content/category/subcategory/index.html",
+						"/content/category/subcategory/index.md",
+						"/content/category/subcategory/index/index.html",
+						"/content/category/subcategory/index/index.md",
+						"/content/category/index",
+						"/content/category/index.html",
+						"/content/category/index.md",
+						"/content/category/index/index.html",
+						"/content/category/index/index.md",
+						"/content/index",
+						"/content/index.html",
+						"/content/index.md",
+						"/content/index/index.html",
+						"/content/index/index.md",
 					],
 				},
 			].map(({ file, pathname, inherited }) => ({

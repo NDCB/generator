@@ -11,6 +11,17 @@ export const isNumber = (element: unknown): element is number =>
 export const isObject = (element: unknown): element is object =>
 	strictEquals(typeof element, "object");
 
+export const isArray = (element: unknown): element is any[] =>
+	Array.isArray(element);
+
+export const isTypeArray = <T>(
+	element: unknown,
+	isOfType: (element: unknown) => element is T,
+): element is T[] => isArray(element) && element.every(isOfType);
+
+export const isStringArray = (element: unknown): element is string[] =>
+	isTypeArray(element, isString);
+
 export const allPairs = <T>(iterable: Iterable<T>): Iterable<[T, T]> => {
 	const sequence = Seq(iterable);
 	return sequence.flatMap((element1) =>
