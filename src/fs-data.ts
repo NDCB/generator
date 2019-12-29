@@ -1,4 +1,4 @@
-import { Map, Set, ValueObject } from "immutable";
+import { Map, Seq, Set, ValueObject } from "immutable";
 import slug from "slug";
 
 import { File } from "./fs-entry";
@@ -53,6 +53,14 @@ export interface DataParserModule {
 	readonly parser: (contents: FileContents) => Data;
 }
 
+export const dataParserModuleToValueObject = (
+	parser: DataParserModule,
+): DataParserModule & ValueObject => ({
+	...parser,
+	equals: (other) => parser.extensions.equals(other),
+	hashCode: () => parser.extensions.hashCode(),
+});
+
 export const dataParserModuleToMap = ({
 	extensions,
 	parser,
@@ -75,9 +83,14 @@ export const mergeMappedParsers = (
 		.asImmutable();
 
 export const mergeParserModules = (
-	...modules: DataParserModule[]
+	modules: Iterable<DataParserModule>,
 ): Map<Extension & ValueObject, (contents: FileContents) => Data> =>
-	mergeMappedParsers(Set(modules.map(dataParserModuleToMap)));
+	mergeMappedParsers(
+		Seq(modules)
+			.map(dataParserModuleToValueObject)
+			.toSet()
+			.map(dataParserModuleToMap),
+	);
 
 export const parseFileDataByExtension = (
 	parsers: Map<Extension & ValueObject, (contents: FileContents) => Data>,

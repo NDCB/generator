@@ -28,7 +28,7 @@ describe("mergeParserModules", () => {
 		parser: () => ({ data }),
 		data,
 	}));
-	const merged = mergeParserModules(...modules);
+	const merged = mergeParserModules(modules);
 	context(
 		`using modules "${modules
 			.map(
