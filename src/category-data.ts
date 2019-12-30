@@ -9,6 +9,7 @@ import {
 	fileToValueObject,
 	parentDirectory,
 } from "./fs-entry";
+import { Pathname, pathname } from "./fs-site";
 import { isArray, isString, isStringArray } from "./util";
 
 export const articlesKey = "articles";
@@ -47,9 +48,12 @@ export const properArticlesData = (fileExists: (file: File) => boolean) => (
 
 export const subcategoriesKey = "subcategories";
 
-export const properSubcategoriesData = (sourceFile: (file: File) => File) => (
-	properData: (file: File) => Data,
-) => (categoryFile: File, categoryData: Data): Iterable<Data> => {
+export const relationalSubcategoriesData = (
+	sourceFile: (file: File) => File,
+) => (relationalData: (file: File) => Data) => (
+	categoryFile: File,
+	categoryData: Data,
+): Iterable<Data> => {
 	const fromCategoryDirectory = directoryFromDirectory(
 		parentDirectory(categoryFile),
 	);
@@ -68,12 +72,12 @@ export const properSubcategoriesData = (sourceFile: (file: File) => File) => (
 		.map(sourceFile)
 		.map(fileToValueObject)
 		.toOrderedSet()
-		.map(properData);
+		.map(relationalData);
 };
 
 export const allArticlesKey = "allArticles";
 
-export const allArticles = (
+export const relationalAllArticles = (
 	properArticles: Iterable<Data>,
 	properSubcategories: Iterable<Data>,
 ): Iterable<Data> =>
@@ -120,3 +124,50 @@ export const keyedMerger = (
 		.map((_, key) => mergers.get(key, defaultMerger(key))(reduction, current))
 		.toJS(),
 });
+
+export const mergedUpwardCategoriesData = (
+	inheritedFiles: (file: File) => (pathname: Pathname) => Iterable<File>,
+	merger = (reduction: Data, current: Data): Data => ({
+		...reduction,
+		...current,
+	}),
+) => (categoryFile: File, properData: (file: File) => Data): Data =>
+	Seq(inheritedFiles(categoryFile)(pathname("index.html")))
+		.map(properData)
+		.reduceRight(merger);
+
+export const relationalData = ({
+	fileExists,
+	sourceFile,
+	inheritedFiles,
+	upwardCategoriesDataMerger,
+}: {
+	fileExists: (file: File) => boolean;
+	sourceFile: (file: File) => File;
+	inheritedFiles: (file: File) => (pathname: Pathname) => Iterable<File>;
+	upwardCategoriesDataMerger?: (reduction: Data, current: Data) => Data;
+}) => (
+	file: File,
+	properData: (file: File) => Data,
+	relationalData: (file: File) => Data,
+): Data => {
+	const categoryData = mergedUpwardCategoriesData(
+		inheritedFiles,
+		upwardCategoriesDataMerger,
+	)(file, properData);
+	const articles = properArticlesData(fileExists)(properData)(
+		file,
+		categoryData,
+	);
+	const subcategories = relationalSubcategoriesData(sourceFile)(relationalData)(
+		file,
+		categoryData,
+	);
+	const allArticles = relationalAllArticles(articles, subcategories);
+	return {
+		...categoryData,
+		articles,
+		subcategories,
+		allArticles,
+	};
+};
