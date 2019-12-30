@@ -1,4 +1,4 @@
-import { Seq } from "immutable";
+import { Map, Seq } from "immutable";
 
 import { Data } from "./fs-data";
 import {
@@ -9,7 +9,7 @@ import {
 	fileToValueObject,
 	parentDirectory,
 } from "./fs-entry";
-import { isStringArray } from "./util";
+import { isArray, isString, isStringArray } from "./util";
 
 export const articlesKey = "articles";
 
@@ -82,3 +82,41 @@ export const allArticles = (
 			.map((data) => data[allArticlesKey] || [])
 			.flatten(),
 	);
+
+export const defaultMerger = (key: string) => (
+	reduction: Data,
+	current: Data,
+): unknown => current[key] || reduction[key];
+
+export const stringConcatenationMerger = (
+	key: string,
+	fallback = defaultMerger(key),
+) => (reduction: Data, current: Data): unknown => {
+	const reductionValue = reduction[key];
+	const currentValue = current[key];
+	return isString(reductionValue) && isString(currentValue)
+		? reductionValue + currentValue
+		: fallback(reduction, current);
+};
+
+export const arrayConcatenationMerger = (
+	key: string,
+	fallback = defaultMerger(key),
+) => (reduction: Data, current: Data): unknown => {
+	const reductionValue = reduction[key];
+	const currentValue = current[key];
+	return !isArray(reductionValue)
+		? fallback(reduction, current)
+		: reductionValue.concat(
+				isArray(currentValue) ? currentValue : [currentValue],
+		  );
+};
+
+export const keyedMerger = (
+	mergers: Map<string, (reduction: Data, current: Data) => unknown>,
+) => (reduction: Data, current: Data): Data => ({
+	...current, // keys not in reduction
+	...Map(reduction)
+		.map((_, key) => mergers.get(key, defaultMerger(key))(reduction, current))
+		.toJS(),
+});
