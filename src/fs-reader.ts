@@ -100,7 +100,7 @@ export const readDirectory = (encoding: Encoding) => (
 export const logDirectoryRead = (
 	directoryReader: (directory: Directory) => Iterable<Entry>,
 ) => (directory: Directory): Iterable<Entry> => {
-	const stringOfDirectory = directoryToString(directory)
+	const stringOfDirectory = directoryToString(directory);
 	logger.info(`Reading directory "${stringOfDirectory}"`);
 	try {
 		const entries = directoryReader(directory);

@@ -9,9 +9,8 @@ export const parseJsonData = (token: string): Data => JSON.parse(token);
 export const parseJsonFileData = (contents: FileContents): Data =>
 	parseJsonData(fileContentsToString(contents));
 
-export const jsonExtensions: Set<
-	Extension & ValueObject
-> = extensionValueObjectSet([".json"]);
+export const jsonExtensions: Set<Extension &
+	ValueObject> = extensionValueObjectSet([".json"]);
 
 export const jsonFileDataParser: DataParserModule = {
 	extensions: jsonExtensions,
