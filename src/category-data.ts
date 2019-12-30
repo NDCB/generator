@@ -14,8 +14,8 @@ import { isArray, isString, isStringArray } from "./util";
 
 export const articlesKey = "articles";
 
-export const properArticlesData = (fileExists: (file: File) => boolean) => (
-	properData: (file: File) => Data,
+export const relationalArticlesData = (fileExists: (file: File) => boolean) => (
+	relationalData: (file: File) => Data,
 ) => (categoryFile: File, categoryData: Data): Iterable<Data> => {
 	const fromCategoryDirectory = fileFromDirectory(
 		parentDirectory(categoryFile),
@@ -43,7 +43,7 @@ export const properArticlesData = (fileExists: (file: File) => boolean) => (
 				.join()}`,
 		);
 	}
-	return articleFiles.map(properData);
+	return articleFiles.map(relationalData);
 };
 
 export const subcategoriesKey = "subcategories";
@@ -155,7 +155,7 @@ export const relationalData = ({
 		inheritedFiles,
 		upwardCategoriesDataMerger,
 	)(file, properData);
-	const articles = properArticlesData(fileExists)(properData)(
+	const articles = relationalArticlesData(fileExists)(relationalData)(
 		file,
 		categoryData,
 	);
