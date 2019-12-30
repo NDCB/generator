@@ -44,10 +44,10 @@
 		"tslint": "^5.20.1",
 		"tslint-config-prettier": "^1.18.0",
 		"typedoc": "^0.15.6",
-		"typescript": "^3.7.4"
+		"typescript": "^3.7.2"
 	},
 	"dependencies": {
-		"consola": "^2.11.2",
+		"consola": "2.10.1",
 		"dayjs": "^1.8.18",
 		"fs-extra": "^8.1.0",
 		"i18n-iso-countries": "^4.3.1",
