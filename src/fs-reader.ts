@@ -44,9 +44,13 @@ export const encoding = (value: string): Encoding => ({
 	value,
 });
 
+export const defaultEncoding = encoding("utf8");
+
 export const encodingToString = (encoding: Encoding): string => encoding.value;
 
-export const readFile = (encoding: Encoding) => (file: File): FileContents =>
+export const readFile = (encoding: Encoding = defaultEncoding) => (
+	file: File,
+): FileContents =>
 	fileContents(
 		readFileSync(pathToString(fileToPath(file)), encodingToString(encoding)),
 	);
@@ -85,7 +89,7 @@ const directoryEntryAsEntry = (directory: Directory) => {
 	};
 };
 
-export const readDirectory = (encoding: Encoding) => (
+export const readDirectory = (encoding: Encoding = defaultEncoding) => (
 	directory: Directory,
 ): Iterable<Entry> => {
 	const asEntry = directoryEntryAsEntry(directory);
