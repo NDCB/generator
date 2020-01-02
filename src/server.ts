@@ -53,3 +53,6 @@ export const serverSourceFile = (
 
 export const is404File = (file: File): boolean =>
 	strictEquals(fileName(file), "404");
+
+export const statusCode = (source: File | null): number =>
+	!source || is404File(source) ? 404 : 200;
