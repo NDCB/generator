@@ -19,6 +19,7 @@ export const server = (
 ): void => {
 	createServer(requestHandler(roots)).listen(port, hostname, () => {
 		logger.info(`Server running at http://${hostname}:${port}/`);
+		logger.info(`Press CTRL+C to stop the server`);
 	});
 };
 
