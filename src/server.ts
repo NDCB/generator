@@ -48,7 +48,7 @@ export const serverSourceFile = (
 	possible404s: (pathname: Pathname) => Iterable<File>,
 ): ((pathname: Pathname) => File | null) =>
 	sourceFile((pathname: Pathname) =>
-		Seq(possibleSources(pathname)).concat(Seq(possible404s(pathname))),
+		Seq(possibleSources(pathname)).concat(possible404s(pathname)),
 	);
 
 export const is404File = (file: File): boolean =>
