@@ -7,8 +7,9 @@ import {
 	RequestListener,
 	ServerResponse,
 } from "http";
-import { Directory, File } from "./fs-entry";
+import { Directory, File, fileName } from "./fs-entry";
 import { normalizedPathname, Pathname, sourceFile } from "./fs-site";
+import { strictEquals } from "./util";
 
 export const logger = consola.withTag("server");
 
@@ -49,3 +50,6 @@ export const serverSourceFile = (
 	sourceFile((pathname: Pathname) =>
 		Seq(possibleSources(pathname)).concat(Seq(possible404(pathname))),
 	);
+
+export const is404File = (file: File): boolean =>
+	strictEquals(fileName(file), "404");
