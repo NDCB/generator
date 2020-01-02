@@ -25,7 +25,7 @@ export const isStringArray = (element: unknown): element is string[] =>
 export const allPairs = <T>(iterable: Iterable<T>): Iterable<[T, T]> => {
 	const sequence = Seq(iterable);
 	return sequence.flatMap((element1) =>
-		sequence.map((element2) => [element1, element2]),
+		sequence.map<[T, T]>((element2) => [element1, element2]),
 	);
 };
 
