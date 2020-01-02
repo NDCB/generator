@@ -1,5 +1,5 @@
 import consola from "consola";
-import { Set, ValueObject } from "immutable";
+import { Seq, Set, ValueObject } from "immutable";
 
 import {
 	createServer,
@@ -8,7 +8,7 @@ import {
 	ServerResponse,
 } from "http";
 import { Directory, File } from "./fs-entry";
-import { normalizedPathname, Pathname } from "./fs-site";
+import { normalizedPathname, Pathname, sourceFile } from "./fs-site";
 
 export const logger = consola.withTag("server");
 
@@ -36,6 +36,15 @@ export const requestUrlPathname: RegExp = /^\/(.*?)(\?(.*)|)$/;
 export const requestUrlToPathname = (url: string): Pathname =>
 	normalizedPathname(requestUrlPathname.exec(url)[1]);
 
-export const sourceFile = (source: (pathname: Pathname) => File) => (
-	request: IncomingMessage,
-): File | null => source(requestUrlToPathname(request.url || ""));
+export const pathnameSourceFile = (
+	source: (pathname: Pathname) => File | null,
+) => (request: IncomingMessage): File | null =>
+	source(requestUrlToPathname(request.url || ""));
+
+export const serverSourceFile = (
+	possibleSources: (pathname: Pathname) => Iterable<File>,
+	possible404: (pathname: Pathname) => Iterable<File>,
+): ((pathname: Pathname) => File | null) =>
+	sourceFile((pathname: Pathname) =>
+		Seq(possibleSources(pathname)).concat(Seq(possible404(pathname))),
+	);
