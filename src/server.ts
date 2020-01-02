@@ -31,13 +31,11 @@ export const requestHandler = (
 	throw new Error("Not implemented yet");
 };
 
-export const sourceFile = (source: Pathname) => (
-	request: IncomingMessage,
-): File => {
-	throw new Error("Not implemented yet");
-};
-
 export const requestUrlPathname: RegExp = /^\/(.*?)(\?(.*)|)$/;
 
 export const requestUrlToPathname = (url: string): Pathname =>
 	normalizedPathname(requestUrlPathname.exec(url)[1]);
+
+export const sourceFile = (source: (pathname: Pathname) => File) => (
+	request: IncomingMessage,
+): File | null => source(requestUrlToPathname(request.url || ""));
