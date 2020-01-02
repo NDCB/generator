@@ -17,6 +17,9 @@
 	"files": [
 		"lib"
 	],
+	"bin": {
+		"generator": "./lib/generator.js"
+	},
 	"scripts": {
 		"format": "prettier --write \"./{src,test}/**/*.ts\"",
 		"lint": "tslint --force --format verbose \"./{src,test}/**/*.ts\"",

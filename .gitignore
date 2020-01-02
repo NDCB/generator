@@ -5,3 +5,6 @@ build
 coverage
 .nyc_output
 *.log
+*.tsbuildinfo
+
+lib
