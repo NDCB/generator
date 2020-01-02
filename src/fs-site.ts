@@ -308,13 +308,17 @@ export const possibleSourceFiles = (roots: Set<Directory & ValueObject>) => {
 	};
 };
 
-export const sourceFile = (roots: Set<Directory & ValueObject>) => (
-	sourceExtensions: (destination: Extension) => Set<Extension & ValueObject>,
-) => {
-	const possibilities = possibleSourceFiles(roots)(sourceExtensions);
-	return (pathname: Pathname): File =>
-		Seq(possibilities(pathname)).find(fileExists);
-};
+export const possibleSource404Files = (
+	possibleSourceFiles: (pathname: Pathname) => Iterable<File>,
+) => (pathname: Pathname): Iterable<File> =>
+	Seq(upwardPathnames(pathname))
+		.map((upwardPathname) => joinPathname(upwardPathname)("404.html"))
+		.flatMap(possibleSourceFiles);
+
+export const sourceFile = (
+	possibilities: (pathname: Pathname) => Iterable<File>,
+) => (pathname: Pathname): File | null =>
+	Seq(possibilities(pathname)).find(fileExists);
 
 export const asSourceFile = ({
 	possibleSourceFiles, // Using result from possibleSourceFiles
