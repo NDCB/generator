@@ -1,5 +1,6 @@
 import consola from "consola";
 import { Seq, Set, ValueObject } from "immutable";
+import { lookup as mimeType } from "mime-types";
 
 import {
 	createServer,
@@ -8,7 +9,14 @@ import {
 	ServerResponse,
 } from "http";
 import { Directory, File, fileName } from "./fs-entry";
-import { normalizedPathname, Pathname, sourceFile } from "./fs-site";
+import { defaultEncoding, encodingToString } from "./fs-reader";
+import {
+	normalizedPathname,
+	Pathname,
+	pathnameToString,
+	sourceFile,
+} from "./fs-site";
+import { Document, documentContents, documentLocation } from "./processor";
 import { strictEquals } from "./util";
 
 export const logger = consola.withTag("server");
@@ -56,3 +64,39 @@ export const is404File = (file: File): boolean =>
 
 export const statusCode = (source: File | null): number =>
 	!source || is404File(source) ? 404 : 200;
+
+export const locationMimeType = (location: Pathname): string =>
+	mimeType(pathnameToString(location)) || "text/plain";
+
+export const processorRequestHandler = (
+	processor: (source: File) => Document,
+	serverSourceFile: (pathname: Pathname) => File | null,
+	noSourceHandler: (request: IncomingMessage, response: ServerResponse) => void,
+	processorErrorHandler: (
+		error: Error,
+		request: IncomingMessage,
+		response: ServerResponse,
+	) => void,
+): RequestListener => (
+	request: IncomingMessage,
+	response: ServerResponse,
+): void => {
+	const source = serverSourceFile(requestUrlToPathname(request.url));
+	if (!source) {
+		noSourceHandler(request, response);
+	} else {
+		try {
+			const document = processor(source);
+			response.writeHead(statusCode(source), {
+				"Content-Type": locationMimeType(documentLocation(document)),
+			});
+			response.write(
+				documentContents(document),
+				encodingToString(defaultEncoding),
+			);
+			response.end();
+		} catch (error) {
+			processorErrorHandler(error, request, response);
+		}
+	}
+};
