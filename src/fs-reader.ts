@@ -101,6 +101,9 @@ export const readDirectory = (encoding: Encoding = defaultEncoding) => (
 	).map(asEntry);
 };
 
+export const isDirectoryEmpty = (directory: Directory): boolean =>
+	Seq(readDirectory()(directory)).isEmpty();
+
 export const logDirectoryRead = (
 	directoryReader: (directory: Directory) => Iterable<Entry>,
 ) => (directory: Directory): Iterable<Entry> => {
