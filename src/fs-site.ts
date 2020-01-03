@@ -5,7 +5,9 @@ import { resolve as resolveUrl } from "url";
 
 import {
 	Directory,
+	directory,
 	directoryEquals,
+	directoryExists,
 	directoryHasDescendent,
 	directoryToPath,
 	directoryToString,
@@ -138,6 +140,11 @@ export const pathFromPathname = (root: Directory) => {
 export const fileFromPathname = (root: Directory) => {
 	const fetchPath = pathFromPathname(root);
 	return (pathname: Pathname): File => file(fetchPath(pathname));
+};
+
+export const directoryFromPathname = (root: Directory) => {
+	const fetchPath = pathFromPathname(root);
+	return (pathname: Pathname): Directory => directory(fetchPath(pathname));
 };
 
 export const pathnameIsEmpty = (pathname: Pathname): boolean =>
@@ -372,4 +379,15 @@ export const inheritedFile = (
 	const possibilities = inheritedFiles(source);
 	return (pathname: Pathname): File =>
 		Seq(possibilities(pathname)).first<File>();
+};
+
+export const readDirectoriesAcrossRoots = (
+	readDirectory: (directory: Directory) => Iterable<Entry>,
+) => (roots: Iterable<Directory>) => {
+	const directoriesFromPathname = Seq(roots).map(directoryFromPathname);
+	return (pathname: Pathname): Iterable<Entry> =>
+		directoriesFromPathname
+			.map((directoryFromPathname) => directoryFromPathname(pathname))
+			.filter(directoryExists)
+			.flatMap(readDirectory);
 };
