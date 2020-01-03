@@ -1,9 +1,7 @@
 import { hash, ValueObject } from "immutable";
-import { lookup as mimeType } from "mime-types";
 
-import { Extension } from "./fs-extension";
 import { FileContents } from "./fs-reader";
-import { Pathname, pathnameExtension, pathnameToString } from "./fs-site";
+import { Pathname } from "./fs-site";
 import { strictEquals } from "./util";
 
 export interface DocumentType {
@@ -50,9 +48,3 @@ export const documentContents = (document: Document): FileContents =>
 
 export const documentLocation = (document: Document): Pathname =>
 	document.location;
-
-export const documentExtension = (document: Document): Extension =>
-	pathnameExtension(documentLocation(document));
-
-export const documentMimeType = (document: Document): string =>
-	mimeType(pathnameToString(documentLocation(document))) || "text/plain";
