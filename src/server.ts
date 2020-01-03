@@ -10,12 +10,7 @@ import {
 } from "http";
 import { Directory, File, fileName } from "./fs-entry";
 import { defaultEncoding, encodingToString } from "./fs-reader";
-import {
-	normalizedPathname,
-	Pathname,
-	pathnameToString,
-	sourceFile,
-} from "./fs-site";
+import { Pathname, pathname, pathnameToString, sourceFile } from "./fs-site";
 import { Document, documentContents, documentLocation } from "./processor";
 import { strictEquals } from "./util";
 
@@ -44,7 +39,7 @@ export const requestHandler = (
 export const requestUrlPathname: RegExp = /^\/(.*?)(\?(.*)|)$/;
 
 export const requestUrlToPathname = (url: string): Pathname =>
-	normalizedPathname(requestUrlPathname.exec(url)[1]);
+	pathname(requestUrlPathname.exec(url)[1]);
 
 export const pathnameSourceFile = (
 	source: (pathname: Pathname) => File | null,
