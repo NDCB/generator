@@ -1,5 +1,6 @@
 import consola from "consola";
 import ignore from "ignore";
+import { Seq, Set, ValueObject } from "immutable";
 
 import {
 	Directory,
@@ -66,17 +67,17 @@ export const ifRuleAppliesToFile = (
 ) => (file: File): boolean => applies(file) && rule(file);
 
 export const forFirstRuleThatAppliesToFile = (
-	...criteria: Array<{
+	criteria: Iterable<{
 		applies: (file: File) => boolean;
 		rule: (file: File) => boolean;
-	}>
-) => (file: File): boolean => {
-	const criterion = criteria.find(({ applies }) => applies(file));
-	if (!criterion) {
-		return false;
-	}
-	return criterion.rule(file);
-};
+	}>,
+) => (file: File): boolean =>
+	Seq(criteria)
+		.find(
+			({ applies }) => applies(file),
+			() => ({ rule: () => false }),
+		)
+		.rule(file);
 
 export const logIfFileIgnored = (
 	logger: (file: File) => void,
@@ -115,14 +116,16 @@ export const entryHasLeadingUnderscore = (entry: Entry): boolean =>
 export const ignoreLeadingUnderscore = (
 	upwardDirectories: (file: File) => Iterable<Directory>,
 ) => (file: File): boolean =>
-	[file, ...upwardDirectories(file)].some(entryHasLeadingUnderscore);
+	Seq([file])
+		.concat(upwardDirectories(file))
+		.some(entryHasLeadingUnderscore);
 
 export const ignoreLeadingUnderscoreWithLogging = (
 	upwardDirectories: (file: File) => Iterable<Directory>,
 ) => (file: File): boolean => {
-	const cause: Entry = [file, ...upwardDirectories(file)].find(
-		entryHasLeadingUnderscore,
-	);
+	const cause: Entry = Seq([file])
+		.concat(upwardDirectories(file))
+		.find(entryHasLeadingUnderscore);
 	if (cause) {
 		logFileIgnoredForEntryLeadingUnderscoreCause(cause)(file);
 	}
@@ -158,25 +161,25 @@ export const ignoreUsingGitignoreWithLogging = (
 		ignoreUsingGitignore(fileReader)(gitignoreFile),
 	);
 
-export const compositeIgnore = (...rules: Array<(file: File) => boolean>) => (
+export const compositeIgnore = (rules: Iterable<(file: File) => boolean>) => (
 	file: File,
-): boolean => rules.some((rule) => rule(file));
+): boolean => Seq(rules).some((rule) => rule(file));
 
 export const ignoreLeadingUnderscoreFromRoots = (
-	...roots: Directory[]
+	roots: Set<Directory & ValueObject>,
 ): ((file: File) => boolean) =>
 	forFirstRuleThatAppliesToFile(
-		...roots.map((root) => ({
+		roots.map((root) => ({
 			applies: directoryHasDescendent(root),
 			rule: ignoreLeadingUnderscore(upwardDirectoriesUntil(root)),
 		})),
 	);
 
 export const ignoreLeadingUnderscoreFromRootsWithLogging = (
-	...roots: Directory[]
+	roots: Set<Directory & ValueObject>,
 ): ((file: File) => boolean) =>
 	forFirstRuleThatAppliesToFile(
-		...roots.map((root) => ({
+		roots.map((root) => ({
 			applies: directoryHasDescendent(root),
 			rule: ignoreLeadingUnderscoreWithLogging(upwardDirectoriesUntil(root)),
 		})),
