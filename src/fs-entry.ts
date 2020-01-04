@@ -3,10 +3,7 @@ import {
 	emptyDirSync,
 	ensureDirSync,
 	ensureFileSync,
-	existsSync,
 	realpathSync,
-	Stats as Status,
-	statSync,
 } from "fs-extra";
 import { hash, Seq, Set, ValueObject } from "immutable";
 
@@ -20,6 +17,8 @@ import {
 	Path,
 	path,
 	pathEquals,
+	pathExists,
+	pathStatus,
 	pathToString,
 	relativePath,
 	resolvePath,
@@ -87,16 +86,46 @@ export const directoryToValueObject = (
 
 export type Entry = File | Directory;
 
-export const entryToPath = (entry: Entry): Path => entry.path;
-
-export const entryToString = (entry: Entry): string =>
-	pathToString(entryToPath(entry));
+export interface EntryPattern<T> {
+	readonly file: (file: File) => T;
+	readonly directory: (directory: Directory) => T;
+}
 
 export const entryIsFile = (entry: Entry): entry is File =>
 	strictEquals(entry._tag, "File");
 
 export const entryIsDirectory = (entry: Entry): entry is Directory =>
 	strictEquals(entry._tag, "Directory");
+
+export const matchEntry = <T>(pattern: EntryPattern<T>) => (
+	entry: Entry,
+): T => {
+	if (entryIsFile(entry)) {
+		return pattern.file(entry);
+	} else if (entryIsDirectory(entry)) {
+		return pattern.directory(entry);
+	}
+	throw new Error(
+		`Unexpectedly failed to match entry pattern for object "${JSON.stringify(
+			entry,
+		)}"`,
+	);
+};
+
+export const entryToPath: (entry: Entry) => Path = matchEntry({
+	file: fileToPath,
+	directory: directoryToPath,
+});
+
+export const entryToString: (entry: Entry) => string = matchEntry({
+	file: fileToString,
+	directory: directoryToString,
+});
+
+export const entryEquals = (e1: Entry, e2: Entry): boolean =>
+	((entryIsFile(e1) && entryIsFile(e2)) ||
+		(entryIsDirectory(e1) && entryIsDirectory(e2))) &&
+	pathEquals(entryToPath(e1), entryToPath(e2));
 
 export const entryToFile = (entry: Entry): File => file(entryToPath(entry));
 
@@ -111,57 +140,44 @@ export const fileName = (file: File): string => name(fileToPath(file));
 export const fileExtensionName = (file: File): string =>
 	extensionName(fileToPath(file));
 
+export const entryRelativePath = (from: Entry) => {
+	const relativeTo = relativePath(entryToPath(from));
+	return (to: Entry): string => relativeTo(entryToPath(to));
+};
+
 export const realPath = (p: Path): Path =>
 	path(realpathSync.native(pathToString(p)));
 
-export const entryRealPath = (entry: Entry): Path =>
-	realPath(entryToPath(entry));
+// Real Path
 
 export const fileRealPath = (file: File): Path => realPath(fileToPath(file));
 
 export const directoryRealPath = (directory: Directory): Path =>
 	realPath(directoryToPath(directory));
 
-export const entryRelativePath = (from: Entry) => {
-	const relativeTo = relativePath(entryToPath(from));
-	return (to: Entry): string => relativeTo(entryToPath(to));
+export const entryRealPath: (entry: Entry) => Path = matchEntry({
+	file: fileRealPath,
+	directory: directoryRealPath,
+});
+
+// Entry Exists
+
+export const fileExists = (file: File): boolean => {
+	const path = fileToPath(file);
+	return pathExists(path) && pathStatus(path).isFile();
 };
 
-export const pathExists = (path: Path): boolean =>
-	existsSync(pathToString(path));
+export const directoryExists = (directory: Directory): boolean => {
+	const path = directoryToPath(directory);
+	return pathExists(path) && pathStatus(path).isDirectory();
+};
 
-export const entryExists = (entry: Entry): boolean =>
-	pathExists(entryToPath(entry));
+export const entryExists: (entry: Entry) => boolean = matchEntry({
+	file: fileExists,
+	directory: directoryExists,
+});
 
-/**
- * @precondition entryExists(entry)
- */
-export const entryStatus = (entry: Entry): Status =>
-	statSync(pathToString(entryToPath(entry)));
-
-/**
- * @precondition entryExists(entry)
- */
-export const existingEntryIsFile = (entry: Entry): boolean =>
-	entryStatus(entry).isFile();
-
-/**
- * @precondition entryExists(entry)
- */
-export const existingEntryIsDirectory = (entry: Entry): boolean =>
-	entryStatus(entry).isDirectory();
-
-/**
- * @postcondition entryExists(file) && entryIsFile(file)
- */
-export const fileExists = (file: File): boolean =>
-	entryExists(file) && existingEntryIsFile(file);
-
-/**
- * @postcondition entryExists(directory) && entryIsDirectory(directory)
- */
-export const directoryExists = (directory: Directory): boolean =>
-	entryExists(directory) && existingEntryIsDirectory(directory);
+// Ensure Entry Exists
 
 /**
  * @postcondition fileExists(file)
@@ -174,27 +190,6 @@ export const ensureFileExists = (file: File): void =>
  */
 export const ensureDirectoryExists = (directory: Directory): void =>
 	ensureDirSync(pathToString(directoryToPath(directory)));
-
-export interface EntryPattern<T> {
-	readonly file: (file: File) => T;
-	readonly directory: (directory: Directory) => T;
-}
-
-export const matchEntry = <T>(pattern: EntryPattern<T>) => (
-	entry: Entry,
-): T => {
-	if (entryIsFile(entry)) {
-		return pattern.file(entry);
-	} else if (entryIsDirectory(entry)) {
-		return pattern.directory(entry);
-	} else {
-		throw new Error(
-			`Unexpectedly failed to match pattern for entry "${entryToString(
-				entry,
-			)}"`,
-		);
-	}
-};
 
 /**
  * @postcondition entryExists(entry)
