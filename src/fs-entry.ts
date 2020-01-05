@@ -3,9 +3,8 @@ import {
 	emptyDirSync,
 	ensureDirSync,
 	ensureFileSync,
-	realpathSync,
 } from "fs-extra";
-import { hash, Seq, Set, ValueObject } from "immutable";
+import { hash, Seq, ValueObject } from "immutable";
 
 import {
 	baseName,
@@ -15,11 +14,11 @@ import {
 	name,
 	parentPath,
 	Path,
-	path,
 	pathEquals,
 	pathExists,
 	pathStatus,
 	pathToString,
+	realPath,
 	relativePath,
 	resolvePath,
 } from "./fs-path";
@@ -145,9 +144,6 @@ export const entryRelativePath = (from: Entry) => {
 	return (to: Entry): string => relativeTo(entryToPath(to));
 };
 
-export const realPath = (p: Path): Path =>
-	path(realpathSync.native(pathToString(p)));
-
 // Real Path
 
 export const fileRealPath = (file: File): Path => realPath(fileToPath(file));
@@ -204,10 +200,8 @@ export const directoryHasDescendent = (directory: Directory) => {
 	return (descendent: Entry): boolean => predicate(entryToPath(descendent));
 };
 
-export const directoriesHaveDescendent = (
-	directories: Set<Directory & ValueObject>,
-) => {
-	const hasDescendent = directories.map(directoryHasDescendent);
+export const directoriesHaveDescendent = (directories: Iterable<Directory>) => {
+	const hasDescendent = Seq(directories).map(directoryHasDescendent);
 	return (entry: Entry): boolean => hasDescendent.some((test) => test(entry));
 };
 
@@ -217,7 +211,7 @@ export const hasParentDirectory = (entry: Entry): boolean => {
 	return !pathEquals(path, parent);
 };
 
-export const isRootDirectory = (directory: Directory): boolean =>
+export const isTopmostDirectory = (directory: Directory): boolean =>
 	!hasParentDirectory(directory);
 
 /**
@@ -225,6 +219,8 @@ export const isRootDirectory = (directory: Directory): boolean =>
  */
 export const parentDirectory = (entry: Entry): Directory =>
 	directory(parentPath(entryToPath(entry)));
+
+// Entries From Directory
 
 export const fileFromDirectory = (directory: Directory) => {
 	const join = joinPath(directoryToPath(directory));
@@ -236,6 +232,8 @@ export const directoryFromDirectory = (d: Directory) => {
 	return (...directorySegments: string[]): Directory =>
 		directory(join(...directorySegments));
 };
+
+// Upward Directories
 
 export const upwardDirectoriesFromDirectory = function*(
 	directory: Directory,
@@ -261,6 +259,7 @@ export const upwardDirectories: (
 /**
  * @postcondition entryExists(entry) is sufficient for the topmost directory to
  * exist.
+ * @postcondition The topmost directory has no parent.
  */
 export const topmostDirectory = (entry: Entry): Directory =>
 	directory(resolvePath(entryToPath(entry))("/"));

@@ -1,4 +1,4 @@
-import { existsSync, Stats as Status, statSync } from "fs-extra";
+import { existsSync, realpathSync, Stats as Status, statSync } from "fs-extra";
 import {
 	basename,
 	dirname,
@@ -67,3 +67,6 @@ export const pathExists = (path: Path): boolean =>
  * @precondition pathExists(path)
  */
 export const pathStatus = (path: Path): Status => statSync(pathToString(path));
+
+export const realPath = (p: Path): Path =>
+	path(realpathSync.native(pathToString(p)));
