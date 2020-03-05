@@ -1,20 +1,20 @@
 language: node_js
 node_js:
-  - "12"
+    - "12"
 
 cache: yarn
 
 install:
-  - yarn global add lerna jest
-  - lerna bootstrap
+    - yarn global add lerna jest
+    - lerna bootstrap
 
 script:
-  - yarn test
-  - yarn build
+    - yarn test
+    - yarn build
 
 deploy:
-  - provider: script
-    script: yarn pack && yarn deploy
-    on:
-      tags: true
-      branch: master
+    - provider: script
+      script: yarn pack && yarn deploy
+      on:
+          tags: true
+          branch: master
