@@ -17,3 +17,6 @@ export const isTypeIterable = <T>(
 	isOfType: (element: unknown) => element is T,
 ): element is Iterable<T> => isIterable(element) && every(element, isOfType);
 
+export const isArray = (element: unknown): element is any[] =>
+	Array.isArray(element);
+

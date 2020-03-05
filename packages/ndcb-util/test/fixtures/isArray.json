@@ -1,0 +1,22 @@
+[
+	{
+		"input": [1, 2, 3],
+		"expected": true
+	},
+	{
+		"input": null,
+		"expected": false
+	},
+	{
+		"input": {},
+		"expected": false
+	},
+	{
+		"input": 0,
+		"expected": false
+	},
+	{
+		"input": "String",
+		"expected": false
+	}
+]

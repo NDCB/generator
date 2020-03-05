@@ -4,6 +4,7 @@ import {
 	isObject,
 	isIterable,
 	isTypeIterable,
+	isArray,
 } from "../src/type";
 
 describe("isString", () => {
@@ -47,6 +48,14 @@ describe("isTypeIterable", () => {
 	} of require("./fixtures/isTypeIterable")) {
 		test(description, () => {
 			expect(isTypeIterable(input, ofType)).toBe(expected);
+		});
+	}
+});
+
+describe("isArray", () => {
+	for (const { input, expected } of require("./fixtures/isArray.json")) {
+		test(`returns "${expected}" for input "${input}"`, () => {
+			expect(isArray(input)).toBe(expected);
 		});
 	}
 });
