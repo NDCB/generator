@@ -1,0 +1,54 @@
+{
+	"name": "generator-monorepo",
+	"private": true,
+	"description": "A static website generator.",
+	"license": "MIT",
+	"author": "Marc-Antoine Ouimet <ouimetmarcantoine@gmail.com>",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/NDCB/generator.git"
+	},
+	"homepage": "https://github.com/NDCB/generator#readme",
+	"bugs": {
+		"url": "https://github.com/NDCB/generator/issues",
+		"email": "ouimetmarcantoine@gmail.com"
+	},
+	"scripts": {
+		"bootstrap": "lerna bootstrap",
+		"build": "lerna exec tsc",
+		"docs": "lerna exec typedoc",
+		"clean": "lerna clean",
+		"release": "lerna publish",
+		"test": "jest",
+		"coverage": "jest --coverage",
+		"watch": "jest --watch",
+		"pack": "lerna exec yarn pack"
+	},
+	"devDependencies": {
+		"@types/jest": "^25.1.3",
+		"@types/node": "^13.7.7",
+		"cz-conventional-changelog": "^3.1.0",
+		"jest": "^25.1.0",
+		"lerna": "^3.20.2",
+		"semantic-release": "^17.0.4",
+		"ts-jest": "^25.2.1",
+		"typedoc": "^0.16.11",
+		"typescript": "^3.8.3"
+	},
+	"jest": {
+		"verbose": true,
+		"testEnvironment": "node",
+		"rootDir": "packages",
+		"transform": {
+			"^.+\\.ts?$": "ts-jest"
+		}
+	},
+	"workspaces": [
+		"./packages/*"
+	],
+	"config": {
+		"commitizen": {
+			"path": "./node_modules/cz-conventional-changelog"
+		}
+	}
+}
