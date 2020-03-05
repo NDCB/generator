@@ -20,3 +20,8 @@ export const isTypeIterable = <T>(
 export const isArray = (element: unknown): element is any[] =>
 	Array.isArray(element);
 
+export const isTypeArray = <T>(
+	element: unknown,
+	isOfType: (element: unknown) => element is T,
+): element is T[] => isArray(element) && isTypeIterable(element, isOfType);
+
