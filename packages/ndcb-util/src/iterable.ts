@@ -16,3 +16,13 @@ export const iterableToString = <T>(
 	result += "]";
 	return result;
 };
+
+export const orderedPairs = function*<T>(
+	iterable: Iterable<T>,
+): Iterable<[T, T]> {
+	for (const e1 of iterable) {
+		for (const e2 of iterable) {
+			yield [e1, e2];
+		}
+	}
+};
