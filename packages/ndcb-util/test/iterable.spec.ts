@@ -2,6 +2,7 @@ import {
 	orderedPairs,
 	iterableToString,
 	unorderedPairs,
+	every,
 } from "../src/iterable";
 
 describe("iterableToString", () => {
@@ -15,6 +16,19 @@ describe("iterableToString", () => {
 			expect(iterableToString(input, stringify, delimiter)).toBe(
 				expected,
 			);
+		});
+	}
+});
+
+describe("every", () => {
+	for (const {
+		input,
+		predicate,
+		expected,
+		description,
+	} of require("./fixtures/every")) {
+		test(description, () => {
+			expect(every(input, predicate)).toBe(expected);
 		});
 	}
 });
