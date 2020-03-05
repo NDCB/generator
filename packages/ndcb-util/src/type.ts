@@ -1,3 +1,5 @@
+import { every } from "./iterable";
+
 export const isString = (element: unknown): element is string =>
 	typeof element === "string";
 
@@ -9,4 +11,9 @@ export const isObject = (element: unknown): element is object =>
 
 export const isIterable = (element: unknown): element is Iterable<any> =>
 	element !== null && !!element[Symbol.iterator];
+
+export const isTypeIterable = <T>(
+	element: unknown,
+	isOfType: (element: unknown) => element is T,
+): element is Iterable<T> => isIterable(element) && every(element, isOfType);
 

@@ -1,4 +1,10 @@
-import { isNumber, isString, isObject, isIterable } from "../src/type";
+import {
+	isNumber,
+	isString,
+	isObject,
+	isIterable,
+	isTypeIterable,
+} from "../src/type";
 
 describe("isString", () => {
 	for (const { input, expected } of require("./fixtures/isString.json")) {
@@ -28,6 +34,19 @@ describe("isIterable", () => {
 	for (const { input, expected } of require("./fixtures/isIterable.json")) {
 		test(`returns "${expected}" for input "${input}"`, () => {
 			expect(isIterable(input)).toBe(expected);
+		});
+	}
+});
+
+describe("isTypeIterable", () => {
+	for (const {
+		input,
+		ofType,
+		expected,
+		description,
+	} of require("./fixtures/isTypeIterable")) {
+		test(description, () => {
+			expect(isTypeIterable(input, ofType)).toBe(expected);
 		});
 	}
 });
