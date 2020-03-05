@@ -11,3 +11,10 @@ install:
 script:
   - yarn test
   - yarn build
+
+deploy:
+  - provider: script
+		script: yarn pack && yarn deploy
+    on:
+			tags: true
+      branch: master

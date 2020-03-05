@@ -6,6 +6,7 @@ coverage/
 
 packages/*/lib
 packages/*/docs
+packages/*/*.tgz
 
 *.log
 *.tsbuildinfo
