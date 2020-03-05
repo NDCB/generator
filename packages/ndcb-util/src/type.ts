@@ -7,3 +7,6 @@ export const isNumber = (element: unknown): element is number =>
 export const isObject = (element: unknown): element is object =>
 	element !== null && typeof element === "object";
 
+export const isIterable = (element: unknown): element is Iterable<any> =>
+	element !== null && !!element[Symbol.iterator];
+
