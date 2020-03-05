@@ -25,3 +25,5 @@ export const isTypeArray = <T>(
 	isOfType: (element: unknown) => element is T,
 ): element is T[] => isArray(element) && isTypeIterable(element, isOfType);
 
+export const isStringArray = (element: unknown): element is string[] =>
+	isTypeArray(element, isString);
