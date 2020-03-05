@@ -1,7 +1,6 @@
 module.exports = [
 	{
 		input: [],
-		stringify: (n: number): string => `${n}`,
 		delimiter: ", ",
 		expected: "[]",
 	},
@@ -14,12 +13,10 @@ module.exports = [
 	{
 		input: [1, 2],
 		stringify: (n: number): string => `${n}`,
-		delimiter: ", ",
 		expected: "[1, 2]",
 	},
 	{
 		input: [1, 2, 3, 4],
-		stringify: (n: number): string => `${n}`,
 		delimiter: "; ",
 		expected: "[1; 2; 3; 4]",
 	},
