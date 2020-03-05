@@ -44,7 +44,13 @@
 		"rootDir": "packages",
 		"transform": {
 			"^.+\\.ts?$": "ts-jest"
-		}
+		},
+		"testPathIgnorePatterns": [
+			"fixtures"
+		],
+		"coveragePathIgnorePatterns": [
+			"fixtures"
+		]
 	},
 	"workspaces": [
 		"./packages/*"
