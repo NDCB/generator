@@ -26,3 +26,15 @@ export const orderedPairs = function*<T>(
 		}
 	}
 };
+
+export const unorderedPairs = function*<T>(
+	iterable: Iterable<T>,
+): Iterable<[T, T]> {
+	const elements: T[] = [];
+	for (const e2 of iterable) {
+		for (const e1 of elements) {
+			yield [e1, e2];
+		}
+		elements.push(e2);
+	}
+};

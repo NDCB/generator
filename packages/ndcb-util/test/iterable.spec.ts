@@ -1,4 +1,8 @@
-import { orderedPairs, iterableToString } from "../src/iterable";
+import {
+	orderedPairs,
+	iterableToString,
+	unorderedPairs,
+} from "../src/iterable";
 
 describe("iterableToString", () => {
 	for (const {
@@ -22,6 +26,20 @@ describe("orderedPairs", () => {
 			(e) => `[${e}]`,
 		)}" for input "${iterableToString(input)}"`, () => {
 			expect([...orderedPairs(input)]).toStrictEqual(expected);
+		});
+	}
+});
+
+describe("unorderedPairs", () => {
+	for (const {
+		input,
+		expected,
+	} of require("./fixtures/unorderedPairs.json")) {
+		test(`returns "${iterableToString(
+			expected,
+			(e) => `[${e}]`,
+		)}" for input "${iterableToString(input)}"`, () => {
+			expect([...unorderedPairs(input)]).toStrictEqual(expected);
 		});
 	}
 });
