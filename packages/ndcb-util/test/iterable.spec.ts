@@ -6,6 +6,7 @@ import {
 	some,
 	filter,
 	map,
+	first,
 } from "../src/iterable";
 
 describe("iterableToString", () => {
@@ -71,6 +72,18 @@ describe("map", () => {
 	} of require("./fixtures/map")) {
 		test(description, () => {
 			expect([...map(input, mapper)]).toStrictEqual(expected);
+		});
+	}
+});
+
+describe("first", () => {
+	for (const {
+		input,
+		expected,
+		description,
+	} of require("./fixtures/first")) {
+		test(description, () => {
+			expect(first(input)).toBe(expected);
 		});
 	}
 });

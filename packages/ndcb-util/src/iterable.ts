@@ -52,6 +52,13 @@ export const filter = function*<T>(
 	}
 };
 
+export const first = <T>(iterable: Iterable<T>): T | null => {
+	for (const element of iterable) {
+		return element;
+	}
+	return null;
+};
+
 export const map = function*<T, K>(
 	iterable: Iterable<T>,
 	mapper: (element: T) => K,
