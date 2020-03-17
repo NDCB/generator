@@ -4,6 +4,7 @@ import {
 	unorderedPairs,
 	every,
 	some,
+	filter,
 } from "../src/iterable";
 
 describe("iterableToString", () => {
@@ -43,6 +44,19 @@ describe("some", () => {
 	} of require("./fixtures/some")) {
 		test(description, () => {
 			expect(some(input, predicate)).toBe(expected);
+		});
+	}
+});
+
+describe("filter", () => {
+	for (const {
+		input,
+		predicate,
+		expected,
+		description,
+	} of require("./fixtures/filter")) {
+		test(description, () => {
+			expect([...filter(input, predicate)]).toStrictEqual(expected);
 		});
 	}
 });

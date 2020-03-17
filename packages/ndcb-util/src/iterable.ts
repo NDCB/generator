@@ -41,6 +41,17 @@ export const some = <T>(
 	return false;
 };
 
+export const filter = function*<T>(
+	iterable: Iterable<T>,
+	predicate: (element: T) => boolean,
+): Iterable<T> {
+	for (const element of iterable) {
+		if (predicate(element)) {
+			yield element;
+		}
+	}
+};
+
 export const orderedPairs = function*<T>(
 	iterable: Iterable<T>,
 ): Iterable<[T, T]> {
