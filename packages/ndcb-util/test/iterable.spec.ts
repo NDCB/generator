@@ -3,6 +3,7 @@ import {
 	iterableToString,
 	unorderedPairs,
 	every,
+	some,
 } from "../src/iterable";
 
 describe("iterableToString", () => {
@@ -29,6 +30,19 @@ describe("every", () => {
 	} of require("./fixtures/every")) {
 		test(description, () => {
 			expect(every(input, predicate)).toBe(expected);
+		});
+	}
+});
+
+describe("some", () => {
+	for (const {
+		input,
+		predicate,
+		expected,
+		description,
+	} of require("./fixtures/some")) {
+		test(description, () => {
+			expect(some(input, predicate)).toBe(expected);
 		});
 	}
 });
