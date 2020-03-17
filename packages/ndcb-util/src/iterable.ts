@@ -52,6 +52,15 @@ export const filter = function*<T>(
 	}
 };
 
+export const map = function*<T, K>(
+	iterable: Iterable<T>,
+	mapper: (element: T) => K,
+): Iterable<K> {
+	for (const element of iterable) {
+		yield mapper(element);
+	}
+};
+
 export const orderedPairs = function*<T>(
 	iterable: Iterable<T>,
 ): Iterable<[T, T]> {

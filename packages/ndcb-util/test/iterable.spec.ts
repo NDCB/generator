@@ -5,6 +5,7 @@ import {
 	every,
 	some,
 	filter,
+	map,
 } from "../src/iterable";
 
 describe("iterableToString", () => {
@@ -57,6 +58,19 @@ describe("filter", () => {
 	} of require("./fixtures/filter")) {
 		test(description, () => {
 			expect([...filter(input, predicate)]).toStrictEqual(expected);
+		});
+	}
+});
+
+describe("map", () => {
+	for (const {
+		input,
+		mapper,
+		expected,
+		description,
+	} of require("./fixtures/map")) {
+		test(description, () => {
+			expect([...map(input, mapper)]).toStrictEqual(expected);
 		});
 	}
 });
