@@ -7,6 +7,7 @@ import {
 	filter,
 	map,
 	first,
+	reverse,
 } from "../src/iterable";
 
 describe("iterableToString", () => {
@@ -84,6 +85,18 @@ describe("first", () => {
 	} of require("./fixtures/first")) {
 		test(description, () => {
 			expect(first(input)).toBe(expected);
+		});
+	}
+});
+
+describe("reverse", () => {
+	for (const {
+		input,
+		expected,
+		description,
+	} of require("./fixtures/reverse")) {
+		test(description, () => {
+			expect([...reverse(input)]).toStrictEqual(expected);
 		});
 	}
 });

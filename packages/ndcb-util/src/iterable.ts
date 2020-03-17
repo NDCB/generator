@@ -59,6 +59,9 @@ export const first = <T>(iterable: Iterable<T>): T | null => {
 	return null;
 };
 
+export const reverse = <T>(iterable: Iterable<T>): Iterable<T> =>
+	[...iterable].reverse();
+
 export const map = function*<T, K>(
 	iterable: Iterable<T>,
 	mapper: (element: T) => K,
