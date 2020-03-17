@@ -1,12 +1,12 @@
 import {
-	isNumber,
-	isString,
-	isObject,
-	isIterable,
-	isTypeIterable,
 	isArray,
-	isTypeArray,
+	isIterable,
+	isNumber,
+	isObject,
+	isString,
 	isStringArray,
+	isTypeArray,
+	isTypeIterable,
 } from "../src/type";
 
 describe("isString", () => {

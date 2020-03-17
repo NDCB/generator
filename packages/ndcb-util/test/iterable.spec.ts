@@ -1,14 +1,14 @@
 import {
-	orderedPairs,
-	iterableToString,
-	unorderedPairs,
 	every,
-	some,
 	filter,
-	map,
-	first,
-	reverse,
 	find,
+	first,
+	iterableToString,
+	map,
+	orderedPairs,
+	reverse,
+	some,
+	unorderedPairs,
 } from "../src/iterable";
 
 describe("iterableToString", () => {
