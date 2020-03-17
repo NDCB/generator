@@ -8,6 +8,7 @@ import {
 	map,
 	first,
 	reverse,
+	find,
 } from "../src/iterable";
 
 describe("iterableToString", () => {
@@ -97,6 +98,19 @@ describe("reverse", () => {
 	} of require("./fixtures/reverse")) {
 		test(description, () => {
 			expect([...reverse(input)]).toStrictEqual(expected);
+		});
+	}
+});
+
+describe("find", () => {
+	for (const {
+		input,
+		predicate,
+		expected,
+		description,
+	} of require("./fixtures/find")) {
+		test(description, () => {
+			expect(find(input, predicate)).toBe(expected);
 		});
 	}
 });

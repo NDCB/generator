@@ -59,6 +59,11 @@ export const first = <T>(iterable: Iterable<T>): T | null => {
 	return null;
 };
 
+export const find = <T>(
+	iterable: Iterable<T>,
+	predicate: (element: T) => boolean,
+): T | null => first(filter(iterable, predicate));
+
 export const reverse = <T>(iterable: Iterable<T>): Iterable<T> =>
 	[...iterable].reverse();
 
