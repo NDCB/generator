@@ -13,3 +13,17 @@ export const depthFirstTreeTraversal = function*<T>(
 		yield element;
 	}
 };
+
+export const breadthFirstTreeTraversal = function*<T>(
+	root: T,
+	children: (element: T) => Iterable<T>,
+): Iterable<T> {
+	const elementsToTraverse = [root];
+	while (elementsToTraverse.length > 0) {
+		const element = elementsToTraverse.shift();
+		for (const child of children(element)) {
+			elementsToTraverse.push(child);
+		}
+		yield element;
+	}
+};

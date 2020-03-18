@@ -1,4 +1,7 @@
-import { depthFirstTreeTraversal } from "../src/graph";
+import {
+	depthFirstTreeTraversal,
+	breadthFirstTreeTraversal,
+} from "../src/graph";
 
 describe("depthFirstTreeTraversal", () => {
 	for (const {
@@ -11,6 +14,21 @@ describe("depthFirstTreeTraversal", () => {
 			expect([...depthFirstTreeTraversal(root, children)]).toStrictEqual(
 				expected,
 			);
+		});
+	}
+});
+
+describe("breadthFirstTreeTraversal", () => {
+	for (const {
+		root,
+		children,
+		expected,
+		description,
+	} of require("./fixtures/breadthFirstTreeTraversal")) {
+		test(description, () => {
+			expect([
+				...breadthFirstTreeTraversal(root, children),
+			]).toStrictEqual(expected);
 		});
 	}
 });
