@@ -7,10 +7,10 @@ export const depthFirstTreeTraversal = function*<T>(
 	const elementsToTraverse = [root];
 	while (elementsToTraverse.length > 0) {
 		const element = elementsToTraverse.pop();
+		yield element;
 		for (const child of reverse(children(element))) {
 			elementsToTraverse.push(child);
 		}
-		yield element;
 	}
 };
 
@@ -21,9 +21,9 @@ export const breadthFirstTreeTraversal = function*<T>(
 	const elementsToTraverse = [root];
 	while (elementsToTraverse.length > 0) {
 		const element = elementsToTraverse.shift();
+		yield element;
 		for (const child of children(element)) {
 			elementsToTraverse.push(child);
 		}
-		yield element;
 	}
 };
