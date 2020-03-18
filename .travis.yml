@@ -14,7 +14,7 @@ script:
 
 deploy:
     - provider: script
-      script: yarn pack && yarn deploy
+      script: yarn run pack && yarn run deploy
       on:
           tags: true
           branch: master
