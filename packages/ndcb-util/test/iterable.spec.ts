@@ -10,6 +10,7 @@ import {
 	some,
 	unorderedPairs,
 	flatMap,
+	concat,
 } from "../src/iterable";
 
 describe("iterableToString", () => {
@@ -112,6 +113,19 @@ describe("reverse", () => {
 	} of require("./fixtures/reverse")) {
 		test(description, () => {
 			expect([...reverse(input)]).toStrictEqual(expected);
+		});
+	}
+});
+
+describe("concat", () => {
+	for (const {
+		input,
+		rest,
+		expected,
+		description,
+	} of require("./fixtures/concat")) {
+		test(description, () => {
+			expect([...concat(input, ...rest)]).toStrictEqual(expected);
 		});
 	}
 });

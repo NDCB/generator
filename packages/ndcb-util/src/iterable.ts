@@ -67,6 +67,16 @@ export const find = <T>(
 export const reverse = <T>(iterable: Iterable<T>): Iterable<T> =>
 	[...iterable].reverse();
 
+export const concat = function*<T>(
+	iterable: Iterable<T>,
+	...iterables: Array<Iterable<T>>
+): Iterable<T> {
+	yield* iterable;
+	for (const iterable of iterables) {
+		yield* iterable;
+	}
+};
+
 export const map = function*<T, K>(
 	iterable: Iterable<T>,
 	mapper: (element: T) => K,
