@@ -9,6 +9,7 @@ import {
 	reverse,
 	some,
 	unorderedPairs,
+	flatMap,
 } from "../src/iterable";
 
 describe("iterableToString", () => {
@@ -74,6 +75,19 @@ describe("map", () => {
 	} of require("./fixtures/map")) {
 		test(description, () => {
 			expect([...map(input, mapper)]).toStrictEqual(expected);
+		});
+	}
+});
+
+describe("flatMap", () => {
+	for (const {
+		input,
+		mapper,
+		expected,
+		description,
+	} of require("./fixtures/flatMap")) {
+		test(description, () => {
+			expect([...flatMap(input, mapper)]).toStrictEqual(expected);
 		});
 	}
 });

@@ -76,6 +76,15 @@ export const map = function*<T, K>(
 	}
 };
 
+export const flatMap = function*<T, K>(
+	iterable: Iterable<T>,
+	mapper: (element: T) => Iterable<K>,
+): Iterable<K> {
+	for (const mappedIterables of map(iterable, mapper)) {
+		yield* mappedIterables;
+	}
+};
+
 export const orderedPairs = function*<T>(
 	iterable: Iterable<T>,
 ): Iterable<[T, T]> {
