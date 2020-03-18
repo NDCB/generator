@@ -134,11 +134,12 @@ describe("find", () => {
 	for (const {
 		input,
 		predicate,
+		ifNotFound,
 		expected,
 		description,
 	} of require("./fixtures/find")) {
 		test(description, () => {
-			expect(find(input, predicate)).toBe(expected);
+			expect(find(input, predicate, ifNotFound)).toBe(expected);
 		});
 	}
 });
