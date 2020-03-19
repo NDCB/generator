@@ -9,8 +9,8 @@ install:
     - lerna bootstrap
 
 script:
-    - yarn test
     - yarn build
+    - yarn test
 
 deploy:
     - provider: script
