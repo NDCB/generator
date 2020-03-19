@@ -48,5 +48,5 @@ export const sequence = <T>(iterable: Iterable<T>): Sequence<T> => ({
 	unorderedPairs: () => sequence(unorderedPairs(iterable)),
 	toString: (elementToString, delimiter) =>
 		iterableToString(iterable, elementToString, delimiter),
-	[Symbol.iterator]: iterable[Symbol.iterator],
+	[Symbol.iterator]: () => iterable[Symbol.iterator](),
 });
