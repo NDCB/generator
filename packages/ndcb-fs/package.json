@@ -12,5 +12,8 @@
 	],
 	"dependencies": {
 		"@ndcb/util": "^0.2.1"
+	},
+	"publishConfig": {
+		"access": "public"
 	}
 }

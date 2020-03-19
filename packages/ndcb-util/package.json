@@ -9,5 +9,8 @@
 	"license": "MIT",
 	"files": [
 		"lib"
-	]
+	],
+	"publishConfig": {
+		"access": "public"
+	}
 }

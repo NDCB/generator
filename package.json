@@ -24,7 +24,7 @@
 		"coverage": "jest --coverage",
 		"watch": "jest --watch",
 		"pack": "lerna exec yarn pack",
-		"deploy": "lerna exec \"npm publish *.tgz --access public\"",
+		"deploy": "lerna exec npm publish *.tgz",
 		"commit": "git-cz"
 	},
 	"devDependencies": {

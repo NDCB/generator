@@ -12,9 +12,17 @@ script:
     - yarn build
     - yarn test
 
+before_deploy:
+    - echo "registry=https://registry.npmjs.org/" > ~/.npmrc
+    - echo "email=${NPM_EMAIL}" >> ~/.npmrc
+    - echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+
 deploy:
     - provider: script
       script: yarn run pack && yarn run deploy
       on:
           tags: true
           branch: master
+
+after_deploy:
+    - rm ~/.npmrc
