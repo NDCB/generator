@@ -1,0 +1,12 @@
+[
+	{
+		"input": ".",
+		"expected": ["."],
+		"description": "yields the input path"
+	},
+	{
+		"input": "./1/2/3",
+		"expected": ["./1/2/3", "./1/2", "./1", "."],
+		"description": "yields the upward relative paths"
+	}
+]
