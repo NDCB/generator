@@ -1,6 +1,6 @@
 import { basename, dirname, extname, join, normalize } from "path";
 
-import { hashString } from "@ndcb/util";
+import { hashString, map } from "@ndcb/util";
 
 import { extension, Extension, extensionToString } from "./extension";
 
@@ -101,5 +101,32 @@ export const relativePathWithExtension = (
 			basename(pathAsString, extname(pathAsString)) +
 				extensionToString(extension),
 		),
+	);
+};
+
+/**
+ * Constructs relative paths corresponding to the given one with its extension
+ * name replaced with each of the given extensions.
+ *
+ * If the given relative path has no extension name, then the given extension
+ * name is appended. Otherwise, the extension name is replaced.
+ *
+ * @param path The relative path from which to construct the new ones. It is
+ * assumed to have a trailing non-empty and non-`".."` segment.
+ * @param extensions The extension names of the new relative paths.
+ *
+ * @return The new relative paths.
+ */
+export const relativePathWithExtensions = (
+	path: RelativePath,
+	extensions: Iterable<Extension>,
+): Iterable<RelativePath> => {
+	const pathAsString = relativePathToString(path);
+	const base = join(
+		dirname(pathAsString),
+		basename(pathAsString, extname(pathAsString)),
+	);
+	return map(extensions, (extension) =>
+		relativePath(base + extensionToString(extension)),
 	);
 };

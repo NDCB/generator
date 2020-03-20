@@ -5,6 +5,7 @@ import { extension } from "../src/extension";
 import {
 	normalizedRelativePath,
 	relativePathWithExtension,
+	relativePathWithExtensions,
 	upwardRelativePaths,
 } from "../src/relativePath";
 
@@ -38,6 +39,26 @@ describe("relativePathWithExtension", () => {
 					extension(target),
 				),
 			).toStrictEqual(normalizedRelativePath(expected));
+		});
+	}
+});
+
+describe("relativePathWithExtensions", () => {
+	for (const {
+		input,
+		targets,
+		expected,
+		description,
+	} of require("./fixtures/relativePathWithExtensions")) {
+		test(description, () => {
+			expect([
+				...relativePathWithExtensions(
+					normalizedRelativePath(input),
+					sequence(targets).map(extension),
+				),
+			]).toStrictEqual([
+				...sequence(expected).map(normalizedRelativePath),
+			]);
 		});
 	}
 });
