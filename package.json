@@ -45,10 +45,12 @@
 			"^.+\\.ts?$": "ts-jest"
 		},
 		"testPathIgnorePatterns": [
-			"fixtures"
+			"fixtures",
+			"lib"
 		],
 		"coveragePathIgnorePatterns": [
-			"fixtures"
+			"fixtures",
+			"lib"
 		]
 	},
 	"workspaces": [
