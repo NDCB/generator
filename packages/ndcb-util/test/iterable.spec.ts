@@ -1,16 +1,17 @@
 import {
+	concat,
 	every,
 	filter,
 	find,
 	first,
+	flatMap,
 	iterableToString,
 	map,
 	orderedPairs,
+	prepend,
 	reverse,
 	some,
 	unorderedPairs,
-	flatMap,
-	concat,
 } from "../src/iterable";
 
 describe("iterableToString", () => {
@@ -126,6 +127,19 @@ describe("concat", () => {
 	} of require("./fixtures/concat")) {
 		test(description, () => {
 			expect([...concat(input, ...rest)]).toStrictEqual(expected);
+		});
+	}
+});
+
+describe("prepend", () => {
+	for (const {
+		input,
+		element,
+		expected,
+		description,
+	} of require("./fixtures/prepend")) {
+		test(description, () => {
+			expect([...prepend(input, element)]).toStrictEqual(expected);
 		});
 	}
 });
