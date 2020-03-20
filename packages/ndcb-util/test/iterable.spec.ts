@@ -10,6 +10,7 @@ import {
 	map,
 	orderedPairs,
 	prepend,
+	rest,
 	reverse,
 	some,
 	takeWhile,
@@ -104,6 +105,14 @@ describe("first", () => {
 	} of require("./fixtures/first")) {
 		test(description, () => {
 			expect(first(input)).toBe(expected);
+		});
+	}
+});
+
+describe("rest", () => {
+	for (const { input, expected, description } of require("./fixtures/rest")) {
+		test(description, () => {
+			expect([...rest(input)]).toStrictEqual(expected);
 		});
 	}
 });

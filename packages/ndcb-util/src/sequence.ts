@@ -10,6 +10,7 @@ import {
 	map,
 	orderedPairs,
 	prepend,
+	rest,
 	reverse,
 	some,
 	takeWhile,
@@ -23,6 +24,7 @@ export interface Sequence<T> extends Iterable<T> {
 	map: <K>(mapper: (element: T) => K) => Sequence<K>;
 	flatMap: <K>(mapper: (element: T) => Iterable<K>) => Sequence<K>;
 	first: () => T | null;
+	rest: () => Sequence<T>;
 	find: (
 		predicate: (element: T) => boolean,
 		ifNotFound?: () => T,
@@ -47,6 +49,7 @@ export const sequence = <T>(iterable: Iterable<T>): Sequence<T> => ({
 	map: (mapper) => sequence(map(iterable, mapper)),
 	flatMap: (mapper) => sequence(flatMap(iterable, mapper)),
 	first: () => first(iterable),
+	rest: () => sequence(rest(iterable)),
 	find: (predicate, ifNotFound?) => find(iterable, predicate, ifNotFound),
 	reverse: () => sequence(reverse(iterable)),
 	concat: (...iterables) => sequence(concat(iterable, ...iterables)),

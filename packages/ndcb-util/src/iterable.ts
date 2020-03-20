@@ -59,6 +59,17 @@ export const first = <T>(iterable: Iterable<T>): T | null => {
 	return null;
 };
 
+export const rest = function*<T>(iterable: Iterable<T>): Iterable<T> {
+	let firstSkipped = false;
+	for (const element of iterable) {
+		if (firstSkipped) {
+			yield element;
+		} else {
+			firstSkipped = true;
+		}
+	}
+};
+
 export const find = <T>(
 	iterable: Iterable<T>,
 	predicate: (element: T) => boolean,
