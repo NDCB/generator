@@ -97,6 +97,19 @@ export const append = function*<T>(
 	yield element;
 };
 
+export const takeWhile = function*<T>(
+	iterable: Iterable<T>,
+	predicate: (element: T) => boolean,
+): Iterable<T> {
+	for (const element of iterable) {
+		if (predicate(element)) {
+			yield element;
+		} else {
+			break;
+		}
+	}
+};
+
 export const map = function*<T, K>(
 	iterable: Iterable<T>,
 	mapper: (element: T) => K,

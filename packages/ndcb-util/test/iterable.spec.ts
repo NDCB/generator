@@ -12,6 +12,7 @@ import {
 	prepend,
 	reverse,
 	some,
+	takeWhile,
 	unorderedPairs,
 } from "../src/iterable";
 
@@ -154,6 +155,19 @@ describe("append", () => {
 	} of require("./fixtures/append")) {
 		test(description, () => {
 			expect([...append(input, element)]).toStrictEqual(expected);
+		});
+	}
+});
+
+describe("takeWhile", () => {
+	for (const {
+		input,
+		predicate,
+		expected,
+		description,
+	} of require("./fixtures/takeWhile")) {
+		test(description, () => {
+			expect([...takeWhile(input, predicate)]).toStrictEqual(expected);
 		});
 	}
 });
