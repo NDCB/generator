@@ -1,4 +1,4 @@
-import { dirname, normalize } from "path";
+import { dirname, normalize, join } from "path";
 
 import { hashString } from "@ndcb/util";
 
@@ -66,3 +66,8 @@ export const upwardRelativePaths = function*(
 		current = dirname(current);
 	} while (current !== previous);
 };
+
+export const joinRelativePath = (
+	path: RelativePath,
+	segment: string,
+): RelativePath => relativePath(join(relativePathToString(path), segment));
