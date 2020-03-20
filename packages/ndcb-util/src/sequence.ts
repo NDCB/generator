@@ -1,16 +1,19 @@
 import {
-	orderedPairs,
-	every,
-	some,
-	filter,
-	map,
-	unorderedPairs,
-	iterableToString,
-	first,
-	reverse,
-	find,
-	flatMap,
+	append,
 	concat,
+	every,
+	filter,
+	find,
+	first,
+	flatMap,
+	iterableToString,
+	map,
+	orderedPairs,
+	prepend,
+	reverse,
+	some,
+	takeWhile,
+	unorderedPairs,
 } from "./iterable";
 
 export interface Sequence<T> extends Iterable<T> {
@@ -26,6 +29,9 @@ export interface Sequence<T> extends Iterable<T> {
 	) => T | null;
 	reverse: () => Sequence<T>;
 	concat: (...iterables: Array<Iterable<T>>) => Sequence<T>;
+	prepend: (element: T) => Sequence<T>;
+	append: (element: T) => Sequence<T>;
+	takeWhile: (predicate: (element: T) => boolean) => Sequence<T>;
 	orderedPairs: () => Sequence<[T, T]>;
 	unorderedPairs: () => Sequence<[T, T]>;
 	toString: (
@@ -44,6 +50,9 @@ export const sequence = <T>(iterable: Iterable<T>): Sequence<T> => ({
 	find: (predicate, ifNotFound?) => find(iterable, predicate, ifNotFound),
 	reverse: () => sequence(reverse(iterable)),
 	concat: (...iterables) => sequence(concat(iterable, ...iterables)),
+	prepend: (element) => sequence(prepend(iterable, element)),
+	append: (element) => sequence(append(iterable, element)),
+	takeWhile: (predicate) => sequence(takeWhile(iterable, predicate)),
 	orderedPairs: () => sequence(orderedPairs(iterable)),
 	unorderedPairs: () => sequence(unorderedPairs(iterable)),
 	toString: (elementToString, delimiter) =>
