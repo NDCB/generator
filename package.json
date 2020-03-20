@@ -19,12 +19,11 @@
 		"docs": "lerna exec typedoc",
 		"clean": "lerna clean",
 		"version": "lerna version",
-		"release": "lerna publish",
 		"test": "jest",
 		"coverage": "jest --coverage",
 		"watch": "jest --watch",
 		"pack": "lerna exec yarn pack",
-		"deploy": "lerna exec npm publish *.tgz",
+		"deploy": "lerna publish from-git",
 		"commit": "git-cz"
 	},
 	"devDependencies": {
