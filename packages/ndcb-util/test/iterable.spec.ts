@@ -1,4 +1,5 @@
 import {
+	append,
 	concat,
 	every,
 	filter,
@@ -140,6 +141,19 @@ describe("prepend", () => {
 	} of require("./fixtures/prepend")) {
 		test(description, () => {
 			expect([...prepend(input, element)]).toStrictEqual(expected);
+		});
+	}
+});
+
+describe("append", () => {
+	for (const {
+		input,
+		element,
+		expected,
+		description,
+	} of require("./fixtures/append")) {
+		test(description, () => {
+			expect([...append(input, element)]).toStrictEqual(expected);
 		});
 	}
 });

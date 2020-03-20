@@ -1,0 +1,14 @@
+[
+	{
+		"input": [],
+		"element": 0,
+		"expected": [0],
+		"description": "appends an element to an empty iterable"
+	},
+	{
+		"input": [1, 2, 3],
+		"element": 4,
+		"expected": [1, 2, 3, 4],
+		"description": "appends an element to a non-empty iterable"
+	}
+]

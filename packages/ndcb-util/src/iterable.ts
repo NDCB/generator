@@ -89,6 +89,14 @@ export const prepend = function*<T>(
 	yield* iterable;
 };
 
+export const append = function*<T>(
+	iterable: Iterable<T>,
+	element: T,
+): Iterable<T> {
+	yield* iterable;
+	yield element;
+};
+
 export const map = function*<T, K>(
 	iterable: Iterable<T>,
 	mapper: (element: T) => K,
