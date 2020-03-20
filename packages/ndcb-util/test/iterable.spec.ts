@@ -187,7 +187,7 @@ describe("find", () => {
 });
 
 describe("orderedPairs", () => {
-	for (const { input, expected } of require("./fixtures/orderedPairs.json")) {
+	for (const { input, expected } of require("./fixtures/orderedPairs")) {
 		test(`returns "${iterableToString(
 			expected,
 			(e) => `[${e}]`,
@@ -198,10 +198,7 @@ describe("orderedPairs", () => {
 });
 
 describe("unorderedPairs", () => {
-	for (const {
-		input,
-		expected,
-	} of require("./fixtures/unorderedPairs.json")) {
+	for (const { input, expected } of require("./fixtures/unorderedPairs")) {
 		test(`returns "${iterableToString(
 			expected,
 			(e) => `[${e}]`,

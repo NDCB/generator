@@ -10,7 +10,7 @@ import {
 } from "../src/type";
 
 describe("isString", () => {
-	for (const { input, expected } of require("./fixtures/isString.json")) {
+	for (const { input, expected } of require("./fixtures/isString")) {
 		test(`returns "${expected}" for input "${input}"`, () => {
 			expect(isString(input)).toBe(expected);
 		});
@@ -18,7 +18,7 @@ describe("isString", () => {
 });
 
 describe("isNumber", () => {
-	for (const { input, expected } of require("./fixtures/isNumber.json")) {
+	for (const { input, expected } of require("./fixtures/isNumber")) {
 		test(`returns "${expected}" for input "${input}"`, () => {
 			expect(isNumber(input)).toBe(expected);
 		});
@@ -26,7 +26,7 @@ describe("isNumber", () => {
 });
 
 describe("isObject", () => {
-	for (const { input, expected } of require("./fixtures/isObject.json")) {
+	for (const { input, expected } of require("./fixtures/isObject")) {
 		test(`returns "${expected}" for input "${input}"`, () => {
 			expect(isObject(input)).toBe(expected);
 		});
@@ -34,7 +34,7 @@ describe("isObject", () => {
 });
 
 describe("isIterable", () => {
-	for (const { input, expected } of require("./fixtures/isIterable.json")) {
+	for (const { input, expected } of require("./fixtures/isIterable")) {
 		test(`returns "${expected}" for input "${input}"`, () => {
 			expect(isIterable(input)).toBe(expected);
 		});
@@ -55,7 +55,7 @@ describe("isTypeIterable", () => {
 });
 
 describe("isArray", () => {
-	for (const { input, expected } of require("./fixtures/isArray.json")) {
+	for (const { input, expected } of require("./fixtures/isArray")) {
 		test(`returns "${expected}" for input "${input}"`, () => {
 			expect(isArray(input)).toBe(expected);
 		});
@@ -76,10 +76,7 @@ describe("isTypeArray", () => {
 });
 
 describe("isStringArray", () => {
-	for (const {
-		input,
-		expected,
-	} of require("./fixtures/isStringArray.json")) {
+	for (const { input, expected } of require("./fixtures/isStringArray")) {
 		test(`returns "${expected}" for input "${input}"`, () => {
 			expect(isStringArray(input)).toBe(expected);
 		});
