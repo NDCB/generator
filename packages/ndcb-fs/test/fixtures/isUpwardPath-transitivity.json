@@ -1,0 +1,12 @@
+[
+	{
+		"a": "/",
+		"b": "/directory",
+		"c": "/directory/subdirectory"
+	},
+	{
+		"a": "/directory",
+		"b": "/directory/subdirectory",
+		"c": "/directory/subdirectory/index.html"
+	}
+]

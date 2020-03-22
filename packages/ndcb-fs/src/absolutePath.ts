@@ -38,3 +38,16 @@ export const resolvedAbsolutePath = (
 	to: RelativePath,
 ): AbsolutePath =>
 	absolutePath(resolve(absolutePathToString(from), relativePathToString(to)));
+
+/**
+ * Determines whether an absolute path is located upwards from another.
+ *
+ * This defines a total order on absolute paths.
+ *
+ * @param up The queried upward path.
+ * @param down The queried downward path.
+ *
+ * @return `true` if `up` is located upwards from `down`, and `false` otherwise.
+ */
+export const isUpwardPath = (up: AbsolutePath, down: AbsolutePath): boolean =>
+	absolutePathToString(down).startsWith(absolutePathToString(up));
