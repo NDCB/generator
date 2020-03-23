@@ -9,7 +9,7 @@ export const isNumber = (element: unknown): element is number =>
 export const isObject = (element: unknown): element is object =>
 	element !== null && typeof element === "object";
 
-export const isIterable = (element: unknown): element is Iterable<any> =>
+export const isIterable = (element: unknown): element is Iterable<unknown> =>
 	element !== null && !!element[Symbol.iterator];
 
 export const isTypeIterable = <T>(
@@ -17,7 +17,7 @@ export const isTypeIterable = <T>(
 	isOfType: (element: unknown) => element is T,
 ): element is Iterable<T> => isIterable(element) && every(element, isOfType);
 
-export const isArray = (element: unknown): element is any[] =>
+export const isArray = (element: unknown): element is unknown[] =>
 	Array.isArray(element);
 
 export const isTypeArray = <T>(

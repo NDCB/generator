@@ -19,5 +19,5 @@ export const extension = (value: string): Extension => ({
 	value,
 });
 
-export const isExtension = (element: any): element is Extension =>
-	!!element && element._tag === "Extension";
+export const isExtension = (element: unknown): element is Extension =>
+	!!element && (element as { _tag } & unknown)._tag === "Extension";

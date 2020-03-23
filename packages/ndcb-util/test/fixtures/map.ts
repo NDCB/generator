@@ -13,7 +13,7 @@ module.exports = [
 	},
 	{
 		input: [1, 2, 3],
-		mapper: () => null,
+		mapper: (): null => null,
 		expected: [null, null, null],
 		description: "handles elements mapped to `null`",
 	},

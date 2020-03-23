@@ -43,6 +43,7 @@ export interface Sequence<T> extends Iterable<T> {
 }
 
 export const sequence = <T>(iterable: Iterable<T>): Sequence<T> => ({
+	/* eslint-disable @typescript-eslint/explicit-function-return-type */
 	every: (predicate) => every(iterable, predicate),
 	some: (predicate) => some(iterable, predicate),
 	filter: (predicate) => sequence(filter(iterable, predicate)),

@@ -1,9 +1,9 @@
 export const iterableToString = <T>(
 	iterable: Iterable<T>,
-	elementToString: (element: T) => string = (e) => `${e}`,
-	delimiter: string = ", ",
+	elementToString: (element: T) => string = (e): string => `${e}`,
+	delimiter = ", ",
 ): string => {
-	let result: string = "[";
+	let result = "[";
 	const iterator = iterable[Symbol.iterator]();
 	let current = iterator.next();
 	while (!current.done) {

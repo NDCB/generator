@@ -1,7 +1,7 @@
 module.exports = [
 	{
 		input: null,
-		ofType: () => true,
+		ofType: (): boolean => true,
 		expected: false,
 		description: 'return "false" if the element is not an array',
 	},
