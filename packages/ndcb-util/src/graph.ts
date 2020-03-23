@@ -1,6 +1,6 @@
 import { reverse } from "./iterable";
 
-export const depthFirstTreeTraversal = function*<T>(
+export const depthFirstTreeTraversal = function* <T>(
 	root: T,
 	children: (node: T) => Iterable<T>,
 ): Iterable<T> {
@@ -14,7 +14,7 @@ export const depthFirstTreeTraversal = function*<T>(
 	}
 };
 
-export const breadthFirstTreeTraversal = function*<T>(
+export const breadthFirstTreeTraversal = function* <T>(
 	root: T,
 	children: (element: T) => Iterable<T>,
 ): Iterable<T> {

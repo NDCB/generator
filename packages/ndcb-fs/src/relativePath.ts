@@ -57,7 +57,7 @@ export const normalizedRelativePath = (value: string): RelativePath =>
  *
  * @return The iterable over the upward relative paths.
  */
-export const upwardRelativePaths = function*(
+export const upwardRelativePaths = function* (
 	path: RelativePath,
 ): Iterable<RelativePath> {
 	let current: string = relativePathToString(path);

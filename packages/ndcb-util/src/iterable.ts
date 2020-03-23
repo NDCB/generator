@@ -41,7 +41,7 @@ export const some = <T>(
 	return false;
 };
 
-export const filter = function*<T>(
+export const filter = function* <T>(
 	iterable: Iterable<T>,
 	predicate: (element: T) => boolean,
 ): Iterable<T> {
@@ -59,7 +59,7 @@ export const first = <T>(iterable: Iterable<T>): T | null => {
 	return null;
 };
 
-export const rest = function*<T>(iterable: Iterable<T>): Iterable<T> {
+export const rest = function* <T>(iterable: Iterable<T>): Iterable<T> {
 	let firstSkipped = false;
 	for (const element of iterable) {
 		if (firstSkipped) {
@@ -82,7 +82,7 @@ export const find = <T>(
 export const reverse = <T>(iterable: Iterable<T>): Iterable<T> =>
 	[...iterable].reverse();
 
-export const concat = function*<T>(
+export const concat = function* <T>(
 	iterable: Iterable<T>,
 	...iterables: Array<Iterable<T>>
 ): Iterable<T> {
@@ -92,7 +92,7 @@ export const concat = function*<T>(
 	}
 };
 
-export const prepend = function*<T>(
+export const prepend = function* <T>(
 	iterable: Iterable<T>,
 	element: T,
 ): Iterable<T> {
@@ -100,7 +100,7 @@ export const prepend = function*<T>(
 	yield* iterable;
 };
 
-export const append = function*<T>(
+export const append = function* <T>(
 	iterable: Iterable<T>,
 	element: T,
 ): Iterable<T> {
@@ -108,7 +108,7 @@ export const append = function*<T>(
 	yield element;
 };
 
-export const takeWhile = function*<T>(
+export const takeWhile = function* <T>(
 	iterable: Iterable<T>,
 	predicate: (element: T) => boolean,
 ): Iterable<T> {
@@ -121,7 +121,7 @@ export const takeWhile = function*<T>(
 	}
 };
 
-export const map = function*<T, K>(
+export const map = function* <T, K>(
 	iterable: Iterable<T>,
 	mapper: (element: T) => K,
 ): Iterable<K> {
@@ -130,7 +130,7 @@ export const map = function*<T, K>(
 	}
 };
 
-export const flatMap = function*<T, K>(
+export const flatMap = function* <T, K>(
 	iterable: Iterable<T>,
 	mapper: (element: T) => Iterable<K>,
 ): Iterable<K> {
@@ -139,7 +139,7 @@ export const flatMap = function*<T, K>(
 	}
 };
 
-export const orderedPairs = function*<T>(
+export const orderedPairs = function* <T>(
 	iterable: Iterable<T>,
 ): Iterable<[T, T]> {
 	for (const e1 of iterable) {
@@ -149,7 +149,7 @@ export const orderedPairs = function*<T>(
 	}
 };
 
-export const unorderedPairs = function*<T>(
+export const unorderedPairs = function* <T>(
 	iterable: Iterable<T>,
 ): Iterable<[T, T]> {
 	const elements: T[] = [];
