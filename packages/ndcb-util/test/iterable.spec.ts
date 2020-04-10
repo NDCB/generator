@@ -3,6 +3,7 @@ import {
 	concat,
 	every,
 	filter,
+	filterForType,
 	find,
 	first,
 	flatMap,
@@ -67,6 +68,21 @@ describe("filter", () => {
 	} of require("./fixtures/filter")) {
 		test(description, () => {
 			expect([...filter(input, predicate)]).toStrictEqual(expected);
+		});
+	}
+});
+
+describe("filterForType", () => {
+	for (const {
+		input,
+		assertion,
+		expected,
+		description,
+	} of require("./fixtures/filterForType")) {
+		test(description, () => {
+			expect([...filterForType(input, assertion)]).toStrictEqual(
+				expected,
+			);
 		});
 	}
 });

@@ -52,6 +52,11 @@ export const filter = function* <T>(
 	}
 };
 
+export const filterForType = <T>(
+	iterable: Iterable<unknown>,
+	assertion: (element: unknown) => element is T,
+): Iterable<T> => filter(iterable, assertion) as Iterable<T>;
+
 export const first = <T>(iterable: Iterable<T>): T | null => {
 	for (const element of iterable) {
 		return element;
