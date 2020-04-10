@@ -1,7 +1,10 @@
+import { statSync } from "fs";
+
 import {
 	AbsolutePath,
 	absolutePathEquals,
 	absolutePathToString,
+	pathExists,
 } from "./absolutePath";
 
 const FILE: unique symbol = Symbol();
@@ -31,3 +34,8 @@ export const fileToString = (file: File): string =>
 
 export const fileEquals = (f1: File, f2: File): boolean =>
 	absolutePathEquals(fileToPath(f1), fileToPath(f2));
+
+export const fileExists = (file: File): boolean => {
+	const path = fileToPath(file);
+	return pathExists(path) && statSync(absolutePathToString(path)).isFile();
+};

@@ -3,6 +3,7 @@ import { normalize, resolve } from "path";
 import { hashString } from "@ndcb/util";
 
 import { RelativePath, relativePathToString } from "./relativePath";
+import { existsSync } from "fs";
 
 const ABSOLUTE_PATH = Symbol();
 
@@ -40,6 +41,9 @@ export const resolvedAbsolutePath = (
 	to: RelativePath,
 ): AbsolutePath =>
 	absolutePath(resolve(absolutePathToString(from), relativePathToString(to)));
+
+export const pathExists = (path: AbsolutePath): boolean =>
+	existsSync(absolutePathToString(path));
 
 /**
  * Determines whether an absolute path is located upwards from another.

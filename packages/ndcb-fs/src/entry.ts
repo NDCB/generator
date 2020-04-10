@@ -5,8 +5,16 @@ import {
 	directoryToPath,
 	directoryToString,
 	isDirectory,
+	directoryExists,
 } from "./directory";
-import { File, file, fileToPath, fileToString, isFile } from "./file";
+import {
+	File,
+	file,
+	fileToPath,
+	fileToString,
+	isFile,
+	fileExists,
+} from "./file";
 
 /**
  * A file system entry representation in the file system.
@@ -59,3 +67,8 @@ export const entryToFile = (entry: Entry): File =>
 
 export const entryToDirectory = (entry: Entry): Directory =>
 	entryIsDirectory(entry) ? entry : directory(entryToPath(entry));
+
+export const entryExists: (entry: Entry) => boolean = matchEntry({
+	file: fileExists,
+	directory: directoryExists,
+});

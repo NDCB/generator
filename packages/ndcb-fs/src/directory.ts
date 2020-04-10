@@ -2,7 +2,9 @@ import {
 	AbsolutePath,
 	absolutePathEquals,
 	absolutePathToString,
+	pathExists,
 } from "./absolutePath";
+import { statSync } from "fs";
 
 const DIRECTORY: unique symbol = Symbol();
 
@@ -32,3 +34,10 @@ export const directoryToString = (directory: Directory): string =>
 
 export const directoryEquals = (d1: Directory, d2: Directory): boolean =>
 	absolutePathEquals(directoryToPath(d1), directoryToPath(d2));
+
+export const directoryExists = (directory: Directory): boolean => {
+	const path = directoryToPath(directory);
+	return (
+		pathExists(path) && statSync(absolutePathToString(path)).isDirectory()
+	);
+};
