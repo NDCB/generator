@@ -1,6 +1,6 @@
 {
 	"name": "@ndcb/fs",
-	"version": "0.1.0",
+	"version": "0.2.0-alpha.0",
 	"description": "Website file system and abstractions",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
