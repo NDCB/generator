@@ -1,6 +1,6 @@
 import {
-	depthFirstTreeTraversal,
 	breadthFirstTreeTraversal,
+	depthFirstTreeTraversal,
 } from "../src/graph";
 
 describe("depthFirstTreeTraversal", () => {

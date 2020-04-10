@@ -1,7 +1,6 @@
 import { sequence } from "@ndcb/util";
 
 import { extension } from "../src/extension";
-
 import {
 	normalizedRelativePath,
 	relativePathWithExtension,

@@ -4,6 +4,8 @@ import { hashString, map } from "@ndcb/util";
 
 import { extension, Extension, extensionToString } from "./extension";
 
+const RELATIVE_PATH = Symbol();
+
 /**
  * A relative path between entries in the file system.
  *
@@ -12,18 +14,8 @@ import { extension, Extension, extensionToString } from "./extension";
  */
 export interface RelativePath {
 	readonly value: string;
-	readonly _tag: "RelativePath";
+	readonly [RELATIVE_PATH]: true;
 }
-
-export const relativePathToString = (path: RelativePath): string => path.value;
-
-export const relativePathEquals = (
-	p1: RelativePath,
-	p2: RelativePath,
-): boolean => p1.value === p2.value;
-
-export const hashRelativePath = (path: RelativePath): number =>
-	hashString(relativePathToString(path));
 
 /**
  * Constructs a relative path of a given value.
@@ -35,8 +27,18 @@ export const hashRelativePath = (path: RelativePath): number =>
  */
 export const relativePath = (value: string): RelativePath => ({
 	value,
-	_tag: "RelativePath",
+	[RELATIVE_PATH]: true,
 });
+
+export const relativePathToString = (path: RelativePath): string => path.value;
+
+export const relativePathEquals = (
+	p1: RelativePath,
+	p2: RelativePath,
+): boolean => p1.value === p2.value;
+
+export const hashRelativePath = (path: RelativePath): number =>
+	hashString(relativePathToString(path));
 
 /**
  * Constructs a relative path of a given value, normalized.

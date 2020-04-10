@@ -1,5 +1,5 @@
-import { File, fileToString, file } from "./../../src/file";
-import { Directory, directoryToString, directory } from "./../../src/directory";
+import { File, file, fileToString } from "./../../src/file";
+import { directory, Directory, directoryToString } from "./../../src/directory";
 import { Entry } from "./../../src/entry";
 import { normalizedAbsolutePath } from "../../src/absolutePath";
 

@@ -4,6 +4,8 @@ import { hashString } from "@ndcb/util";
 
 import { RelativePath, relativePathToString } from "./relativePath";
 
+const ABSOLUTE_PATH = Symbol();
+
 /**
  * An absolute path to an entry in the file system.
  *
@@ -12,8 +14,13 @@ import { RelativePath, relativePathToString } from "./relativePath";
  */
 export interface AbsolutePath {
 	readonly value: string;
-	readonly _tag: "AbsolutePath";
+	readonly [ABSOLUTE_PATH]: true;
 }
+
+export const absolutePath = (value: string): AbsolutePath => ({
+	value,
+	[ABSOLUTE_PATH]: true,
+});
 
 export const absolutePathToString = (path: AbsolutePath): string => path.value;
 
@@ -24,11 +31,6 @@ export const absolutePathEquals = (
 
 export const hashAbsolutePath = (path: AbsolutePath): number =>
 	hashString(absolutePathToString(path));
-
-export const absolutePath = (value: string): AbsolutePath => ({
-	value,
-	_tag: "AbsolutePath",
-});
 
 export const normalizedAbsolutePath = (value: string): AbsolutePath =>
 	absolutePath(normalize(value));

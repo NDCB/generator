@@ -1,9 +1,16 @@
 import { hashString } from "@ndcb/util";
 
+const EXTENSION = Symbol();
+
 export interface Extension {
-	readonly _tag: "Extension";
 	readonly value: string;
+	readonly [EXTENSION]: true;
 }
+
+export const extension = (value: string): Extension => ({
+	value,
+	[EXTENSION]: true,
+});
 
 export const extensionToString = (extension: Extension): string =>
 	extension.value;
@@ -13,11 +20,6 @@ export const extensionEquals = (e1: Extension, e2: Extension): boolean =>
 
 export const hashExtension = (extension: Extension): number =>
 	hashString(extensionToString(extension));
-
-export const extension = (value: string): Extension => ({
-	_tag: "Extension",
-	value,
-});
 
 export const isExtension = (element: unknown): element is Extension =>
 	!!element && (element as { _tag } & unknown)._tag === "Extension";

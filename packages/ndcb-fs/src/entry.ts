@@ -1,12 +1,12 @@
 import { AbsolutePath, absolutePathEquals } from "./absolutePath";
 import {
-	directory,
 	Directory,
+	directory,
 	directoryToPath,
 	directoryToString,
 	isDirectory,
 } from "./directory";
-import { file, File, fileToPath, fileToString, isFile } from "./file";
+import { File, file, fileToPath, fileToString, isFile } from "./file";
 
 /**
  * A file system entry representation in the file system.
