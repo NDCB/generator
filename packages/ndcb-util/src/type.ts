@@ -7,10 +7,12 @@ export const isNumber = (element: unknown): element is number =>
 	typeof element === "number";
 
 export const isObject = (element: unknown): element is object =>
-	element !== null && typeof element === "object";
+	typeof element === "object";
 
 export const isIterable = (element: unknown): element is Iterable<unknown> =>
-	element !== null && !!element[Symbol.iterator];
+	(isObject(element) || isString(element)) &&
+	element !== null &&
+	!!element[Symbol.iterator];
 
 export const isTypeIterable = <T>(
 	element: unknown,

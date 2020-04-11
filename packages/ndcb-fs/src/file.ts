@@ -20,7 +20,7 @@ export interface File {
 }
 
 export const isFile = (element: unknown): element is File =>
-	!!element && element[FILE];
+	typeof element === "object" && !!element && element[FILE];
 
 export const file = (path: AbsolutePath): File => ({
 	path,

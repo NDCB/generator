@@ -1,7 +1,7 @@
 [
 	{
 		"input": null,
-		"expected": false
+		"expected": true
 	},
 	{
 		"input": "String",

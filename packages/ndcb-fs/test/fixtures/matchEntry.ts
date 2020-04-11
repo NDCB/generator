@@ -3,16 +3,16 @@ import { directory, Directory, directoryToString } from "./../../src/directory";
 import { Entry } from "./../../src/entry";
 import { normalizedAbsolutePath } from "../../src/absolutePath";
 
-interface TestCase {
+interface TestCase<T = unknown> {
 	readonly entry: Entry;
-	readonly throws: boolean;
-	readonly expected: unknown;
+	readonly throws: false;
+	readonly expected: T;
 }
 
-interface TestScenario {
-	readonly directory: (directory: Directory) => unknown;
-	readonly file: (file: File) => unknown;
-	readonly cases: TestCase[];
+interface TestScenario<T = unknown> {
+	readonly directory: (directory: Directory) => T;
+	readonly file: (file: File) => T;
+	readonly cases: Array<TestCase>;
 }
 
 module.exports = [
@@ -21,7 +21,11 @@ module.exports = [
 			`Directory: ${directoryToString(directory)}`;
 		const fileFunction = (file: File): string =>
 			`File: ${fileToString(file)}`;
-		const cases = [
+		const cases: Array<{
+			path: string;
+			type: "Directory" | "File";
+			description: string;
+		}> = [
 			{
 				path: "/",
 				type: "Directory",
@@ -42,31 +46,24 @@ module.exports = [
 				type: "File",
 				description: "calls the file function on files",
 			},
-			{
-				type: "Error",
-				description: "throws on unmatched objects",
-			},
 		];
 		return {
 			directory: directoryFunction,
 			file: fileFunction,
 			cases: cases.map(({ path, type, description }) => ({
 				description,
-				entry: ((): File | Directory | null => {
+				entry: ((): Entry => {
 					switch (type) {
-						case "Error":
-							return null;
 						case "File":
 							return file(normalizedAbsolutePath(path));
 						case "Directory":
 							return directory(normalizedAbsolutePath(path));
 					}
+					throw new Error();
 				})(),
-				throws: type === "Error",
+				throws: false,
 				expected: ((): unknown => {
 					switch (type) {
-						case "Error":
-							return null;
 						case "File":
 							return fileFunction(
 								file(normalizedAbsolutePath(path)),
@@ -76,8 +73,20 @@ module.exports = [
 								directory(normalizedAbsolutePath(path)),
 							);
 					}
+					throw new Error();
 				})(),
 			})),
 		};
 	})(),
+	{
+		directory: (): null => null,
+		file: (): null => null,
+		cases: [
+			{
+				throws: true,
+				expected: null,
+				description: "throws on unmatched objects",
+			},
+		],
+	},
 ];

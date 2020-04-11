@@ -22,7 +22,7 @@ export interface Directory {
 }
 
 export const isDirectory = (element: unknown): element is Directory =>
-	!!element && element[DIRECTORY];
+	typeof element === "object" && !!element && element[DIRECTORY];
 
 export const directory = (path: AbsolutePath): Directory => ({
 	path,

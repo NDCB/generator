@@ -18,7 +18,7 @@ describe("upwardRelativePaths", () => {
 			expect([
 				...upwardRelativePaths(normalizedRelativePath(input)),
 			]).toStrictEqual([
-				...sequence(expected).map(normalizedRelativePath),
+				...sequence<string>(expected).map(normalizedRelativePath),
 			]);
 		});
 	}
@@ -53,10 +53,10 @@ describe("relativePathWithExtensions", () => {
 			expect([
 				...relativePathWithExtensions(
 					normalizedRelativePath(input),
-					sequence(targets).map(extension),
+					sequence<string>(targets).map(extension),
 				),
 			]).toStrictEqual([
-				...sequence(expected).map(normalizedRelativePath),
+				...sequence<string>(expected).map(normalizedRelativePath),
 			]);
 		});
 	}
