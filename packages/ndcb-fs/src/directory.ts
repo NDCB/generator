@@ -3,8 +3,11 @@ import {
 	absolutePathEquals,
 	absolutePathToString,
 	pathExists,
+	resolvedAbsolutePath,
 } from "./absolutePath";
 import { statSync } from "fs";
+import { RelativePath } from "./relativePath";
+import { file, File } from "./file";
 
 const DIRECTORY: unique symbol = Symbol();
 
@@ -41,3 +44,11 @@ export const directoryExists = (directory: Directory): boolean => {
 		pathExists(path) && statSync(absolutePathToString(path)).isDirectory()
 	);
 };
+
+export const fileFromDirectory = (from: Directory) => (
+	to: RelativePath,
+): File => file(resolvedAbsolutePath(directoryToPath(from), to));
+
+export const directoryFromDirectory = (from: Directory) => (
+	to: RelativePath,
+): Directory => directory(resolvedAbsolutePath(directoryToPath(from), to));

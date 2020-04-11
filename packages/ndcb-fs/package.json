@@ -11,7 +11,7 @@
 		"lib"
 	],
 	"dependencies": {
-		"@ndcb/util": "^0.3.0"
+		"@ndcb/util": "^0.4.0"
 	},
 	"publishConfig": {
 		"access": "public"
