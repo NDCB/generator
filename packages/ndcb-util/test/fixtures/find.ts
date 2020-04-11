@@ -26,4 +26,10 @@ module.exports = [
 		expected: 2,
 		description: "returns the first found element",
 	},
+	{
+		input: [false],
+		predicate: (p: boolean): boolean => !p,
+		expected: false,
+		description: "returns the first found element, even if it is falsy",
+	},
 ];

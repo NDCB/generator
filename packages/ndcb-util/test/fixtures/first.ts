@@ -9,4 +9,10 @@ module.exports = [
 		expected: 1,
 		description: "returns the first element of a non-empty iterable",
 	},
+	{
+		input: [],
+		otherwise: (): number => 0,
+		expected: 0,
+		description: "returns the otherwise supplier if the iterable is empty",
+	},
 ];

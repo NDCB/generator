@@ -116,11 +116,12 @@ describe("flatMap", () => {
 describe("first", () => {
 	for (const {
 		input,
+		otherwise,
 		expected,
 		description,
 	} of require("./fixtures/first")) {
 		test(description, () => {
-			expect(first(input)).toBe(expected);
+			expect(first(input, otherwise)).toBe(expected);
 		});
 	}
 });

@@ -57,12 +57,14 @@ export const filterForType = <T>(
 	assertion: (element: unknown) => element is T,
 ): Iterable<T> => filter(iterable, assertion) as Iterable<T>;
 
-export const first = <T>(iterable: Iterable<T>): T | null => {
+export function first<T>(iterable: Iterable<T>): T | null;
+export function first<T>(iterable: Iterable<T>, otherwise: () => T): T;
+export function first<T>(iterable, otherwise = (): null => null): T | null {
 	for (const element of iterable) {
 		return element;
 	}
-	return null;
-};
+	return otherwise();
+}
 
 export const rest = function* <T>(iterable: Iterable<T>): Iterable<T> {
 	let firstSkipped = false;
@@ -75,14 +77,22 @@ export const rest = function* <T>(iterable: Iterable<T>): Iterable<T> {
 	}
 };
 
-export const find = <T>(
+export function find<T>(
 	iterable: Iterable<T>,
 	predicate: (element: T) => boolean,
-	ifNotFound?: () => T,
-): T | null => {
-	const found = first(filter(iterable, predicate));
-	return !found && !!ifNotFound ? ifNotFound() : found;
-};
+): T | null;
+export function find<T>(
+	iterable: Iterable<T>,
+	predicate: (element: T) => boolean,
+	otherwise: () => T,
+): T;
+export function find<T>(
+	iterable,
+	predicate,
+	otherwise = (): null => null,
+): T | null {
+	return first(filter(iterable, predicate), otherwise);
+}
 
 export const reverse = <T>(iterable: Iterable<T>): Iterable<T> =>
 	[...iterable].reverse();
