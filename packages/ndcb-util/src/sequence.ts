@@ -18,6 +18,16 @@ import {
 	unorderedPairs,
 } from "./iterable";
 
+interface First<T> {
+	(): T | null;
+	(otherwise: () => T): T;
+}
+
+interface Find<T> {
+	(predicate: (element: T) => boolean): T | null;
+	(predicate: (element: T) => boolean, otherwise: () => T): T;
+}
+
 export interface Sequence<T> extends Iterable<T> {
 	every: (predicate: (element: T) => boolean) => boolean;
 	some: (predicate: (element: T) => boolean) => boolean;
@@ -27,12 +37,9 @@ export interface Sequence<T> extends Iterable<T> {
 	) => Sequence<K>;
 	map: <K>(mapper: (element: T) => K) => Sequence<K>;
 	flatMap: <K>(mapper: (element: T) => Iterable<K>) => Sequence<K>;
-	first: () => T | null;
+	first: First<T>;
 	rest: () => Sequence<T>;
-	find: (
-		predicate: (element: T) => boolean,
-		ifNotFound?: () => T,
-	) => T | null;
+	find: Find<T>;
 	reverse: () => Sequence<T>;
 	concat: (...iterables: Array<Iterable<T>>) => Sequence<T>;
 	prepend: (element: T) => Sequence<T>;
@@ -54,9 +61,9 @@ export const sequence = <T>(iterable: Iterable<T>): Sequence<T> => ({
 	filterForType: (assertion) => sequence(filterForType(iterable, assertion)),
 	map: (mapper) => sequence(map(iterable, mapper)),
 	flatMap: (mapper) => sequence(flatMap(iterable, mapper)),
-	first: () => first(iterable),
+	first: (otherwise?) => first(iterable, otherwise),
 	rest: () => sequence(rest(iterable)),
-	find: (predicate, ifNotFound?) => find(iterable, predicate, ifNotFound),
+	find: (predicate, otherwise?) => find(iterable, predicate, otherwise),
 	reverse: () => sequence(reverse(iterable)),
 	concat: (...iterables) => sequence(concat(iterable, ...iterables)),
 	prepend: (element) => sequence(prepend(iterable, element)),
