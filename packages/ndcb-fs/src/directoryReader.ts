@@ -10,8 +10,8 @@ import {
 	fileFromDirectory,
 	directoryFromDirectory,
 } from "./directory";
-import { Entry, entryIsFile } from "./entry";
-import { File } from "./file";
+import { Entry } from "./entry";
+import { File, isFile } from "./file";
 import { relativePath } from "./relativePath";
 
 export const directoryEntryAsEntry = (
@@ -55,4 +55,4 @@ export const readDirectory: DirectoryReader = (directory) =>
 
 export const readDirectoryFiles = (readDirectory: DirectoryReader) => (
 	directory: Directory,
-): Iterable<File> => filterForType(readDirectory(directory), entryIsFile);
+): Iterable<File> => filterForType(readDirectory(directory), isFile);
