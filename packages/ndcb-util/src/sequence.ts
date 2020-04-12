@@ -3,7 +3,6 @@ import {
 	concat,
 	every,
 	filter,
-	filterForType,
 	find,
 	first,
 	flatMap,
@@ -28,13 +27,15 @@ interface Find<T> {
 	(predicate: (element: T) => boolean, otherwise: () => T): T;
 }
 
+interface Filter<T> {
+	(predicate: (element: T) => boolean): Sequence<T>;
+	<K>(assertion: (element: T | K) => element is K): Sequence<K>;
+}
+
 export interface Sequence<T> extends Iterable<T> {
 	every: (predicate: (element: T) => boolean) => boolean;
 	some: (predicate: (element: T) => boolean) => boolean;
-	filter: (predicate: (element: T) => boolean) => Sequence<T>;
-	filterForType: <K>(
-		assertion: (element: unknown) => element is K,
-	) => Sequence<K>;
+	filter: Filter<T>;
 	map: <K>(mapper: (element: T) => K) => Sequence<K>;
 	flatMap: <K>(mapper: (element: T) => Iterable<K>) => Sequence<K>;
 	first: First<T>;
@@ -58,7 +59,6 @@ export const sequence = <T>(iterable: Iterable<T>): Sequence<T> => ({
 	every: (predicate) => every(iterable, predicate),
 	some: (predicate) => some(iterable, predicate),
 	filter: (predicate) => sequence(filter(iterable, predicate)),
-	filterForType: (assertion) => sequence(filterForType(iterable, assertion)),
 	map: (mapper) => sequence(map(iterable, mapper)),
 	flatMap: (mapper) => sequence(flatMap(iterable, mapper)),
 	first: (otherwise?) => first(iterable, otherwise),
