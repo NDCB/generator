@@ -3,7 +3,6 @@ import {
 	concat,
 	every,
 	filter,
-	filterForType,
 	find,
 	first,
 	flatMap,
@@ -72,7 +71,18 @@ describe("filter", () => {
 	}
 });
 
-describe("filterForType", () => {
+describe("filter type assertion", () => {
+	test("type checks", () => {
+		const xs: Iterable<number | string> = [1, 2, "3", 4, "5", 6];
+		const ns: Iterable<number> = filter<number | string, number>(
+			xs,
+			(x): x is number => typeof x === "number",
+		);
+		expect([...ns]).toStrictEqual([1, 2, 4, 6]);
+	});
+});
+
+describe("filter type assertion yield", () => {
 	for (const {
 		input,
 		assertion,
@@ -80,9 +90,7 @@ describe("filterForType", () => {
 		description,
 	} of require("./fixtures/filterForType")) {
 		test(description, () => {
-			expect([...filterForType(input, assertion)]).toStrictEqual(
-				expected,
-			);
+			expect([...filter(input, assertion)]).toStrictEqual(expected);
 		});
 	}
 });

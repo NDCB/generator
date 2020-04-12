@@ -41,7 +41,11 @@ export const some = <T>(
 	return false;
 };
 
-export const filter = function* <T>(
+export function filter<T, K>(
+	iterable: Iterable<T | K>,
+	assertion: (element: T | K) => element is K,
+): Iterable<K>;
+export function* filter<T>(
 	iterable: Iterable<T>,
 	predicate: (element: T) => boolean,
 ): Iterable<T> {
@@ -50,12 +54,7 @@ export const filter = function* <T>(
 			yield element;
 		}
 	}
-};
-
-export const filterForType = <T>(
-	iterable: Iterable<unknown>,
-	assertion: (element: unknown) => element is T,
-): Iterable<T> => filter(iterable, assertion) as Iterable<T>;
+}
 
 export function first<T>(iterable: Iterable<T>): T | null;
 export function first<T>(iterable: Iterable<T>, otherwise: () => T): T;
