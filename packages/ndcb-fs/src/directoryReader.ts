@@ -1,6 +1,6 @@
 import { readdirSync } from "fs";
 
-import { map, filterForType } from "@ndcb/util";
+import { map, filter } from "@ndcb/util";
 
 import { absolutePathToString } from "./absolutePath";
 import {
@@ -55,4 +55,4 @@ export const readDirectory: DirectoryReader = (directory) =>
 
 export const readDirectoryFiles = (readDirectory: DirectoryReader) => (
 	directory: Directory,
-): Iterable<File> => filterForType(readDirectory(directory), isFile);
+): Iterable<File> => filter(readDirectory(directory), isFile);
