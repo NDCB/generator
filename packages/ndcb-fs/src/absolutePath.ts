@@ -1,9 +1,9 @@
-import { normalize, resolve } from "path";
+import { existsSync } from "fs";
+import { normalize, resolve, sep } from "path";
 
-import { hashString } from "@ndcb/util";
+import { hashString, rest } from "@ndcb/util";
 
 import { RelativePath, relativePathToString } from "./relativePath";
-import { existsSync } from "fs";
 
 const ABSOLUTE_PATH = Symbol();
 
@@ -57,3 +57,6 @@ export const pathExists = (path: AbsolutePath): boolean =>
  */
 export const isUpwardPath = (up: AbsolutePath, down: AbsolutePath): boolean =>
 	absolutePathToString(down).startsWith(absolutePathToString(up));
+
+export const segments = (path: AbsolutePath): Iterable<string> =>
+	rest(absolutePathToString(path).split(sep));
