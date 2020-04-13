@@ -76,8 +76,10 @@ export const joinRelativePath = (
 	segment: string,
 ): RelativePath => relativePath(join(relativePathToString(path), segment));
 
-export const relativePathExtension = (path: RelativePath): Extension =>
-	extension(extname(relativePathToString(path)));
+export const relativePathExtension = (path: RelativePath): Extension | null => {
+	const extensionName = extname(relativePathToString(path));
+	return !extensionName ? null : extension(extensionName);
+};
 
 /**
  * Constructs a relative path corresponding to the given one with its extension
