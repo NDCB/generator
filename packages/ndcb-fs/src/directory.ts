@@ -1,13 +1,15 @@
+import { statSync } from "fs";
+
 import {
 	AbsolutePath,
+	absolutePath,
 	absolutePathEquals,
 	absolutePathToString,
 	pathExists,
 	resolvedAbsolutePath,
 } from "./absolutePath";
-import { statSync } from "fs";
-import { RelativePath } from "./relativePath";
 import { file, File } from "./file";
+import { RelativePath } from "./relativePath";
 
 const DIRECTORY: unique symbol = Symbol();
 
@@ -44,6 +46,9 @@ export const directoryExists = (directory: Directory): boolean => {
 		pathExists(path) && statSync(absolutePathToString(path)).isDirectory()
 	);
 };
+
+export const currentWorkingDirectory = (): Directory =>
+	directory(absolutePath(process.cwd()));
 
 export const fileFromDirectory = (from: Directory) => (
 	to: RelativePath,
