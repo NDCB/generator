@@ -10,7 +10,7 @@ import {
 	fileFromDirectory,
 	directoryFromDirectory,
 } from "./directory";
-import { Entry } from "./entry";
+import { Entry, entryIsFile, entryIsDirectory } from "./entry";
 import { File, isFile } from "./file";
 import { relativePath } from "./relativePath";
 
@@ -56,3 +56,37 @@ export const readDirectory: DirectoryReader = (directory) =>
 export const readDirectoryFiles = (readDirectory: DirectoryReader) => (
 	directory: Directory,
 ): Iterable<File> => filter(readDirectory(directory), isFile);
+
+export const downwardEntries = (readDirectory: DirectoryReader) =>
+	function* (directories: Iterable<Directory>): Iterable<Entry> {
+		for (const rootDirectory of directories) {
+			yield rootDirectory;
+			const directoriesToRead: Directory[] = [rootDirectory];
+			while (directoriesToRead.length > 0) {
+				for (const entry of readDirectory(
+					directoriesToRead.shift() as Directory,
+				)) {
+					yield entry;
+					if (entryIsDirectory(entry)) {
+						directoriesToRead.push(entry);
+					}
+				}
+			}
+		}
+	};
+
+export const downwardFiles = (readDirectory: DirectoryReader) =>
+	function* (directories: Iterable<Directory>): Iterable<File> {
+		const directoriesToRead: Directory[] = [...directories];
+		while (directoriesToRead.length > 0) {
+			for (const entry of readDirectory(
+				directoriesToRead.shift() as Directory,
+			)) {
+				if (entryIsFile(entry)) {
+					yield entry;
+				} else if (entryIsDirectory(entry)) {
+					directoriesToRead.push(entry);
+				}
+			}
+		}
+	};
