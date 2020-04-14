@@ -1,4 +1,12 @@
-import { AbsolutePath, absolutePathEquals } from "./absolutePath";
+import { takeWhile } from "@ndcb/util";
+
+import {
+	AbsolutePath,
+	absolutePathEquals,
+	rootPath,
+	parentPath,
+	isUpwardPath,
+} from "./absolutePath";
 import {
 	Directory,
 	directory,
@@ -6,6 +14,7 @@ import {
 	directoryToString,
 	isDirectory,
 	directoryExists,
+	directoryEquals,
 } from "./directory";
 import {
 	File,
@@ -72,3 +81,47 @@ export const entryExists: (entry: Entry) => boolean = matchEntry({
 	file: fileExists,
 	directory: directoryExists,
 });
+
+export const rootDirectory = (entry: Entry): Directory =>
+	directory(rootPath(entryToPath(entry)));
+
+export function parentDirectory(file: File): Directory;
+export function parentDirectory(directory: Directory): Directory | null;
+export function parentDirectory(entry: Entry): Directory | null {
+	const path = parentPath(entryToPath(entry));
+	return !path ? null : directory(path);
+}
+
+const upwardDirectoriesFromDirectory = function* (
+	directory: Directory,
+): Iterable<Directory> {
+	let current: Directory | null = directory;
+	while (current) {
+		yield current;
+		current = parentDirectory(current);
+	}
+};
+
+const upwardDirectoriesFromFile = (file: File): Iterable<Directory> =>
+	upwardDirectoriesFromDirectory(parentDirectory(file));
+
+export const upwardDirectories: (
+	entry: Entry,
+) => Iterable<Directory> = matchEntry({
+	file: upwardDirectoriesFromFile,
+	directory: upwardDirectoriesFromDirectory,
+});
+
+export const directoryHasDescendent = (
+	directory: Directory,
+	entry: Entry,
+): boolean => isUpwardPath(directoryToPath(directory), entryToPath(entry));
+
+export const upwardDirectoriesUntil = (root: Directory) =>
+	function* (entry: Entry): Iterable<Directory> {
+		yield* takeWhile(
+			upwardDirectories(entry),
+			(directory) => !directoryEquals(directory, root),
+		);
+		if (directoryHasDescendent(root, entry)) yield root;
+	};

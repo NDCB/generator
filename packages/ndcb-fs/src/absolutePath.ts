@@ -58,5 +58,13 @@ export const pathExists = (path: AbsolutePath): boolean =>
 export const isUpwardPath = (up: AbsolutePath, down: AbsolutePath): boolean =>
 	absolutePathToString(down).startsWith(absolutePathToString(up));
 
+export const rootPath = (path: AbsolutePath): AbsolutePath =>
+	absolutePath(resolve(absolutePathToString(path), "/"));
+
+export const parentPath = (path: AbsolutePath): AbsolutePath | null => {
+	const parent = absolutePath(resolve(absolutePathToString(path), ".."));
+	return absolutePathEquals(path, parent) ? null : parent;
+};
+
 export const segments = (path: AbsolutePath): Iterable<string> =>
 	rest(absolutePathToString(path).split(sep));
