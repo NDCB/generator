@@ -82,7 +82,7 @@ export const entryExists: (entry: Entry) => boolean = matchEntry({
 	directory: directoryExists,
 });
 
-export const rootDirectory = (entry: Entry): Directory =>
+export const topmostDirectory = (entry: Entry): Directory =>
 	directory(rootPath(entryToPath(entry)));
 
 export function parentDirectory(file: File): Directory;

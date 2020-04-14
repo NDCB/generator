@@ -8,7 +8,12 @@ import {
 	directoryFromDirectory,
 } from "./directory";
 import { DirectoryReader, downwardFiles } from "./directoryReader";
-import { Entry, entryToPath, upwardDirectoriesUntil } from "./entry";
+import {
+	Entry,
+	entryToPath,
+	topmostDirectory,
+	upwardDirectoriesUntil,
+} from "./entry";
 import { Extension, extension } from "./extension";
 import { File } from "./file";
 import { FileContents, FileReader } from "./fileReader";
@@ -68,7 +73,7 @@ export const siteFileSystem = ({
 					directoryToPath(rootDirectory),
 					entryToPath(entry),
 				),
-			() => rootDirectory(entry),
+			() => topmostDirectory(entry),
 		);
 	const possibleBaseRelativePaths = function* (
 		relativePath: RelativePath,
