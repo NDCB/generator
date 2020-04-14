@@ -1,9 +1,13 @@
 import { existsSync } from "fs";
-import { normalize, resolve, sep } from "path";
+import { normalize, resolve, sep, relative } from "path";
 
 import { hashString, rest } from "@ndcb/util";
 
-import { RelativePath, relativePathToString } from "./relativePath";
+import {
+	RelativePath,
+	relativePathToString,
+	relativePath,
+} from "./relativePath";
 
 const ABSOLUTE_PATH = Symbol();
 
@@ -41,6 +45,14 @@ export const resolvedAbsolutePath = (
 	to: RelativePath,
 ): AbsolutePath =>
 	absolutePath(resolve(absolutePathToString(from), relativePathToString(to)));
+
+export const relativePathFromAbsolutePaths = (
+	from: AbsolutePath,
+	to: AbsolutePath,
+): RelativePath =>
+	relativePath(
+		relative(absolutePathToString(from), absolutePathToString(to)),
+	);
 
 export const pathExists = (path: AbsolutePath): boolean =>
 	existsSync(absolutePathToString(path));

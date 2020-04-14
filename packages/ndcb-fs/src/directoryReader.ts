@@ -55,7 +55,7 @@ export const readDirectory: DirectoryReader = (directory) =>
 
 export const readDirectoryFiles = (readDirectory: DirectoryReader) => (
 	directory: Directory,
-): Iterable<File> => filter(readDirectory(directory), isFile);
+): Iterable<File> => filter<Entry, File>(readDirectory(directory), isFile);
 
 export const downwardEntries = (readDirectory: DirectoryReader) =>
 	function* (directories: Iterable<Directory>): Iterable<Entry> {

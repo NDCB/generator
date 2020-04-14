@@ -1,6 +1,6 @@
 import { basename, dirname, extname, join, normalize } from "path";
 
-import { hashString, map } from "@ndcb/util";
+import { hashString, map, isString } from "@ndcb/util";
 
 import { extension, Extension, extensionToString } from "./extension";
 
@@ -71,10 +71,25 @@ export const upwardRelativePaths = function* (
 	} while (current !== previous);
 };
 
-export const joinRelativePath = (
+export function joinRelativePath(
+	path: RelativePath,
+	other: RelativePath,
+): RelativePath;
+export function joinRelativePath(
 	path: RelativePath,
 	segment: string,
-): RelativePath => relativePath(join(relativePathToString(path), segment));
+): RelativePath;
+export function joinRelativePath(
+	path: RelativePath,
+	other: string | RelativePath,
+): RelativePath {
+	return relativePath(
+		join(
+			relativePathToString(path),
+			isString(other) ? other : relativePathToString(other),
+		),
+	);
+}
 
 export const relativePathExtension = (path: RelativePath): Extension | null => {
 	const extensionName = extname(relativePathToString(path));
@@ -88,6 +103,9 @@ export const relativePathExtension = (path: RelativePath): Extension | null => {
  * If the given relative path has no extension name, then the given extension
  * name is appended. Otherwise, the extension name is replaced.
  *
+ * If the given extension is `null`, then the returned relative path has no
+ * extension.
+ *
  * @param path The relative path from which to construct the new one. It is
  * assumed to have a trailing non-empty and non-`".."` segment.
  * @param extension The extension name of the new relative path.
@@ -96,16 +114,14 @@ export const relativePathExtension = (path: RelativePath): Extension | null => {
  */
 export const relativePathWithExtension = (
 	path: RelativePath,
-	extension: Extension,
+	extension: Extension | null,
 ): RelativePath => {
 	const pathAsString = relativePathToString(path);
-	return relativePath(
-		join(
-			dirname(pathAsString),
-			basename(pathAsString, extname(pathAsString)) +
-				extensionToString(extension),
-		),
+	const base = join(
+		dirname(pathAsString),
+		basename(pathAsString, extname(pathAsString)),
 	);
+	return relativePath(extension ? base + extensionToString(extension) : base);
 };
 
 /**
@@ -134,3 +150,9 @@ export const relativePathWithExtensions = (
 		relativePath(base + extensionToString(extension)),
 	);
 };
+
+export const relativePathIsEmpty = (path: RelativePath): boolean =>
+	relativePathToString(path).length === 0;
+
+export const relativePathHasExtension = (path: RelativePath): boolean =>
+	relativePathExtension(path) !== null;
