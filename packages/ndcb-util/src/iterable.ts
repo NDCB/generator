@@ -45,6 +45,10 @@ export function filter<T, K>(
 	iterable: Iterable<T | K>,
 	assertion: (element: T | K) => element is K,
 ): Iterable<K>;
+export function filter<T>(
+	iterable: Iterable<T>,
+	predicate: (element: T) => boolean,
+): Iterable<T>;
 export function* filter<T>(
 	iterable: Iterable<T>,
 	predicate: (element: T) => boolean,
