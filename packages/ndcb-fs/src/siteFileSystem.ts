@@ -27,7 +27,7 @@ export interface SiteFileSystem {
 	readFile: (relativePath: RelativePath) => FileContents | null;
 	readDirectory: (relativePath: RelativePath) => Iterable<Entry>;
 	sourceFile: (relativePath: RelativePath) => File | null;
-	sourceDirectory: (relativePath: RelativePath) => Directory | null;
+	sourceDirectories: (relativePath: RelativePath) => Iterable<Directory>;
 	upwardDirectories: (entry: Entry) => Iterable<Directory>;
 	inheritedFile: (
 		inheritor: Entry,
@@ -115,8 +115,10 @@ export const siteFileSystem = ({
 		map(rootDirectories, (rootDirectory) =>
 			directoryFromDirectory(rootDirectory)(relativePath),
 		);
-	const sourceDirectory = (relativePath: RelativePath): Directory | null =>
-		find(possibleSourceDirectories(relativePath), directoryExists);
+	const sourceDirectories = (
+		relativePath: RelativePath,
+	): Iterable<Directory> =>
+		filter(possibleSourceDirectories(relativePath), directoryExists);
 	const fileReader = (relativePath: RelativePath): FileContents | null => {
 		const file = find(
 			map(rootDirectories, (rootDirectory) =>
@@ -174,7 +176,7 @@ export const siteFileSystem = ({
 		readFile: fileReader,
 		readDirectory: directoryReader,
 		sourceFile,
-		sourceDirectory,
+		sourceDirectories,
 		upwardDirectories,
 		inheritedFile,
 		inheritedFiles,
