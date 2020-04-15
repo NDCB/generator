@@ -145,10 +145,7 @@ describe("siteFileSystem", () => {
 			readDirectory,
 			fileExists,
 			directoryExists,
-		})(
-			sourceExtensions,
-			destinationExtension,
-		)(
+		})({ sourceExtensions, destinationExtension })(
 			...map<string, Directory>(rootDirectories, (rootDirectory) =>
 				directory(normalizedAbsolutePath(rootDirectory)),
 			),

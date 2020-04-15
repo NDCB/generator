@@ -9,4 +9,5 @@ export * from "./directory";
 
 export * from "./directoryReader";
 
+export * from "./extensionMap";
 export * from "./siteFileSystem";

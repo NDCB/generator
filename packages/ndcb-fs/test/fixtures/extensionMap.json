@@ -1,0 +1,62 @@
+[
+	{
+		"definition": [
+			[".md", ".html"],
+			[".mdx", ".html"],
+			[".pug", ".html"],
+			[".scss", ".css"]
+		],
+		"sourceExtensions": [
+			{
+				"input": ".html",
+				"expected": [".md", ".mdx", ".pug", ".html"]
+			},
+			{
+				"input": ".css",
+				"expected": [".css", ".scss"]
+			},
+			{
+				"input": ".png",
+				"expected": [".png"]
+			},
+			{
+				"input": null,
+				"expected": [".html"]
+			}
+		],
+		"destinationExtension": [
+			{
+				"input": ".html",
+				"expected": ".html"
+			},
+			{
+				"input": ".md",
+				"expected": ".html"
+			},
+			{
+				"input": ".mdx",
+				"expected": ".html"
+			},
+			{
+				"input": ".pug",
+				"expected": ".html"
+			},
+			{
+				"input": ".css",
+				"expected": ".css"
+			},
+			{
+				"input": ".scss",
+				"expected": ".css"
+			},
+			{
+				"input": ".png",
+				"expected": ".png"
+			},
+			{
+				"input": null,
+				"expected": null
+			}
+		]
+	}
+]

@@ -14,7 +14,8 @@ import {
 	topmostDirectory,
 	upwardDirectoriesUntil,
 } from "./entry";
-import { Extension, extension } from "./extension";
+import { extension } from "./extension";
+import { ExtensionMap } from "./extensionMap";
 import { File } from "./file";
 import { FileContents, FileReader } from "./fileReader";
 import {
@@ -55,14 +56,9 @@ export const siteFileSystem = ({
 	readDirectory: DirectoryReader;
 	fileExists: (file: File) => boolean;
 	directoryExists: (directory: Directory) => boolean;
-}) => (
-	sourceExtensions: (
-		destinationExtension: Extension | null,
-	) => Iterable<Extension>,
-	destinationExtension: (
-		sourceExtension: Extension | null,
-	) => Extension | null,
-) => (...rootDirectories: Directory[]): SiteFileSystem => {
+}) => ({ sourceExtensions, destinationExtension }: ExtensionMap) => (
+	...rootDirectories: Directory[]
+): SiteFileSystem => {
 	const files = (): Iterable<File> =>
 		downwardFiles(readDirectory)(rootDirectories);
 	const rootDirectory = (entry: Entry): Directory =>

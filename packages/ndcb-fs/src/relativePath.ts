@@ -139,7 +139,7 @@ export const relativePathWithExtension = (
  */
 export const relativePathWithExtensions = (
 	path: RelativePath,
-	extensions: Iterable<Extension>,
+	extensions: Iterable<Extension | null>,
 ): Iterable<RelativePath> => {
 	const pathAsString = relativePathToString(path);
 	const base = join(
@@ -147,7 +147,7 @@ export const relativePathWithExtensions = (
 		basename(pathAsString, extname(pathAsString)),
 	);
 	return map(extensions, (extension) =>
-		relativePath(base + extensionToString(extension)),
+		relativePath(extension ? base + extensionToString(extension) : base),
 	);
 };
 
