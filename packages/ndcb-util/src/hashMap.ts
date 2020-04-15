@@ -1,4 +1,4 @@
-interface HashMapGetter<K, V> {
+export interface HashMapGetter<K, V> {
 	(key: K): V | null;
 	(key: K, otherwise: () => V): V;
 }
