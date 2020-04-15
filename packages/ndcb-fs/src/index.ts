@@ -8,3 +8,5 @@ export * from "./entry";
 export * from "./directory";
 
 export * from "./directoryReader";
+
+export * from "./siteFileSystem";
