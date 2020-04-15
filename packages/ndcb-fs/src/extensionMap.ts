@@ -38,7 +38,7 @@ export const extensionMap = (
 			return [destinationExtension];
 		else
 			return prepend(
-				inverse.get(destinationExtension, () => []),
+				inverse.get(destinationExtension) as Extension[],
 				destinationExtension,
 			);
 	};
