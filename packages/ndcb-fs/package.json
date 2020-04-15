@@ -1,6 +1,6 @@
 {
 	"name": "@ndcb/fs",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"description": "Website file system and abstractions",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -11,7 +11,7 @@
 		"lib"
 	],
 	"dependencies": {
-		"@ndcb/util": "^0.6.0"
+		"@ndcb/util": "^0.6.1"
 	},
 	"publishConfig": {
 		"access": "public"
