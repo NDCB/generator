@@ -40,3 +40,28 @@ export const hashMap = <K, V>(
 	}
 	return { has, get };
 };
+
+export const inversedHashMap = <K, V>(
+	entries: Iterable<[K, V]>,
+	hash: (value: V) => number,
+	equals: (value1: V, value2: V) => boolean,
+): HashMap<V, K[]> => {
+	const inversedEntries = function* (): Iterable<[V, K[]]> {
+		let remainingEntries: Array<[K, V]> = [...entries];
+		let ignoredEntries: Array<[K, V]> = [];
+		while (remainingEntries.length > 0) {
+			const [key, masterValue] = remainingEntries.pop() as [K, V];
+			const keys: K[] = [key];
+			const entry: [V, K[]] = [masterValue, keys];
+			while (remainingEntries.length > 0) {
+				const [key, value] = remainingEntries.pop() as [K, V];
+				if (equals(masterValue, value)) keys.push(key);
+				else ignoredEntries.push([key, value]);
+			}
+			yield entry;
+			remainingEntries = ignoredEntries;
+			ignoredEntries = [];
+		}
+	};
+	return hashMap(inversedEntries(), hash, equals);
+};
