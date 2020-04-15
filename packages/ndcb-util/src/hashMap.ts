@@ -19,7 +19,13 @@ export const hashMap = <K, V>(
 		if (!buckets[hashCode]) buckets[hashCode] = [[key, value]];
 		else buckets[hashCode].push([key, value]);
 	}
-	const has = (key: K): boolean => !!buckets[hash(key)];
+	const has = (key: K): boolean => {
+		const hashCode = hash(key);
+		if (buckets[hashCode])
+			for (const bucket of buckets[hashCode])
+				if (equals(key, bucket[0])) return true;
+		return false;
+	};
 	function get(key: K): V | null;
 	function get(key: K, otherwise: () => V): V;
 	function get(
@@ -28,8 +34,8 @@ export const hashMap = <K, V>(
 	): V | null {
 		const hashCode = hash(key);
 		if (buckets[hashCode])
-			for (const [other, value] of buckets[hashCode])
-				if (equals(key, other)) return value;
+			for (const bucket of buckets[hashCode])
+				if (equals(key, bucket[0])) return bucket[1];
 		return otherwise();
 	}
 	return { has, get };
