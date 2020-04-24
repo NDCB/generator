@@ -1,4 +1,4 @@
-import { find } from "./iterable";
+import { find, some } from "./iterable";
 
 export interface HashMapGetter<K, V> {
 	(key: K): V | null;
@@ -30,24 +30,21 @@ export const hashMap = <K, V>(
 				},
 			)[1] = value;
 	}
-	const has = (key: K): boolean => {
-		const hashCode = hash(key);
-		if (buckets[hashCode])
-			for (const bucket of buckets[hashCode])
-				if (equals(key, bucket[0])) return true;
-		return false;
-	};
+	const has = (key: K): boolean =>
+		some<[K, V]>(buckets[hash(key)] || [], (bucket) =>
+			equals(key, bucket[0]),
+		);
 	function get(key: K): V | null;
 	function get(key: K, otherwise: () => V): V;
 	function get(
 		key: K,
 		otherwise: () => V | null = (): null => null,
 	): V | null {
-		const hashCode = hash(key);
-		if (buckets[hashCode])
-			for (const bucket of buckets[hashCode])
-				if (equals(key, bucket[0])) return bucket[1];
-		return otherwise();
+		return find<[K, V | null]>(
+			buckets[hash(key)] || [],
+			(bucket) => equals(key, bucket[0]),
+			() => [key, otherwise()],
+		)[1];
 	}
 	return { has, get };
 };
