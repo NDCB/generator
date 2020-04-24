@@ -53,4 +53,18 @@ module.exports = [
 			},
 		],
 	},
+	{
+		entries: [
+			[0, 0],
+			[0, 1],
+		],
+		hash: (n: number): number => Math.abs(n),
+		equals: (n1: number, n2: number): boolean => n1 === n2,
+		get: [
+			{
+				key: 0,
+				expected: 1,
+			},
+		],
+	},
 ];

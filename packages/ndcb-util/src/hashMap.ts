@@ -1,3 +1,5 @@
+import { find } from "./iterable";
+
 export interface HashMapGetter<K, V> {
 	(key: K): V | null;
 	(key: K, otherwise: () => V): V;
@@ -17,7 +19,16 @@ export const hashMap = <K, V>(
 	for (const [key, value] of entries) {
 		const hashCode = hash(key);
 		if (!buckets[hashCode]) buckets[hashCode] = [[key, value]];
-		else buckets[hashCode].push([key, value]);
+		else
+			find<[K, V]>(
+				buckets[hashCode],
+				(bucket) => equals(key, bucket[0]),
+				() => {
+					const bucket: [K, V] = [key, value];
+					buckets[hashCode].push(bucket);
+					return bucket;
+				},
+			)[1] = value;
 	}
 	const has = (key: K): boolean => {
 		const hashCode = hash(key);
