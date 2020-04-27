@@ -1,4 +1,4 @@
-import { statSync } from "fs-extra";
+import { statSync, readdirSync, ensureDirSync, emptyDirSync } from "fs-extra";
 
 import {
 	AbsolutePath,
@@ -57,3 +57,12 @@ export const fileFromDirectory = (from: Directory) => (
 export const directoryFromDirectory = (from: Directory) => (
 	to: RelativePath,
 ): Directory => directory(resolvedAbsolutePath(directoryToPath(from), to));
+
+export const ensureDirectory = (directory: Directory): void =>
+	ensureDirSync(absolutePathToString(directoryToPath(directory)));
+
+export const isDirectoryEmpty = (directory: Directory): boolean =>
+	readdirSync(absolutePathToString(directoryToPath(directory))).length === 0;
+
+export const emptyDirectory = (directory: Directory): void =>
+	emptyDirSync(absolutePathToString(directoryToPath(directory)));

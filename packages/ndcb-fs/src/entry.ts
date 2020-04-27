@@ -15,8 +15,10 @@ import {
 	isDirectory,
 	directoryExists,
 	directoryEquals,
+	ensureDirectory,
 } from "./directory";
 import {
+	ensureFile,
 	File,
 	file,
 	fileToPath,
@@ -80,6 +82,11 @@ export const entryToDirectory = (entry: Entry): Directory =>
 export const entryExists: (entry: Entry) => boolean = matchEntry({
 	file: fileExists,
 	directory: directoryExists,
+});
+
+export const ensureEntry: (entry: Entry) => void = matchEntry({
+	file: ensureFile,
+	directory: ensureDirectory,
 });
 
 export const topmostDirectory = (entry: Entry): Directory =>

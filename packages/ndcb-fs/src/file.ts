@@ -1,4 +1,4 @@
-import { statSync } from "fs-extra";
+import { statSync, ensureFileSync } from "fs-extra";
 
 import {
 	AbsolutePath,
@@ -39,3 +39,6 @@ export const fileExists = (file: File): boolean => {
 	const path = fileToPath(file);
 	return pathExists(path) && statSync(absolutePathToString(path)).isFile();
 };
+
+export const ensureFile = (file: File): void =>
+	ensureFileSync(absolutePathToString(fileToPath(file)));
