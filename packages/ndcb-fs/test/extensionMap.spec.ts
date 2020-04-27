@@ -1,7 +1,7 @@
 import { map } from "@ndcb/util";
 
-import { extension, Extension } from "../src/extension";
-import { extensionMap } from "../src/extensionMap";
+import { extension } from "../src/extension";
+import { extensionsMap, ExtensionMap } from "../src/extensionMap";
 
 describe("extensionMap", () => {
 	for (const {
@@ -9,13 +9,13 @@ describe("extensionMap", () => {
 		sourceExtensions,
 		destinationExtension,
 	} of require("./fixtures/extensionMap")) {
-		const extMap = extensionMap(
-			map<[string, string], [Extension, Extension]>(
+		const extMap = extensionsMap(
+			map<[string, string], ExtensionMap>(
 				definition,
-				([source, destination]) => [
-					extension(source),
-					extension(destination),
-				],
+				([sourceValue, destinationValue]) => ({
+					source: extension(sourceValue),
+					destination: extension(destinationValue),
+				}),
 			),
 		);
 		for (const { input, expected } of sourceExtensions) {

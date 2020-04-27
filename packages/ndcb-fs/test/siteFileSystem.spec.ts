@@ -146,7 +146,7 @@ describe("siteFileSystem", () => {
 			fileExists,
 			directoryExists,
 		})({ sourceExtensions, destinationExtension })(
-			...map<string, Directory>(rootDirectories, (rootDirectory) =>
+			map<string, Directory>(rootDirectories, (rootDirectory) =>
 				directory(normalizedAbsolutePath(rootDirectory)),
 			),
 		);

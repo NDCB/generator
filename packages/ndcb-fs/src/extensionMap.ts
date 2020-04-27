@@ -1,4 +1,10 @@
-import { HashMap, hashMap, inversedHashMap, prepend } from "@ndcb/util";
+import {
+	HashMap,
+	hashMap,
+	inversedHashMap,
+	prepend,
+	map as mapIterable,
+} from "@ndcb/util";
 
 import {
 	Extension,
@@ -8,6 +14,11 @@ import {
 } from "./extension";
 
 export interface ExtensionMap {
+	readonly source: Extension;
+	readonly destination: Extension;
+}
+
+export interface ExtensionsMap {
 	sourceExtensions: (
 		destinationExtension: Extension | null,
 	) => Iterable<Extension>;
@@ -16,10 +27,13 @@ export interface ExtensionMap {
 	) => Extension | null;
 }
 
-export const extensionMap = (
-	maps: Iterable<[Extension, Extension]>,
-): ExtensionMap => {
-	const mapsArray: Array<[Extension, Extension]> = [...maps];
+export const extensionsMap = (maps: Iterable<ExtensionMap>): ExtensionsMap => {
+	const mapsArray: Array<[Extension, Extension]> = [
+		...mapIterable<ExtensionMap, [Extension, Extension]>(
+			maps,
+			({ source, destination }) => [source, destination],
+		),
+	];
 	const map: HashMap<Extension, Extension> = hashMap(
 		mapsArray,
 		hashExtension,
@@ -30,10 +44,11 @@ export const extensionMap = (
 		hashExtension,
 		extensionEquals,
 	);
+	const htmlSingleton = [extension(".html")];
 	const sourceExtensions = (
 		destinationExtension: Extension | null,
 	): Iterable<Extension> => {
-		if (!destinationExtension) return [extension(".html")];
+		if (!destinationExtension) return htmlSingleton;
 		else if (!inverse.has(destinationExtension))
 			return [destinationExtension];
 		else
@@ -44,10 +59,9 @@ export const extensionMap = (
 	};
 	const destinationExtension = (
 		sourceExtension: Extension | null,
-	): Extension | null => {
-		return sourceExtension
+	): Extension | null =>
+		sourceExtension
 			? map.get(sourceExtension, () => sourceExtension)
 			: null;
-	};
 	return { sourceExtensions, destinationExtension };
 };

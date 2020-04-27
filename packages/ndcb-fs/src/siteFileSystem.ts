@@ -15,7 +15,7 @@ import {
 	upwardDirectoriesUntil,
 } from "./entry";
 import { extension } from "./extension";
-import { ExtensionMap } from "./extensionMap";
+import { ExtensionsMap } from "./extensionMap";
 import { File } from "./file";
 import { FileContents, FileReader } from "./fileReader";
 import {
@@ -56,14 +56,14 @@ export const siteFileSystem = ({
 	readDirectory: DirectoryReader;
 	fileExists: (file: File) => boolean;
 	directoryExists: (directory: Directory) => boolean;
-}) => ({ sourceExtensions, destinationExtension }: ExtensionMap) => (
-	...rootDirectories: Directory[]
+}) => ({ sourceExtensions, destinationExtension }: ExtensionsMap) => (
+	rootDirectories: Iterable<Directory>,
 ): SiteFileSystem => {
-	const files = (): Iterable<File> =>
-		downwardFiles(readDirectory)(rootDirectories);
+	const roots: Directory[] = [...rootDirectories];
+	const files = (): Iterable<File> => downwardFiles(readDirectory)(roots);
 	const rootDirectory = (entry: Entry): Directory =>
 		find(
-			rootDirectories,
+			roots,
 			(rootDirectory) =>
 				isUpwardPath(
 					directoryToPath(rootDirectory),
@@ -104,7 +104,7 @@ export const siteFileSystem = ({
 		);
 	const possibleSourceFiles = (relativePath: RelativePath): Iterable<File> =>
 		flatMap(possibleSourceRelativePaths(relativePath), (relativePath) =>
-			map(rootDirectories, (rootDirectory) =>
+			map(roots, (rootDirectory) =>
 				fileFromDirectory(rootDirectory)(relativePath),
 			),
 		);
@@ -113,7 +113,7 @@ export const siteFileSystem = ({
 	const possibleSourceDirectories = (
 		relativePath: RelativePath,
 	): Iterable<Directory> =>
-		map(rootDirectories, (rootDirectory) =>
+		map(roots, (rootDirectory) =>
 			directoryFromDirectory(rootDirectory)(relativePath),
 		);
 	const sourceDirectories = (
@@ -122,7 +122,7 @@ export const siteFileSystem = ({
 		filter(possibleSourceDirectories(relativePath), directoryExists);
 	const fileReader = (relativePath: RelativePath): FileContents | null => {
 		const file = find(
-			map(rootDirectories, (rootDirectory) =>
+			map(roots, (rootDirectory) =>
 				fileFromDirectory(rootDirectory)(relativePath),
 			),
 			fileExists,
@@ -132,7 +132,7 @@ export const siteFileSystem = ({
 	const directoryReader = (relativePath: RelativePath): Iterable<Entry> =>
 		flatMap(
 			filter(
-				map(rootDirectories, (rootDirectory) =>
+				map(roots, (rootDirectory) =>
 					directoryFromDirectory(rootDirectory)(relativePath),
 				),
 				directoryExists,
