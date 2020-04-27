@@ -1,4 +1,4 @@
-import { statSync } from "fs";
+import { statSync } from "fs-extra";
 
 import {
 	AbsolutePath,

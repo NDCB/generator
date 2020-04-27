@@ -11,7 +11,11 @@
 		"lib"
 	],
 	"dependencies": {
-		"@ndcb/util": "^0.6.1"
+		"@ndcb/util": "^0.6.1",
+		"fs-extra": "^9.0.0"
+	},
+	"devDependencies": {
+		"@types/fs-extra": "^5.0.2"
 	},
 	"publishConfig": {
 		"access": "public"

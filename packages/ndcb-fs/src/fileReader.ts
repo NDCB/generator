@@ -1,4 +1,4 @@
-import { readFileSync } from "fs";
+import { readFileSync } from "fs-extra";
 
 import { absolutePathToString } from "./absolutePath";
 import { File, fileToPath } from "./file";

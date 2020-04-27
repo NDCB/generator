@@ -1,4 +1,4 @@
-import { existsSync } from "fs";
+import { existsSync } from "fs-extra";
 import { normalize, resolve, sep, relative } from "path";
 
 import { hashString, rest } from "@ndcb/util";
