@@ -18,7 +18,7 @@
 		"build": "lerna exec tsc",
 		"docs": "lerna exec typedoc",
 		"clean": "lerna clean",
-		"version": "lerna version",
+		"version": "lerna version --conventional-commits --no-push",
 		"test": "jest",
 		"coverage": "jest --coverage",
 		"watch": "jest --watch",
