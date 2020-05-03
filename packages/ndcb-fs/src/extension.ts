@@ -22,4 +22,4 @@ export const hashExtension = (extension: Extension): number =>
 	hashString(extensionToString(extension));
 
 export const isExtension = (element: unknown): element is Extension =>
-	!!element && (element as { _tag } & unknown)._tag === "Extension";
+	typeof element === "object" && !!element && element[EXTENSION];
