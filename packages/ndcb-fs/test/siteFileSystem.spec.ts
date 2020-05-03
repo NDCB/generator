@@ -11,7 +11,7 @@ import { directoryToPath, Directory, directory } from "../src/directory";
 import { upwardDirectories, Entry, entryToPath } from "../src/entry";
 import { Extension, extensionToString, extension } from "../src/extension";
 import { File, fileToPath, file } from "../src/file";
-import { FileContents, fileContents } from "../src/fileReader";
+import { FileContents, fileContents } from "../src/fileContents";
 import { normalizedRelativePath } from "../src/relativePath";
 import { siteFileSystem, SiteFileSystem } from "../src/siteFileSystem";
 

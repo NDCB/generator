@@ -17,7 +17,8 @@ import {
 import { extension } from "./extension";
 import { ExtensionsMap } from "./extensionMap";
 import { File } from "./file";
-import { FileContents, FileReader } from "./fileReader";
+import { FileContents } from "./fileContents";
+import { FileReader } from "./fileReader";
 import {
 	RelativePath,
 	relativePathExtension,
