@@ -1,3 +1,5 @@
+import { isObject, isNotNull } from "@ndcb/util";
+
 import { statSync, readdirSync, ensureDirSync, emptyDirSync } from "fs-extra";
 
 import {
@@ -24,7 +26,7 @@ export interface Directory {
 }
 
 export const isDirectory = (element: unknown): element is Directory =>
-	typeof element === "object" && !!element && element[DIRECTORY];
+	isObject(element) && isNotNull(element) && element[DIRECTORY];
 
 export const directory = (path: AbsolutePath): Directory => ({
 	path,
