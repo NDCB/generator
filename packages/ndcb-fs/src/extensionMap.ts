@@ -47,16 +47,13 @@ export const extensionsMap = (maps: Iterable<ExtensionMap>): ExtensionsMap => {
 	const htmlSingleton = [extension(".html")];
 	const sourceExtensions = (
 		destinationExtension: Extension | null,
-	): Iterable<Extension> => {
-		if (!destinationExtension) return htmlSingleton;
-		else if (!inverse.has(destinationExtension))
-			return [destinationExtension];
-		else
-			return prepend(
-				inverse.get(destinationExtension) as Extension[],
-				destinationExtension,
-			);
-	};
+	): Iterable<Extension> =>
+		!destinationExtension
+			? htmlSingleton
+			: prepend(
+					inverse.get(destinationExtension, () => []),
+					destinationExtension,
+			  );
 	const destinationExtension = (
 		sourceExtension: Extension | null,
 	): Extension | null =>

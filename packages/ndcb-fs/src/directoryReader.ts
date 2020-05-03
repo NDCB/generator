@@ -14,7 +14,7 @@ import { Entry, entryIsFile, entryIsDirectory } from "./entry";
 import { File, isFile } from "./file";
 import { relativePath } from "./relativePath";
 
-export const directoryEntryAsEntry = (
+const directoryEntryAsEntry = (
 	directory: Directory,
 ): ((directoryEntry: {
 	name: string;
