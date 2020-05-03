@@ -20,10 +20,10 @@
 		"clean": "lerna clean",
 		"version": "lerna version --conventional-commits --no-push",
 		"test": "jest",
+		"test:watch": "jest --watch",
 		"coverage": "jest --coverage",
-		"watch": "jest --watch",
-		"lint": "prettier --check 'packages/**/*.(ts|js|json)' && eslint --quiet --ext .ts packages/",
-		"lint:fix": "prettier --write 'packages/**/*.(ts|js|json)' && eslint --ext .ts packages/ --fix",
+		"lint": "prettier --check 'packages/**/*.(ts|js|json)' && eslint --ext .ts packages/",
+		"lint:fix": "prettier --write 'packages/**/*.(ts|js|json)' && eslint --fix --ext .ts packages/",
 		"pack": "lerna exec yarn pack",
 		"deploy": "lerna publish from-git",
 		"commit": "git-cz"

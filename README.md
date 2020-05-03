@@ -11,7 +11,7 @@ A static website generator.
 ### Development Installation
 
 ```sh
-lerna bootstrap
+yarn run bootstrap
 ```
 
 ### Running the Tests
