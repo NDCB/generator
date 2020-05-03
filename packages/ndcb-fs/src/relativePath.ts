@@ -13,8 +13,8 @@ const RELATIVE_PATH = Symbol();
  * existing entry in the file system.
  */
 export interface RelativePath {
-	readonly value: string;
-	readonly [RELATIVE_PATH]: true;
+  readonly value: string;
+  readonly [RELATIVE_PATH]: true;
 }
 
 /**
@@ -26,19 +26,19 @@ export interface RelativePath {
  * @return The constructed relative path.
  */
 export const relativePath = (value: string): RelativePath => ({
-	value,
-	[RELATIVE_PATH]: true,
+  value,
+  [RELATIVE_PATH]: true,
 });
 
 export const relativePathToString = (path: RelativePath): string => path.value;
 
 export const relativePathEquals = (
-	p1: RelativePath,
-	p2: RelativePath,
+  p1: RelativePath,
+  p2: RelativePath,
 ): boolean => p1.value === p2.value;
 
 export const hashRelativePath = (path: RelativePath): number =>
-	hashString(relativePathToString(path));
+  hashString(relativePathToString(path));
 
 /**
  * Constructs a relative path of a given value, normalized.
@@ -48,7 +48,7 @@ export const hashRelativePath = (path: RelativePath): number =>
  * @return The constructed relative path.
  */
 export const normalizedRelativePath = (value: string): RelativePath =>
-	relativePath(normalize(value));
+  relativePath(normalize(value));
 
 /**
  * Constructs an iterable over the relative paths upwards from and including the
@@ -60,40 +60,40 @@ export const normalizedRelativePath = (value: string): RelativePath =>
  * @return The iterable over the upward relative paths.
  */
 export const upwardRelativePaths = function* (
-	path: RelativePath,
+  path: RelativePath,
 ): Iterable<RelativePath> {
-	let current: string = relativePathToString(path);
-	let previous: string;
-	do {
-		yield relativePath(current);
-		previous = current;
-		current = dirname(current);
-	} while (current !== previous);
+  let current: string = relativePathToString(path);
+  let previous: string;
+  do {
+    yield relativePath(current);
+    previous = current;
+    current = dirname(current);
+  } while (current !== previous);
 };
 
 export function joinRelativePath(
-	path: RelativePath,
-	other: RelativePath,
+  path: RelativePath,
+  other: RelativePath,
 ): RelativePath;
 export function joinRelativePath(
-	path: RelativePath,
-	segment: string,
+  path: RelativePath,
+  segment: string,
 ): RelativePath;
 export function joinRelativePath(
-	path: RelativePath,
-	other: string | RelativePath,
+  path: RelativePath,
+  other: string | RelativePath,
 ): RelativePath {
-	return relativePath(
-		join(
-			relativePathToString(path),
-			isString(other) ? other : relativePathToString(other),
-		),
-	);
+  return relativePath(
+    join(
+      relativePathToString(path),
+      isString(other) ? other : relativePathToString(other),
+    ),
+  );
 }
 
 export const relativePathExtension = (path: RelativePath): Extension | null => {
-	const extensionName = extname(relativePathToString(path));
-	return !extensionName ? null : extension(extensionName);
+  const extensionName = extname(relativePathToString(path));
+  return !extensionName ? null : extension(extensionName);
 };
 
 /**
@@ -113,15 +113,15 @@ export const relativePathExtension = (path: RelativePath): Extension | null => {
  * @return The new relative path.
  */
 export const relativePathWithExtension = (
-	path: RelativePath,
-	extension: Extension | null,
+  path: RelativePath,
+  extension: Extension | null,
 ): RelativePath => {
-	const pathAsString = relativePathToString(path);
-	const base = join(
-		dirname(pathAsString),
-		basename(pathAsString, extname(pathAsString)),
-	);
-	return relativePath(extension ? base + extensionToString(extension) : base);
+  const pathAsString = relativePathToString(path);
+  const base = join(
+    dirname(pathAsString),
+    basename(pathAsString, extname(pathAsString)),
+  );
+  return relativePath(extension ? base + extensionToString(extension) : base);
 };
 
 /**
@@ -138,21 +138,21 @@ export const relativePathWithExtension = (
  * @return The new relative paths.
  */
 export const relativePathWithExtensions = (
-	path: RelativePath,
-	extensions: Iterable<Extension | null>,
+  path: RelativePath,
+  extensions: Iterable<Extension | null>,
 ): Iterable<RelativePath> => {
-	const pathAsString = relativePathToString(path);
-	const base = join(
-		dirname(pathAsString),
-		basename(pathAsString, extname(pathAsString)),
-	);
-	return map(extensions, (extension) =>
-		relativePath(extension ? base + extensionToString(extension) : base),
-	);
+  const pathAsString = relativePathToString(path);
+  const base = join(
+    dirname(pathAsString),
+    basename(pathAsString, extname(pathAsString)),
+  );
+  return map(extensions, (extension) =>
+    relativePath(extension ? base + extensionToString(extension) : base),
+  );
 };
 
 export const relativePathIsEmpty = (path: RelativePath): boolean =>
-	relativePathToString(path).length === 0;
+  relativePathToString(path).length === 0;
 
 export const relativePathHasExtension = (path: RelativePath): boolean =>
-	relativePathExtension(path) !== null;
+  relativePathExtension(path) !== null;

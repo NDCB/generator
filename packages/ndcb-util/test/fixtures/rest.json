@@ -1,17 +1,17 @@
 [
-	{
-		"input": [],
-		"expected": [],
-		"description": "yields an empty iterable if the input is an empty iterable"
-	},
-	{
-		"input": [1],
-		"expected": [],
-		"description": "yields an empty iterable if the input has only one element"
-	},
-	{
-		"input": [1, 2, 3, 4],
-		"expected": [2, 3, 4],
-		"description": "yields the iterable without the first element"
-	}
+  {
+    "input": [],
+    "expected": [],
+    "description": "yields an empty iterable if the input is an empty iterable"
+  },
+  {
+    "input": [1],
+    "expected": [],
+    "description": "yields an empty iterable if the input has only one element"
+  },
+  {
+    "input": [1, 2, 3, 4],
+    "expected": [2, 3, 4],
+    "description": "yields the iterable without the first element"
+  }
 ]

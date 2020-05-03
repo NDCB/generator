@@ -1,24 +1,20 @@
 [
-	{
-		"input": "index",
-		"targets": [".html", ".pug", ".md"],
-		"expected": ["index.html", "index.pug", "index.md"],
-		"description": "adds extension names for paths without extension names"
-	},
-	{
-		"input": "index.html",
-		"targets": [".html", ".pug", ".md"],
-		"expected": ["index.html", "index.pug", "index.md"],
-		"description": "replaces the extension name for paths with extension names"
-	},
-	{
-		"input": "public/index.html",
-		"targets": [".html", ".pug", ".md"],
-		"expected": [
-			"public/index.html",
-			"public/index.pug",
-			"public/index.md"
-		],
-		"description": "replaces the extension name for paths multiple segments"
-	}
+  {
+    "input": "index",
+    "targets": [".html", ".pug", ".md"],
+    "expected": ["index.html", "index.pug", "index.md"],
+    "description": "adds extension names for paths without extension names"
+  },
+  {
+    "input": "index.html",
+    "targets": [".html", ".pug", ".md"],
+    "expected": ["index.html", "index.pug", "index.md"],
+    "description": "replaces the extension name for paths with extension names"
+  },
+  {
+    "input": "public/index.html",
+    "targets": [".html", ".pug", ".md"],
+    "expected": ["public/index.html", "public/index.pug", "public/index.md"],
+    "description": "replaces the extension name for paths multiple segments"
+  }
 ]

@@ -1,17 +1,17 @@
 [
-	{
-		"input": [],
-		"expected": [],
-		"description": "reverses an empty iterable"
-	},
-	{
-		"input": [1],
-		"expected": [1],
-		"description": "reverses an iterable with only one element"
-	},
-	{
-		"input": [1, 2, 3],
-		"expected": [3, 2, 1],
-		"description": "reverses an iterable with many elements"
-	}
+  {
+    "input": [],
+    "expected": [],
+    "description": "reverses an empty iterable"
+  },
+  {
+    "input": [1],
+    "expected": [1],
+    "description": "reverses an iterable with only one element"
+  },
+  {
+    "input": [1, 2, 3],
+    "expected": [3, 2, 1],
+    "description": "reverses an iterable with many elements"
+  }
 ]

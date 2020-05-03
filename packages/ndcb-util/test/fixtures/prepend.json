@@ -1,14 +1,14 @@
 [
-	{
-		"input": [],
-		"element": 0,
-		"expected": [0],
-		"description": "prepends an element to an empty iterable"
-	},
-	{
-		"input": [1, 2, 3],
-		"element": 0,
-		"expected": [0, 1, 2, 3],
-		"description": "prepends an element to a non-empty iterable"
-	}
+  {
+    "input": [],
+    "element": 0,
+    "expected": [0],
+    "description": "prepends an element to an empty iterable"
+  },
+  {
+    "input": [1, 2, 3],
+    "element": 0,
+    "expected": [0, 1, 2, 3],
+    "description": "prepends an element to a non-empty iterable"
+  }
 ]

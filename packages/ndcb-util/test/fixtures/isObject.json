@@ -1,26 +1,26 @@
 [
-	{
-		"input": null,
-		"expected": true
-	},
-	{
-		"input": "String",
-		"expected": false
-	},
-	{
-		"input": {},
-		"expected": true
-	},
-	{
-		"input": { "attr": true },
-		"expected": true
-	},
-	{
-		"input": [],
-		"expected": true
-	},
-	{
-		"input": 0,
-		"expected": false
-	}
+  {
+    "input": null,
+    "expected": true
+  },
+  {
+    "input": "String",
+    "expected": false
+  },
+  {
+    "input": {},
+    "expected": true
+  },
+  {
+    "input": { "attr": true },
+    "expected": true
+  },
+  {
+    "input": [],
+    "expected": true
+  },
+  {
+    "input": 0,
+    "expected": false
+  }
 ]

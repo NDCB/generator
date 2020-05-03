@@ -7,10 +7,10 @@ import { FileContents, fileContentsToString } from "./fileContents";
 export type FileWriter = (file: File, contents: FileContents) => void;
 
 export const writeFile: FileWriter = (
-	file: File,
-	contents: FileContents,
+  file: File,
+  contents: FileContents,
 ): void =>
-	writeFileSync(
-		absolutePathToString(fileToPath(file)),
-		fileContentsToString(contents),
-	);
+  writeFileSync(
+    absolutePathToString(fileToPath(file)),
+    fileContentsToString(contents),
+  );

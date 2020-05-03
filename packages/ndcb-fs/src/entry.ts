@@ -1,30 +1,30 @@
 import { takeWhile } from "@ndcb/util";
 
 import {
-	AbsolutePath,
-	absolutePathEquals,
-	rootPath,
-	parentPath,
-	isUpwardPath,
+  AbsolutePath,
+  absolutePathEquals,
+  rootPath,
+  parentPath,
+  isUpwardPath,
 } from "./absolutePath";
 import {
-	Directory,
-	directory,
-	directoryToPath,
-	directoryToString,
-	isDirectory,
-	directoryExists,
-	directoryEquals,
-	ensureDirectory,
+  Directory,
+  directory,
+  directoryToPath,
+  directoryToString,
+  isDirectory,
+  directoryExists,
+  directoryEquals,
+  ensureDirectory,
 } from "./directory";
 import {
-	ensureFile,
-	File,
-	file,
-	fileToPath,
-	fileToString,
-	isFile,
-	fileExists,
+  ensureFile,
+  File,
+  file,
+  fileToPath,
+  fileToString,
+  isFile,
+  fileExists,
 } from "./file";
 
 /**
@@ -35,100 +35,100 @@ import {
 export type Entry = File | Directory;
 
 export interface EntryPattern<T> {
-	readonly file: (file: File) => T;
-	readonly directory: (directory: Directory) => T;
+  readonly file: (file: File) => T;
+  readonly directory: (directory: Directory) => T;
 }
 
 export const entryIsFile: (entry: Entry) => entry is File = isFile;
 
 export const entryIsDirectory: (
-	entry: Entry,
+  entry: Entry,
 ) => entry is Directory = isDirectory;
 
 export const matchEntry = <T>(pattern: EntryPattern<T>) => (
-	entry: Entry,
+  entry: Entry,
 ): T => {
-	if (entryIsFile(entry)) {
-		return pattern.file(entry);
-	} else if (entryIsDirectory(entry)) {
-		return pattern.directory(entry);
-	}
-	throw new Error(
-		`Failed entry pattern matching for object "${JSON.stringify(entry)}"`,
-	);
+  if (entryIsFile(entry)) {
+    return pattern.file(entry);
+  } else if (entryIsDirectory(entry)) {
+    return pattern.directory(entry);
+  }
+  throw new Error(
+    `Failed entry pattern matching for object "${JSON.stringify(entry)}"`,
+  );
 };
 
 export const entryToPath: (entry: Entry) => AbsolutePath = matchEntry({
-	file: fileToPath,
-	directory: directoryToPath,
+  file: fileToPath,
+  directory: directoryToPath,
 });
 
 export const entryToString: (entry: Entry) => string = matchEntry({
-	file: fileToString,
-	directory: directoryToString,
+  file: fileToString,
+  directory: directoryToString,
 });
 
 export const entryEquals = (e1: Entry, e2: Entry): boolean =>
-	((entryIsFile(e1) && entryIsFile(e2)) ||
-		(entryIsDirectory(e1) && entryIsDirectory(e2))) &&
-	absolutePathEquals(entryToPath(e1), entryToPath(e2));
+  ((entryIsFile(e1) && entryIsFile(e2)) ||
+    (entryIsDirectory(e1) && entryIsDirectory(e2))) &&
+  absolutePathEquals(entryToPath(e1), entryToPath(e2));
 
 export const entryToFile = (entry: Entry): File =>
-	entryIsFile(entry) ? entry : file(entryToPath(entry));
+  entryIsFile(entry) ? entry : file(entryToPath(entry));
 
 export const entryToDirectory = (entry: Entry): Directory =>
-	entryIsDirectory(entry) ? entry : directory(entryToPath(entry));
+  entryIsDirectory(entry) ? entry : directory(entryToPath(entry));
 
 export const entryExists: (entry: Entry) => boolean = matchEntry({
-	file: fileExists,
-	directory: directoryExists,
+  file: fileExists,
+  directory: directoryExists,
 });
 
 export const ensureEntry: (entry: Entry) => void = matchEntry({
-	file: ensureFile,
-	directory: ensureDirectory,
+  file: ensureFile,
+  directory: ensureDirectory,
 });
 
 export const topmostDirectory = (entry: Entry): Directory =>
-	directory(rootPath(entryToPath(entry)));
+  directory(rootPath(entryToPath(entry)));
 
 export function parentDirectory(file: File): Directory;
 export function parentDirectory(directory: Directory): Directory | null;
 export function parentDirectory(entry: Entry): Directory | null {
-	const path = parentPath(entryToPath(entry));
-	return !path ? null : directory(path);
+  const path = parentPath(entryToPath(entry));
+  return !path ? null : directory(path);
 }
 
 const upwardDirectoriesFromDirectory = function* (
-	directory: Directory,
+  directory: Directory,
 ): Iterable<Directory> {
-	let current: Directory | null = directory;
-	while (current) {
-		yield current;
-		current = parentDirectory(current);
-	}
+  let current: Directory | null = directory;
+  while (current) {
+    yield current;
+    current = parentDirectory(current);
+  }
 };
 
 const upwardDirectoriesFromFile = (file: File): Iterable<Directory> =>
-	upwardDirectoriesFromDirectory(parentDirectory(file));
+  upwardDirectoriesFromDirectory(parentDirectory(file));
 
 export const upwardDirectories: (
-	entry: Entry,
+  entry: Entry,
 ) => Iterable<Directory> = matchEntry({
-	file: upwardDirectoriesFromFile,
-	directory: upwardDirectoriesFromDirectory,
+  file: upwardDirectoriesFromFile,
+  directory: upwardDirectoriesFromDirectory,
 });
 
 export const directoryHasDescendent = (
-	directory: Directory,
-	entry: Entry,
+  directory: Directory,
+  entry: Entry,
 ): boolean => isUpwardPath(directoryToPath(directory), entryToPath(entry));
 
 export const upwardDirectoriesUntil = (root: Directory) =>
-	function* (entry: Entry): Iterable<Directory> {
-		yield* takeWhile(
-			upwardDirectories(entry),
-			(directory) => !directoryEquals(directory, root),
-		);
-		if (directoryHasDescendent(root, entry)) yield root;
-	};
+  function* (entry: Entry): Iterable<Directory> {
+    yield* takeWhile(
+      upwardDirectories(entry),
+      (directory) => !directoryEquals(directory, root),
+    );
+    if (directoryHasDescendent(root, entry)) yield root;
+  };

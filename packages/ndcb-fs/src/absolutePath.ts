@@ -4,9 +4,9 @@ import { normalize, resolve, sep, relative } from "path";
 import { hashString, rest } from "@ndcb/util";
 
 import {
-	RelativePath,
-	relativePathToString,
-	relativePath,
+  RelativePath,
+  relativePathToString,
+  relativePath,
 } from "./relativePath";
 
 const ABSOLUTE_PATH = Symbol();
@@ -18,44 +18,42 @@ const ABSOLUTE_PATH = Symbol();
  * normalized.
  */
 export interface AbsolutePath {
-	readonly value: string;
-	readonly [ABSOLUTE_PATH]: true;
+  readonly value: string;
+  readonly [ABSOLUTE_PATH]: true;
 }
 
 export const absolutePath = (value: string): AbsolutePath => ({
-	value,
-	[ABSOLUTE_PATH]: true,
+  value,
+  [ABSOLUTE_PATH]: true,
 });
 
 export const absolutePathToString = (path: AbsolutePath): string => path.value;
 
 export const absolutePathEquals = (
-	p1: AbsolutePath,
-	p2: AbsolutePath,
+  p1: AbsolutePath,
+  p2: AbsolutePath,
 ): boolean => p1.value === p2.value;
 
 export const hashAbsolutePath = (path: AbsolutePath): number =>
-	hashString(absolutePathToString(path));
+  hashString(absolutePathToString(path));
 
 export const normalizedAbsolutePath = (value: string): AbsolutePath =>
-	absolutePath(normalize(value));
+  absolutePath(normalize(value));
 
 export const resolvedAbsolutePath = (
-	from: AbsolutePath,
-	to: RelativePath,
+  from: AbsolutePath,
+  to: RelativePath,
 ): AbsolutePath =>
-	absolutePath(resolve(absolutePathToString(from), relativePathToString(to)));
+  absolutePath(resolve(absolutePathToString(from), relativePathToString(to)));
 
 export const relativePathFromAbsolutePaths = (
-	from: AbsolutePath,
-	to: AbsolutePath,
+  from: AbsolutePath,
+  to: AbsolutePath,
 ): RelativePath =>
-	relativePath(
-		relative(absolutePathToString(from), absolutePathToString(to)),
-	);
+  relativePath(relative(absolutePathToString(from), absolutePathToString(to)));
 
 export const pathExists = (path: AbsolutePath): boolean =>
-	existsSync(absolutePathToString(path));
+  existsSync(absolutePathToString(path));
 
 /**
  * Determines whether an absolute path is located upwards from another.
@@ -68,15 +66,15 @@ export const pathExists = (path: AbsolutePath): boolean =>
  * @return `true` if `up` is located upwards from `down`, and `false` otherwise.
  */
 export const isUpwardPath = (up: AbsolutePath, down: AbsolutePath): boolean =>
-	absolutePathToString(down).startsWith(absolutePathToString(up));
+  absolutePathToString(down).startsWith(absolutePathToString(up));
 
 export const rootPath = (path: AbsolutePath): AbsolutePath =>
-	absolutePath(resolve(absolutePathToString(path), "/"));
+  absolutePath(resolve(absolutePathToString(path), "/"));
 
 export const parentPath = (path: AbsolutePath): AbsolutePath | null => {
-	const parent = absolutePath(resolve(absolutePathToString(path), ".."));
-	return absolutePathEquals(path, parent) ? null : parent;
+  const parent = absolutePath(resolve(absolutePathToString(path), ".."));
+  return absolutePathEquals(path, parent) ? null : parent;
 };
 
 export const segments = (path: AbsolutePath): Iterable<string> =>
-	rest(absolutePathToString(path).split(sep));
+  rest(absolutePathToString(path).split(sep));

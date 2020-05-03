@@ -1,16 +1,16 @@
 {
-	"name": "@ndcb/util",
-	"version": "0.6.1",
-	"description": "Standard utilities",
-	"main": "./lib/index.js",
-	"types": "./lib/index.d.ts",
-	"repository": "https://github.com/NDCB/generator/tree/master/packages/ndcb-util",
-	"author": "Marc-Antoine Ouimet",
-	"license": "MIT",
-	"files": [
-		"lib"
-	],
-	"publishConfig": {
-		"access": "public"
-	}
+  "name": "@ndcb/util",
+  "version": "0.6.1",
+  "description": "Standard utilities",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "repository": "https://github.com/NDCB/generator/tree/master/packages/ndcb-util",
+  "author": "Marc-Antoine Ouimet",
+  "license": "MIT",
+  "files": [
+    "lib"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

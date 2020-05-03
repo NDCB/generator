@@ -7,4 +7,4 @@ import { FileContents, fileContents } from "./fileContents";
 export type FileReader = (file: File) => FileContents;
 
 export const readFile: FileReader = (file) =>
-	fileContents(readFileSync(absolutePathToString(fileToPath(file)), "utf8"));
+  fileContents(readFileSync(absolutePathToString(fileToPath(file)), "utf8"));

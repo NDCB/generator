@@ -3,10 +3,10 @@ import { isObject, isNotNull } from "@ndcb/util";
 import { statSync, ensureFileSync } from "fs-extra";
 
 import {
-	AbsolutePath,
-	absolutePathEquals,
-	absolutePathToString,
-	pathExists,
+  AbsolutePath,
+  absolutePathEquals,
+  absolutePathToString,
+  pathExists,
 } from "./absolutePath";
 
 const FILE: unique symbol = Symbol();
@@ -17,30 +17,30 @@ const FILE: unique symbol = Symbol();
  * The file and its path may not exist.
  */
 export interface File {
-	readonly path: AbsolutePath;
-	readonly [FILE]: true;
+  readonly path: AbsolutePath;
+  readonly [FILE]: true;
 }
 
 export const isFile = (element: unknown): element is File =>
-	isObject(element) && isNotNull(element) && element[FILE];
+  isObject(element) && isNotNull(element) && element[FILE];
 
 export const file = (path: AbsolutePath): File => ({
-	path,
-	[FILE]: true,
+  path,
+  [FILE]: true,
 });
 
 export const fileToPath = (file: File): AbsolutePath => file.path;
 
 export const fileToString = (file: File): string =>
-	absolutePathToString(fileToPath(file));
+  absolutePathToString(fileToPath(file));
 
 export const fileEquals = (f1: File, f2: File): boolean =>
-	absolutePathEquals(fileToPath(f1), fileToPath(f2));
+  absolutePathEquals(fileToPath(f1), fileToPath(f2));
 
 export const fileExists = (file: File): boolean => {
-	const path = fileToPath(file);
-	return pathExists(path) && statSync(absolutePathToString(path)).isFile();
+  const path = fileToPath(file);
+  return pathExists(path) && statSync(absolutePathToString(path)).isFile();
 };
 
 export const ensureFile = (file: File): void =>
-	ensureFileSync(absolutePathToString(fileToPath(file)));
+  ensureFileSync(absolutePathToString(fileToPath(file)));

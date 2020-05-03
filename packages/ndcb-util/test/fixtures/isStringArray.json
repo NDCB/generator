@@ -1,18 +1,18 @@
 [
-	{
-		"input": [],
-		"expected": true
-	},
-	{
-		"input": ["String1", "String2"],
-		"expected": true
-	},
-	{
-		"input": ["String", 2],
-		"expected": false
-	},
-	{
-		"input": null,
-		"expected": false
-	}
+  {
+    "input": [],
+    "expected": true
+  },
+  {
+    "input": ["String1", "String2"],
+    "expected": true
+  },
+  {
+    "input": ["String", 2],
+    "expected": false
+  },
+  {
+    "input": null,
+    "expected": false
+  }
 ]

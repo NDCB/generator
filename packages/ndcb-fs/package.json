@@ -1,23 +1,23 @@
 {
-	"name": "@ndcb/fs",
-	"version": "0.3.0",
-	"description": "Website file system and abstractions",
-	"main": "./lib/index.js",
-	"types": "./lib/index.d.ts",
-	"repository": "https://github.com/NDCB/generator/tree/master/packages/ndcb-fs",
-	"author": "Marc-Antoine Ouimet",
-	"license": "MIT",
-	"files": [
-		"lib"
-	],
-	"dependencies": {
-		"@ndcb/util": "^0.6.1",
-		"fs-extra": "^9.0.0"
-	},
-	"devDependencies": {
-		"@types/fs-extra": "^5.0.2"
-	},
-	"publishConfig": {
-		"access": "public"
-	}
+  "name": "@ndcb/fs",
+  "version": "0.3.0",
+  "description": "Website file system and abstractions",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "repository": "https://github.com/NDCB/generator/tree/master/packages/ndcb-fs",
+  "author": "Marc-Antoine Ouimet",
+  "license": "MIT",
+  "files": [
+    "lib"
+  ],
+  "dependencies": {
+    "@ndcb/util": "^0.6.1",
+    "fs-extra": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^5.0.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }
