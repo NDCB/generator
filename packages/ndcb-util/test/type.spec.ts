@@ -7,6 +7,8 @@ import {
 	isStringArray,
 	isTypeArray,
 	isTypeIterable,
+	isNull,
+	isNotNull,
 } from "../src/type";
 
 describe("isString", () => {
@@ -29,6 +31,22 @@ describe("isObject", () => {
 	for (const { input, expected } of require("./fixtures/isObject")) {
 		test(`returns "${expected}" for input "${input}"`, () => {
 			expect(isObject(input)).toBe(expected);
+		});
+	}
+});
+
+describe("isNull", () => {
+	for (const { input, expected } of require("./fixtures/isNull")) {
+		test(`returns "${expected}" for input "${input}"`, () => {
+			expect(isNull(input)).toBe(expected);
+		});
+	}
+});
+
+describe("isNotNull", () => {
+	for (const { input, expected } of require("./fixtures/isNull")) {
+		test(`returns "${expected}" for input "${input}"`, () => {
+			expect(isNotNull(input)).toBe(!expected);
 		});
 	}
 });

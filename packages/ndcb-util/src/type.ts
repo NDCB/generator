@@ -9,9 +9,14 @@ export const isNumber = (element: unknown): element is number =>
 export const isObject = (element: unknown): element is object =>
 	typeof element === "object";
 
+export const isNull = (element: unknown): element is null => element === null;
+
+export const isNotNull = <T>(element: T | null): element is T =>
+	!isNull(element);
+
 export const isIterable = (element: unknown): element is Iterable<unknown> =>
 	(isObject(element) || isString(element)) &&
-	element !== null &&
+	isNotNull(element) &&
 	!!element[Symbol.iterator];
 
 export const isTypeIterable = <T>(
