@@ -6,7 +6,6 @@ import {
   rootPath,
   parentPath,
   isUpwardPath,
-  relativePathFromAbsolutePaths,
 } from "./absolutePath";
 import {
   Directory,
@@ -18,6 +17,7 @@ import {
   directoryEquals,
   ensureDirectory,
 } from "./directory";
+import { Extension } from "./extension";
 import {
   ensureFile,
   File,
@@ -27,6 +27,7 @@ import {
   isFile,
   fileExists,
 } from "./file";
+import { pathExtension, relativePathFromAbsolutePaths } from "./path";
 import { RelativePath } from "./relativePath";
 
 /**
@@ -137,3 +138,6 @@ export const upwardDirectoriesUntil = (root: Directory) =>
 
 export const entryRelativePath = (from: Directory, to: Entry): RelativePath =>
   relativePathFromAbsolutePaths(directoryToPath(from), entryToPath(to));
+
+export const fileExtension = (file: File): Extension | null =>
+  pathExtension(fileToPath(file));

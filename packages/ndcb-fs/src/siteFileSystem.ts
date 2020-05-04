@@ -20,13 +20,15 @@ import { FileContents } from "./fileContents";
 import { FileReader } from "./fileReader";
 import {
   RelativePath,
-  relativePathExtension,
   joinRelativePath,
   relativePathIsEmpty,
-  relativePathHasExtension,
+} from "./relativePath";
+import {
+  pathHasExtension,
+  pathExtension,
   relativePathWithExtension,
   relativePathWithExtensions,
-} from "./relativePath";
+} from "./path";
 
 export interface SiteFileSystem {
   files: () => Iterable<File>;
@@ -70,10 +72,7 @@ export const siteFileSystem = ({
     relativePath: RelativePath,
   ): Iterable<RelativePath> {
     yield relativePath;
-    if (
-      !relativePathIsEmpty(relativePath) &&
-      !relativePathHasExtension(relativePath)
-    )
+    if (!relativePathIsEmpty(relativePath) && !pathHasExtension(relativePath))
       yield relativePathWithExtension(relativePath, htmlExtension);
     yield joinRelativePath(relativePath, indexHtmlBaseName);
   };
@@ -81,13 +80,10 @@ export const siteFileSystem = ({
     relativePath: RelativePath,
   ): Iterable<RelativePath> {
     yield relativePath;
-    if (
-      !relativePathIsEmpty(relativePath) &&
-      relativePathHasExtension(relativePath)
-    )
+    if (!relativePathIsEmpty(relativePath) && pathHasExtension(relativePath))
       yield* relativePathWithExtensions(
         relativePath,
-        sourceExtensions(relativePathExtension(relativePath)),
+        sourceExtensions(pathExtension(relativePath)),
       );
   };
   const possibleSourceRelativePaths = (
@@ -140,7 +136,7 @@ export const siteFileSystem = ({
     const relativePath = siteEntryRelativePath(file);
     return relativePathWithExtension(
       relativePath,
-      destinationExtension(relativePathExtension(relativePath)),
+      destinationExtension(pathExtension(relativePath)),
     );
   };
   const inheritedFiles = (

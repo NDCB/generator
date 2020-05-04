@@ -1,13 +1,7 @@
 import { existsSync } from "fs-extra";
-import { normalize, resolve, sep, relative } from "path";
+import { normalize, resolve, sep } from "path";
 
-import { hashString, rest } from "@ndcb/util";
-
-import {
-  RelativePath,
-  relativePathToString,
-  relativePath,
-} from "./relativePath";
+import { hashString, rest, isNotNull, isObject } from "@ndcb/util";
 
 const ABSOLUTE_PATH = Symbol();
 
@@ -27,6 +21,9 @@ export const absolutePath = (value: string): AbsolutePath => ({
   [ABSOLUTE_PATH]: true,
 });
 
+export const isAbsolutePath = (element: unknown): element is AbsolutePath =>
+  isObject(element) && isNotNull(element) && element[ABSOLUTE_PATH];
+
 export const absolutePathToString = (path: AbsolutePath): string => path.value;
 
 export const absolutePathEquals = (
@@ -39,18 +36,6 @@ export const hashAbsolutePath = (path: AbsolutePath): number =>
 
 export const normalizedAbsolutePath = (value: string): AbsolutePath =>
   absolutePath(normalize(value));
-
-export const resolvedAbsolutePath = (
-  from: AbsolutePath,
-  to: RelativePath,
-): AbsolutePath =>
-  absolutePath(resolve(absolutePathToString(from), relativePathToString(to)));
-
-export const relativePathFromAbsolutePaths = (
-  from: AbsolutePath,
-  to: AbsolutePath,
-): RelativePath =>
-  relativePath(relative(absolutePathToString(from), absolutePathToString(to)));
 
 export const pathExists = (path: AbsolutePath): boolean =>
   existsSync(absolutePathToString(path));
@@ -76,5 +61,5 @@ export const parentPath = (path: AbsolutePath): AbsolutePath | null => {
   return absolutePathEquals(path, parent) ? null : parent;
 };
 
-export const segments = (path: AbsolutePath): Iterable<string> =>
+export const absolutePathSegments = (path: AbsolutePath): Iterable<string> =>
   rest(absolutePathToString(path).split(sep));

@@ -8,10 +8,10 @@ import {
   absolutePathEquals,
   absolutePathToString,
   pathExists,
-  resolvedAbsolutePath,
 } from "./absolutePath";
 import { file, File } from "./file";
 import { RelativePath } from "./relativePath";
+import { resolvedAbsolutePath } from "./path";
 
 const DIRECTORY: unique symbol = Symbol();
 
