@@ -19,10 +19,12 @@ export interface ExtensionMap {
 }
 
 export interface ExtensionsMap {
-  sourceExtensions: (
+  readonly sourceExtensions: (
     destinationExtension: Extension | null,
   ) => Iterable<Extension>;
-  destinationExtension: (sourceExtension: Extension | null) => Extension | null;
+  readonly destinationExtension: (
+    sourceExtension: Extension | null,
+  ) => Extension | null;
 }
 
 export const extensionsMap = (maps: Iterable<ExtensionMap>): ExtensionsMap => {

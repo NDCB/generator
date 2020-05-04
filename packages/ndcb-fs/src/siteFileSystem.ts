@@ -31,18 +31,23 @@ import {
 } from "./path";
 
 export interface SiteFileSystem {
-  files: () => Iterable<File>;
-  readFile: (relativePath: RelativePath) => FileContents | null;
-  readDirectory: (relativePath: RelativePath) => Iterable<Entry>;
-  sourceFile: (relativePath: RelativePath) => File | null;
-  sourceDirectories: (relativePath: RelativePath) => Iterable<Directory>;
-  upwardDirectories: (entry: Entry) => Iterable<Directory>;
-  inheritedFile: (inheritor: Entry, relativePath: RelativePath) => File | null;
-  inheritedFiles: (
+  readonly files: () => Iterable<File>;
+  readonly readFile: (relativePath: RelativePath) => FileContents | null;
+  readonly readDirectory: (relativePath: RelativePath) => Iterable<Entry>;
+  readonly sourceFile: (relativePath: RelativePath) => File | null;
+  readonly sourceDirectories: (
+    relativePath: RelativePath,
+  ) => Iterable<Directory>;
+  readonly upwardDirectories: (entry: Entry) => Iterable<Directory>;
+  readonly inheritedFile: (
+    inheritor: Entry,
+    relativePath: RelativePath,
+  ) => File | null;
+  readonly inheritedFiles: (
     inheritor: Entry,
     relativePath: RelativePath,
   ) => Iterable<File>;
-  destinationFileRelativePath: (source: File) => RelativePath;
+  readonly destinationFileRelativePath: (source: File) => RelativePath;
 }
 
 export const siteFileSystem = ({

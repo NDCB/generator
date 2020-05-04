@@ -33,22 +33,22 @@ interface Filter<T> {
 }
 
 export interface Sequence<T> extends Iterable<T> {
-  every: (predicate: (element: T) => boolean) => boolean;
-  some: (predicate: (element: T) => boolean) => boolean;
-  filter: Filter<T>;
-  map: <K>(mapper: (element: T) => K) => Sequence<K>;
-  flatMap: <K>(mapper: (element: T) => Iterable<K>) => Sequence<K>;
-  first: First<T>;
-  rest: () => Sequence<T>;
-  find: Find<T>;
-  reverse: () => Sequence<T>;
-  concat: (...iterables: Array<Iterable<T>>) => Sequence<T>;
-  prepend: (element: T) => Sequence<T>;
-  append: (element: T) => Sequence<T>;
-  takeWhile: (predicate: (element: T) => boolean) => Sequence<T>;
-  orderedPairs: () => Sequence<[T, T]>;
-  unorderedPairs: () => Sequence<[T, T]>;
-  toString: (
+  readonly every: (predicate: (element: T) => boolean) => boolean;
+  readonly some: (predicate: (element: T) => boolean) => boolean;
+  readonly filter: Filter<T>;
+  readonly map: <K>(mapper: (element: T) => K) => Sequence<K>;
+  readonly flatMap: <K>(mapper: (element: T) => Iterable<K>) => Sequence<K>;
+  readonly first: First<T>;
+  readonly rest: () => Sequence<T>;
+  readonly find: Find<T>;
+  readonly reverse: () => Sequence<T>;
+  readonly concat: (...iterables: Array<Iterable<T>>) => Sequence<T>;
+  readonly prepend: (element: T) => Sequence<T>;
+  readonly append: (element: T) => Sequence<T>;
+  readonly takeWhile: (predicate: (element: T) => boolean) => Sequence<T>;
+  readonly orderedPairs: () => Sequence<[T, T]>;
+  readonly unorderedPairs: () => Sequence<[T, T]>;
+  readonly toString: (
     elementToString?: (element: T) => string,
     delimiter?: string,
   ) => string;

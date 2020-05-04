@@ -6,8 +6,8 @@ export interface HashMapGetter<K, V> {
 }
 
 export interface HashMap<K, V> {
-  has: (key: K) => boolean;
-  get: HashMapGetter<K, V>;
+  readonly has: (key: K) => boolean;
+  readonly get: HashMapGetter<K, V>;
 }
 
 export const hashMap = <K, V>(
