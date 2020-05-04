@@ -1,6 +1,6 @@
 import { find, flatMap, map, filter, first } from "@ndcb/util";
 
-import { isUpwardPath, relativePathFromAbsolutePaths } from "./absolutePath";
+import { relativePathFromAbsolutePaths } from "./absolutePath";
 import {
   Directory,
   directoryToPath,
@@ -13,6 +13,7 @@ import {
   entryToPath,
   topmostDirectory,
   upwardDirectoriesUntil,
+  directoryHasDescendent,
 } from "./entry";
 import { extension } from "./extension";
 import { ExtensionsMap } from "./extensionMap";
@@ -62,10 +63,11 @@ export const siteFileSystem = ({
   const rootDirectory = (entry: Entry): Directory =>
     find(
       roots,
-      (rootDirectory) =>
-        isUpwardPath(directoryToPath(rootDirectory), entryToPath(entry)),
+      (rootDirectory) => directoryHasDescendent(rootDirectory, entry),
       () => topmostDirectory(entry),
     );
+  const htmlExtension = extension(".html");
+  const indexHtmlBaseName = "index.html";
   const possibleBaseRelativePaths = function* (
     relativePath: RelativePath,
   ): Iterable<RelativePath> {
@@ -74,8 +76,8 @@ export const siteFileSystem = ({
       !relativePathIsEmpty(relativePath) &&
       !relativePathHasExtension(relativePath)
     )
-      yield relativePathWithExtension(relativePath, extension(".html"));
-    yield joinRelativePath(relativePath, "index.html");
+      yield relativePathWithExtension(relativePath, htmlExtension);
+    yield joinRelativePath(relativePath, indexHtmlBaseName);
   };
   const possibleSourceRelativePathsFromBase = function* (
     relativePath: RelativePath,
