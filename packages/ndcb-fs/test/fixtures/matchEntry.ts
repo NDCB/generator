@@ -1,7 +1,10 @@
-import { File, file, fileToString } from "./../../src/file";
-import { directory, Directory, directoryToString } from "./../../src/directory";
+import { File, fileToString, normalizedFile } from "./../../src/file";
+import {
+  Directory,
+  directoryToString,
+  normalizedDirectory,
+} from "./../../src/directory";
 import { Entry } from "./../../src/entry";
-import { normalizedAbsolutePath } from "../../src/absolutePath";
 
 interface TestCase<T = unknown> {
   readonly entry: Entry;
@@ -54,9 +57,9 @@ module.exports = [
         entry: ((): Entry => {
           switch (type) {
             case "File":
-              return file(normalizedAbsolutePath(path));
+              return normalizedFile(path);
             case "Directory":
-              return directory(normalizedAbsolutePath(path));
+              return normalizedDirectory(path);
           }
           throw new Error();
         })(),
@@ -64,9 +67,9 @@ module.exports = [
         expected: ((): unknown => {
           switch (type) {
             case "File":
-              return fileFunction(file(normalizedAbsolutePath(path)));
+              return fileFunction(normalizedFile(path));
             case "Directory":
-              return directoryFunction(directory(normalizedAbsolutePath(path)));
+              return directoryFunction(normalizedDirectory(path));
           }
           throw new Error();
         })(),

@@ -8,6 +8,7 @@ import {
   absolutePathEquals,
   absolutePathToString,
   pathExists,
+  normalizedAbsolutePath,
 } from "./absolutePath";
 import { file, File } from "./file";
 import { RelativePath } from "./relativePath";
@@ -32,6 +33,9 @@ export const directory = (path: AbsolutePath): Directory => ({
   path,
   [DIRECTORY]: true,
 });
+
+export const normalizedDirectory = (path: string): Directory =>
+  directory(normalizedAbsolutePath(path));
 
 export const directoryToPath = (directory: Directory): AbsolutePath =>
   directory.path;

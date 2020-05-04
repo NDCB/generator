@@ -7,6 +7,7 @@ import {
   absolutePathEquals,
   absolutePathToString,
   pathExists,
+  normalizedAbsolutePath,
 } from "./absolutePath";
 
 const FILE: unique symbol = Symbol();
@@ -28,6 +29,9 @@ export const file = (path: AbsolutePath): File => ({
   path,
   [FILE]: true,
 });
+
+export const normalizedFile = (path: string): File =>
+  file(normalizedAbsolutePath(path));
 
 export const fileToPath = (file: File): AbsolutePath => file.path;
 

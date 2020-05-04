@@ -7,10 +7,15 @@ import {
   normalizedAbsolutePath,
   absolutePath,
 } from "../src/absolutePath";
-import { directoryToPath, Directory, directory } from "../src/directory";
+import {
+  directoryToPath,
+  Directory,
+  directory,
+  normalizedDirectory,
+} from "../src/directory";
 import { upwardDirectories, Entry, entryToPath } from "../src/entry";
 import { Extension, extensionToString, extension } from "../src/extension";
-import { File, fileToPath, file } from "../src/file";
+import { File, fileToPath, file, normalizedFile } from "../src/file";
 import { FileContents, fileContents } from "../src/fileContents";
 import { normalizedRelativePath } from "../src/relativePath";
 import { siteFileSystem, SiteFileSystem } from "../src/siteFileSystem";
@@ -53,9 +58,9 @@ describe("siteFileSystem", () => {
       const directoryPaths = new Set<string>(
         map<string, string>(rootDirectories, normalized),
       );
-      for (const filePath of files) {
+      for (const file of files) {
         for (const directoryPath of map(
-          upwardDirectories(file(normalizedAbsolutePath(filePath))),
+          upwardDirectories(normalizedFile(file)),
           (directory) => absolutePathToString(directoryToPath(directory)),
         )) {
           directoryPaths.add(directoryPath);
@@ -138,9 +143,7 @@ describe("siteFileSystem", () => {
       fileExists,
       directoryExists,
     })({ sourceExtensions, destinationExtension })(
-      map<string, Directory>(rootDirectories, (rootDirectory) =>
-        directory(normalizedAbsolutePath(rootDirectory)),
-      ),
+      map<string, Directory>(rootDirectories, normalizedDirectory),
     );
     describe("files", () => {
       test("yields all the files in the system", () => {
@@ -197,7 +200,7 @@ describe("siteFileSystem", () => {
           test("finds the first corresponding file", () => {
             expect(
               system.sourceFile(normalizedRelativePath(fileRelativePath)),
-            ).toEqual(file(normalizedAbsolutePath(sourceFilePath)));
+            ).toEqual(normalizedFile(sourceFilePath));
           });
         } else {
           test("returns `null` for inexistent file", () => {
@@ -241,9 +244,7 @@ describe("siteFileSystem", () => {
           const directories = [
             ...map(
               system.upwardDirectories(
-                isFile(path)
-                  ? file(normalizedAbsolutePath(path))
-                  : directory(normalizedAbsolutePath(path)),
+                isFile(path) ? normalizedFile(path) : normalizedDirectory(path),
               ),
               (directory) => absolutePathToString(directoryToPath(directory)),
             ),
@@ -260,16 +261,16 @@ describe("siteFileSystem", () => {
           test("returns the first corresponding file", () => {
             expect(
               system.inheritedFile(
-                file(normalizedAbsolutePath(inheritor)),
+                normalizedFile(inheritor),
                 normalizedRelativePath(query),
               ),
-            ).toEqual(file(normalizedAbsolutePath(inherited)));
+            ).toEqual(normalizedFile(inherited));
           });
         } else {
           test("returns `null` if there is no corresponding file", () => {
             expect(
               system.inheritedFile(
-                file(normalizedAbsolutePath(inheritor)),
+                normalizedFile(inheritor),
                 normalizedRelativePath(query),
               ),
             ).toBeNull();
@@ -282,14 +283,12 @@ describe("siteFileSystem", () => {
         test("finds the corresponding files", () => {
           const files = [
             ...system.inheritedFiles(
-              file(normalizedAbsolutePath(inheritor)),
+              normalizedFile(inheritor),
               normalizedRelativePath(query),
             ),
           ];
           expect(files).toStrictEqual([
-            ...map<string, File>(inherited, (path) =>
-              file(normalizedAbsolutePath(path)),
-            ),
+            ...map<string, File>(inherited, (path) => normalizedFile(path)),
           ]);
         });
       }
@@ -299,9 +298,7 @@ describe("siteFileSystem", () => {
         []) {
         test("finds the corresponding files", () => {
           expect(
-            system.destinationFileRelativePath(
-              file(normalizedAbsolutePath(source)),
-            ),
+            system.destinationFileRelativePath(normalizedFile(source)),
           ).toEqual(normalizedRelativePath(destination));
         });
       }
