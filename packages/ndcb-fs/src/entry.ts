@@ -6,6 +6,7 @@ import {
   rootPath,
   parentPath,
   isUpwardPath,
+  relativePathFromAbsolutePaths,
 } from "./absolutePath";
 import {
   Directory,
@@ -26,6 +27,7 @@ import {
   isFile,
   fileExists,
 } from "./file";
+import { RelativePath } from "./relativePath";
 
 /**
  * A file system entry representation in the file system.
@@ -132,3 +134,6 @@ export const upwardDirectoriesUntil = (root: Directory) =>
     );
     if (directoryHasDescendent(root, entry)) yield root;
   };
+
+export const entryRelativePath = (from: Directory, to: Entry): RelativePath =>
+  relativePathFromAbsolutePaths(directoryToPath(from), entryToPath(to));

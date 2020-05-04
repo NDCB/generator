@@ -9,9 +9,7 @@ import {
   fileContentsToString,
   directoryHasDescendent,
   relativePathToString,
-  relativePathFromAbsolutePaths,
-  directoryToPath,
-  fileToPath,
+  entryRelativePath,
 } from "@ndcb/fs";
 
 import { ExclusionRule } from "./exclusionRule";
@@ -32,12 +30,5 @@ export const gitignoreExclusionRule = ({
   );
   return (file: File): boolean =>
     directoryHasDescendent(directory, file) &&
-    ignores(
-      relativePathToString(
-        relativePathFromAbsolutePaths(
-          directoryToPath(directory),
-          fileToPath(file),
-        ),
-      ),
-    );
+    ignores(relativePathToString(entryRelativePath(directory, file)));
 };

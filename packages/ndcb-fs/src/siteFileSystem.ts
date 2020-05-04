@@ -1,19 +1,17 @@
 import { find, flatMap, map, filter, first } from "@ndcb/util";
 
-import { relativePathFromAbsolutePaths } from "./absolutePath";
 import {
   Directory,
-  directoryToPath,
   fileFromDirectory,
   directoryFromDirectory,
 } from "./directory";
 import { DirectoryReader, downwardFiles } from "./directoryReader";
 import {
   Entry,
-  entryToPath,
   topmostDirectory,
   upwardDirectoriesUntil,
   directoryHasDescendent,
+  entryRelativePath,
 } from "./entry";
 import { extension } from "./extension";
 import { ExtensionsMap } from "./extensionMap";
@@ -136,13 +134,10 @@ export const siteFileSystem = ({
     );
   const upwardDirectories = (entry: Entry): Iterable<Directory> =>
     upwardDirectoriesUntil(rootDirectory(entry))(entry);
-  const entryRelativePath = (entry: Entry): RelativePath =>
-    relativePathFromAbsolutePaths(
-      directoryToPath(rootDirectory(entry)),
-      entryToPath(entry),
-    );
+  const siteEntryRelativePath = (entry: Entry): RelativePath =>
+    entryRelativePath(rootDirectory(entry), entry);
   const destinationFileRelativePath = (file: File): RelativePath => {
-    const relativePath = entryRelativePath(file);
+    const relativePath = siteEntryRelativePath(file);
     return relativePathWithExtension(
       relativePath,
       destinationExtension(relativePathExtension(relativePath)),
@@ -155,7 +150,7 @@ export const siteFileSystem = ({
     filter<File | null, File>(
       map(upwardDirectories(inheritor), (directory) =>
         sourceFile(
-          joinRelativePath(entryRelativePath(directory), relativePath),
+          joinRelativePath(siteEntryRelativePath(directory), relativePath),
         ),
       ),
       (file): file is File => file !== null,
