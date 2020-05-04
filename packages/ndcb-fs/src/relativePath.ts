@@ -1,4 +1,4 @@
-import { basename, dirname, extname, join, normalize } from "path";
+import { basename, dirname, extname, join, normalize, sep } from "path";
 
 import { hashString, map, isString } from "@ndcb/util";
 
@@ -156,3 +156,14 @@ export const relativePathIsEmpty = (path: RelativePath): boolean =>
 
 export const relativePathHasExtension = (path: RelativePath): boolean =>
   relativePathExtension(path) !== null;
+
+export const relativePathSegments = function* (
+  path: RelativePath,
+): Iterable<string> {
+  const segments = relativePathToString(path).split(sep);
+  if (segments[0] !== ".") {
+    let last = segments.length - 1;
+    if (segments[last] === sep || segments[last].length === 0) last--;
+    for (let i = 0; i <= last; i++) yield segments[i];
+  }
+};

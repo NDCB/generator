@@ -6,6 +6,7 @@ import {
   relativePathWithExtension,
   relativePathWithExtensions,
   upwardRelativePaths,
+  relativePathSegments,
 } from "../src/relativePath";
 
 describe("upwardRelativePaths", () => {
@@ -58,6 +59,20 @@ describe("relativePathWithExtensions", () => {
       ]).toStrictEqual([
         ...sequence<string>(expected).map(normalizedRelativePath),
       ]);
+    });
+  }
+});
+
+describe("relativePathSegments", () => {
+  for (const {
+    input,
+    expected,
+    description,
+  } of require("./fixtures/relativePathSegments")) {
+    test(description, () => {
+      expect([
+        ...relativePathSegments(normalizedRelativePath(input)),
+      ]).toStrictEqual(expected);
     });
   }
 });
