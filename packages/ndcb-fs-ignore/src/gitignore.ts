@@ -14,6 +14,8 @@ import {
 
 import { ExclusionRule } from "./exclusionRule";
 
+const gitignoreRelativePath = normalizedRelativePath("./.gitignore");
+
 export const gitignoreExclusionRule = ({
   readFile,
   fileExists,
@@ -21,14 +23,11 @@ export const gitignoreExclusionRule = ({
   readFile: FileReader;
   fileExists: (file: File) => boolean;
 }) => (directory: Directory): ExclusionRule => {
-  const rulesFile = fileFromDirectory(directory)(
-    normalizedRelativePath("./.gitignore"),
-  );
+  const rulesFile = fileFromDirectory(directory)(gitignoreRelativePath);
   if (!fileExists(rulesFile)) return (): boolean => false;
-  const { ignores } = gitignore().add(
-    fileContentsToString(readFile(rulesFile)),
-  );
+  const ignore = gitignore();
+  ignore.add(fileContentsToString(readFile(rulesFile)));
   return (file: File): boolean =>
     directoryHasDescendent(directory, file) &&
-    ignores(relativePathToString(entryRelativePath(directory, file)));
+    ignore.ignores(relativePathToString(entryRelativePath(directory, file)));
 };
