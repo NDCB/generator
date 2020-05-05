@@ -1,0 +1,47 @@
+[
+  {
+    "extensions": [".ggb", ".ai", ".log"],
+    "cases": [
+      {
+        "file": "/index.html",
+        "expected": false,
+        "description": "does not exclude files whose extension does not match the excluded ones"
+      },
+      {
+        "file": "/fr-CA/index.html",
+        "expected": false,
+        "description": "does not exclude nested files whose extension does not match the excluded ones"
+      },
+      {
+        "file": "/error.log",
+        "expected": true,
+        "description": "excludes files whose extension matches one of the excluded ones"
+      },
+      {
+        "file": "/image.ai",
+        "expected": true,
+        "description": "excludes files whose extension matches one of the excluded ones"
+      },
+      {
+        "file": "/animation.ggb",
+        "expected": true,
+        "description": "excludes files whose extension matches one of the excluded ones"
+      },
+      {
+        "file": "/fr-CA/error.log",
+        "expected": true,
+        "description": "excludes nested files whose extension matches one of the excluded ones"
+      },
+      {
+        "file": "/fr-CA/image.ai",
+        "expected": true,
+        "description": "excludes nested files whose extension matches one of the excluded ones"
+      },
+      {
+        "file": "/fr-CA/animation.ggb",
+        "expected": true,
+        "description": "excludes nested files whose extension matches one of the excluded ones"
+      }
+    ]
+  }
+]

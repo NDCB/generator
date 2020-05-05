@@ -1,7 +1,7 @@
 import { Extension, File, extensionEquals, fileExtension } from "@ndcb/fs";
+import { some, isNotNull } from "@ndcb/util";
 
 import { ExclusionRule } from "./exclusionRule";
-import { some } from "@ndcb/util";
 
 export const extensionsExclusionRule = (
   extensions: Iterable<Extension>,
@@ -10,7 +10,7 @@ export const extensionsExclusionRule = (
   return (file: File): boolean => {
     const extension = fileExtension(file);
     return (
-      !!extension &&
+      isNotNull(extension) &&
       some(extensions, (query) => extensionEquals(extension, query))
     );
   };
