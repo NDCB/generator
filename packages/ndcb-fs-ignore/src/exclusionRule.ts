@@ -9,3 +9,7 @@ export const compositeExclusionRule = (
   rules = [...rules];
   return (file: File): boolean => some(rules, (applies) => applies(file));
 };
+
+export const exclusionRuleAsFilter = (rule: ExclusionRule): ExclusionRule => (
+  file: File,
+): boolean => !rule(file);
