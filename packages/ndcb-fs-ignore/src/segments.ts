@@ -1,11 +1,5 @@
-import {
-  Directory,
-  directoryHasDescendent,
-  relativePathSegments,
-  entryRelativePath,
-  File,
-} from "@ndcb/fs";
-import { find, some } from "@ndcb/util";
+import { File } from "@ndcb/fs";
+import { some } from "@ndcb/util";
 
 import { ExclusionRule } from "./exclusionRule";
 
@@ -17,17 +11,11 @@ export const leadingUnderscoreExclusionRule: SegmentExclusionRule = (
 
 export const segmentsExclusionRule = (
   rules: Iterable<SegmentExclusionRule>,
-) => (rootDirectories: Iterable<Directory>): ExclusionRule => {
+  fileRelativePathSegments: (file: File) => Iterable<string>,
+): ExclusionRule => {
   rules = [...rules];
-  rootDirectories = [...rootDirectories];
-  return (file: File): boolean => {
-    const rootDirectory = find(rootDirectories, (directory) =>
-      directoryHasDescendent(directory, file),
+  return (file: File): boolean =>
+    some(fileRelativePathSegments(file), (segment) =>
+      some(rules, (applies) => applies(segment)),
     );
-    if (!rootDirectory) return false;
-    return some(
-      relativePathSegments(entryRelativePath(rootDirectory, file)),
-      (segment) => some(rules, (applies) => applies(segment)),
-    );
-  };
 };
