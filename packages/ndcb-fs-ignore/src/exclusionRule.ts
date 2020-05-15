@@ -7,7 +7,7 @@ export const compositeExclusionRule = (
   rules: Iterable<ExclusionRule>,
 ): ExclusionRule => {
   rules = [...rules];
-  return (file: File): boolean => some(rules, (applies) => applies(file));
+  return (file: File): boolean => some(rules, (excludes) => excludes(file));
 };
 
 export const exclusionRuleAsFilter = (rule: ExclusionRule): ExclusionRule => (

@@ -16,6 +16,6 @@ export const segmentsExclusionRule = (
   rules = [...rules];
   return (file: File): boolean =>
     some(fileRelativePathSegments(file), (segment) =>
-      some(rules, (applies) => applies(segment)),
+      some(rules, (excludes) => excludes(segment)),
     );
 };
