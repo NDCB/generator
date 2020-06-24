@@ -54,4 +54,21 @@ node_modules
       },
     ],
   },
+  {
+    rules: null,
+    directory: "/project",
+    cases: [
+      {
+        file: "/node_modules/index.js",
+        expected: false,
+        description:
+          "does not exclude files outside the gitignore file's directory",
+      },
+      {
+        file: "/project/module/error.log",
+        expected: false,
+        description: "does not exclude files if the rules file does not exist",
+      },
+    ],
+  },
 ];
