@@ -1,72 +1,75 @@
 {
-	"name": "generator-monorepo",
-	"private": true,
-	"description": "A static website generator.",
-	"license": "MIT",
-	"author": "Marc-Antoine Ouimet <ouimetmarcantoine@gmail.com>",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/NDCB/generator.git"
-	},
-	"homepage": "https://github.com/NDCB/generator#readme",
-	"bugs": {
-		"url": "https://github.com/NDCB/generator/issues",
-		"email": "ouimetmarcantoine@gmail.com"
-	},
-	"scripts": {
-		"bootstrap": "lerna bootstrap",
-		"build": "lerna exec tsc",
-		"docs": "lerna exec typedoc",
-		"clean": "lerna clean",
-		"version": "lerna version --conventional-commits --no-push",
-		"test": "jest",
-		"test:watch": "jest --watch",
-		"coverage": "jest --coverage",
-		"lint": "prettier --check 'packages/**/*.(ts|js|json)' && eslint --ext .ts packages/",
-		"lint:fix": "prettier --write 'packages/**/*.(ts|js|json)' && eslint --fix --ext .ts packages/",
-		"pack": "lerna exec yarn pack",
-		"deploy": "lerna publish from-git",
-		"commit": "git-cz"
-	},
-	"devDependencies": {
-		"@types/jest": "^25.2.1",
-		"@types/node": "^13.13.4",
-		"@typescript-eslint/eslint-plugin": "^2.30.0",
-		"@typescript-eslint/parser": "^2.30.0",
-		"cz-conventional-changelog": "^3.1.0",
-		"eslint": "^6.8.0",
-		"eslint-config-prettier": "^6.11.0",
-		"eslint-plugin-import": "^2.20.2",
-		"eslint-plugin-jest": "^23.8.2",
-		"jest": "^25.5.4",
-		"lerna": "^3.20.2",
-		"prettier": "^2.0.5",
-		"ts-jest": "^25.4.0",
-		"typedoc": "^0.17.6",
-		"typescript": "^3.8.3"
-	},
-	"jest": {
-		"verbose": true,
-		"testEnvironment": "node",
-		"rootDir": "packages",
-		"transform": {
-			"^.+\\.ts?$": "ts-jest"
-		},
-		"testPathIgnorePatterns": [
-			"fixtures",
-			"lib"
-		],
-		"coveragePathIgnorePatterns": [
-			"fixtures",
-			"lib"
-		]
-	},
-	"workspaces": [
-		"./packages/*"
-	],
-	"config": {
-		"commitizen": {
-			"path": "./node_modules/cz-conventional-changelog"
-		}
-	}
+  "name": "generator-monorepo",
+  "private": true,
+  "description": "A static website generator.",
+  "license": "MIT",
+  "author": "Marc-Antoine Ouimet <ouimetmarcantoine@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NDCB/generator.git"
+  },
+  "homepage": "https://github.com/NDCB/generator#readme",
+  "bugs": {
+    "url": "https://github.com/NDCB/generator/issues",
+    "email": "ouimetmarcantoine@gmail.com"
+  },
+  "scripts": {
+    "bootstrap": "lerna bootstrap",
+    "build": "lerna exec tsc",
+    "docs": "lerna exec typedoc",
+    "clean": "lerna clean",
+    "version": "lerna version --conventional-commits --no-push",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "coverage": "jest --coverage",
+    "lint": "prettier --check 'packages/**/*.(ts|js|json)' && eslint --ext .ts packages/",
+    "lint:fix": "prettier --write 'packages/**/*.(ts|js|json)' && eslint --fix --ext .ts packages/",
+    "pack": "lerna exec yarn pack",
+    "deploy": "lerna publish from-git",
+    "commit": "git-cz"
+  },
+  "devDependencies": {
+    "@types/jest": "^26.0.3",
+    "@types/node": "^14.0.14",
+    "@typescript-eslint/eslint-plugin": "^3.4.0",
+    "@typescript-eslint/parser": "^3.4.0",
+    "cz-conventional-changelog": "^3.2.0",
+    "eslint": "^7.3.1",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-import": "^2.21.2",
+    "eslint-plugin-jest": "^23.17.1",
+    "jest": "^26.1.0",
+    "lerna": "^3.22.1",
+    "prettier": "^2.0.5",
+    "ts-jest": "^26.1.1",
+    "typedoc": "^0.17.7",
+    "typescript": "^3.9.5"
+  },
+  "jest": {
+    "verbose": true,
+    "testEnvironment": "node",
+    "rootDir": "packages",
+    "transform": {
+      "^.+\\.ts?$": "ts-jest"
+    },
+    "testPathIgnorePatterns": [
+      "fixtures",
+      "lib"
+    ],
+    "coveragePathIgnorePatterns": [
+      "fixtures",
+      "lib"
+    ]
+  },
+  "workspaces": [
+    "./packages/*"
+  ],
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "engines": {
+    "node": ">=12.0.0"
+  }
 }

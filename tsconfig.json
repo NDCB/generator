@@ -1,19 +1,19 @@
 {
-	"compilerOptions": {
-		"module": "commonjs",
-		"lib": ["esnext"],
-		"target": "esnext",
-		"strict": true,
-		"alwaysStrict": true,
-		"declaration": true,
-		"noImplicitAny": false,
-		"removeComments": true,
-		"noLib": false,
-		"emitDecoratorMetadata": true,
-		"experimentalDecorators": true,
-		"sourceMap": true,
-		"listFiles": true,
-		"listEmittedFiles": true
-	},
-	"exclude": ["node_modules", "**/test/**/*"]
+  "compilerOptions": {
+    "lib": ["ES2019"],
+    "module": "commonjs",
+    "target": "ES2019",
+    "strict": true,
+    "alwaysStrict": true,
+    "declaration": true,
+    "noImplicitAny": false,
+    "removeComments": true,
+    "noLib": false,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "sourceMap": true,
+    "listFiles": true,
+    "listEmittedFiles": true
+  },
+  "exclude": ["node_modules", "**/test/**/*"]
 }

@@ -1,11 +1,11 @@
 {
-	"version": "independent",
-	"packages": ["./packages/*"],
-	"npmClient": "yarn",
-	"useWorkspaces": true,
-	"command": {
-		"publish": {
-			"registry": "https://registry.npmjs.org/"
-		}
-	}
+  "version": "independent",
+  "packages": ["./packages/*"],
+  "npmClient": "yarn",
+  "useWorkspaces": true,
+  "command": {
+    "publish": {
+      "registry": "https://registry.npmjs.org/"
+    }
+  }
 }
