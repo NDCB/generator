@@ -1,6 +1,7 @@
 language: node_js
 node_js:
-  - "12"
+  - "lts/*"
+  - "node"
 
 install:
   - yarn global add lerna jest
