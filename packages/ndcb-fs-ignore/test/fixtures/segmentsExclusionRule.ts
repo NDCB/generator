@@ -1,4 +1,4 @@
-import { absolutePathSegments, fileToPath, File } from "@ndcb/fs";
+import { absolutePathSegments, fileToPath, File } from "@ndcb/fs-util";
 
 import { leadingUnderscoreExclusionRule } from "../../src/segments";
 

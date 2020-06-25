@@ -6,8 +6,9 @@ export const isString = (element: unknown): element is string =>
 export const isNumber = (element: unknown): element is number =>
   typeof element === "number";
 
-export const isObject = (element: unknown): element is object =>
-  typeof element === "object";
+export const isObject = (
+  element: unknown,
+): element is Record<string, unknown> => typeof element === "object";
 
 export const isNull = (element: unknown): element is null => element === null;
 

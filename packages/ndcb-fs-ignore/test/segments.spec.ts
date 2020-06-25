@@ -1,4 +1,4 @@
-import { normalizedFile } from "@ndcb/fs";
+import { normalizedFile } from "@ndcb/fs-util";
 
 import { segmentsExclusionRule } from "../src/segments";
 

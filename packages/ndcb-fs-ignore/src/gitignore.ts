@@ -10,7 +10,7 @@ import {
   directoryHasDescendent,
   relativePathToString,
   entryRelativePath,
-} from "@ndcb/fs";
+} from "@ndcb/fs-util";
 
 import { ExclusionRule } from "./exclusionRule";
 

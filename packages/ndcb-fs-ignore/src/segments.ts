@@ -1,4 +1,4 @@
-import { File } from "@ndcb/fs";
+import { File } from "@ndcb/fs-util";
 import { some } from "@ndcb/util";
 
 import { ExclusionRule } from "./exclusionRule";

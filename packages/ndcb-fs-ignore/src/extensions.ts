@@ -1,4 +1,4 @@
-import { Extension, File, extensionEquals, fileExtension } from "@ndcb/fs";
+import { Extension, File, extensionEquals, fileExtension } from "@ndcb/fs-util";
 import { some, isNotNull } from "@ndcb/util";
 
 import { ExclusionRule } from "./exclusionRule";

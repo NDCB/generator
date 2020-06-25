@@ -62,7 +62,10 @@ export function* filter<T>(
 
 export function first<T>(iterable: Iterable<T>): T | null;
 export function first<T>(iterable: Iterable<T>, otherwise: () => T): T;
-export function first<T>(iterable, otherwise = (): null => null): T | null {
+export function first<T>(
+  iterable: Iterable<T>,
+  otherwise = (): null => null,
+): T | null {
   for (const element of iterable) {
     return element;
   }
@@ -90,8 +93,8 @@ export function find<T>(
   otherwise: () => T,
 ): T;
 export function find<T>(
-  iterable,
-  predicate,
+  iterable: Iterable<T>,
+  predicate: (element: T) => boolean,
   otherwise = (): null => null,
 ): T | null {
   return first(filter(iterable, predicate), otherwise);

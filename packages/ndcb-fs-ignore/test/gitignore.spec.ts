@@ -1,4 +1,8 @@
-import { fileContents, normalizedDirectory, normalizedFile } from "@ndcb/fs";
+import {
+  fileContents,
+  normalizedDirectory,
+  normalizedFile,
+} from "@ndcb/fs-util";
 
 import { gitignoreExclusionRule } from "../src/gitignore";
 

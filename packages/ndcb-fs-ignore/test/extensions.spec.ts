@@ -1,4 +1,4 @@
-import { extension, normalizedFile } from "@ndcb/fs";
+import { extension, normalizedFile } from "@ndcb/fs-util";
 import { sequence } from "@ndcb/util";
 
 import { extensionsExclusionRule } from "../src/extensions";
