@@ -3,6 +3,28 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# 0.1.0 (2020-06-25)
+
+
+### Bug Fixes
+
+* fix issue with `isObject` and `object` type ([2d716bd](https://github.com/NDCB/generator/tree/master/packages/ndcb-fs-util/commit/2d716bd128b8332f4b3e1a47381b0a32c5986fff))
+
+
+### Code Refactoring
+
+* refactor file system utilities from `@ndcb/fs` into `@ndcb/fs-util` ([69e4a80](https://github.com/NDCB/generator/tree/master/packages/ndcb-fs-util/commit/69e4a809e37d0ff559e1a60af30fdf38abcf0ba4))
+
+
+### BREAKING CHANGES
+
+* `isObject` is removed
+* File system utilities previously found in `@ndcb/fs` are now in `@ndcb/fs-util`.
+
+
+
+
+
 # [0.4.0](https://github.com/NDCB/generator/tree/master/packages/ndcb-fs/compare/@ndcb/fs@0.3.0...@ndcb/fs@0.4.0) (2020-05-04)
 
 
