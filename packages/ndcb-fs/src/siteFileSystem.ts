@@ -1,34 +1,29 @@
-import { find, flatMap, map, filter, first } from "@ndcb/util";
-
 import {
   Directory,
-  fileFromDirectory,
   directoryFromDirectory,
-} from "./directory";
-import { DirectoryReader, downwardFiles } from "./directoryReader";
-import {
-  Entry,
-  topmostDirectory,
-  upwardDirectoriesUntil,
   directoryHasDescendent,
+  DirectoryReader,
+  downwardFiles,
+  Entry,
   entryRelativePath,
-} from "./entry";
-import { extension } from "./extension";
-import { ExtensionsMap } from "./extensionMap";
-import { File } from "./file";
-import { FileContents } from "./fileContents";
-import { FileReader } from "./fileReader";
-import {
-  RelativePath,
+  extension,
+  File,
+  FileContents,
+  fileFromDirectory,
+  FileReader,
   joinRelativePath,
-  relativePathIsEmpty,
-} from "./relativePath";
-import {
-  pathHasExtension,
   pathExtension,
+  pathHasExtension,
+  RelativePath,
+  relativePathIsEmpty,
   relativePathWithExtension,
   relativePathWithExtensions,
-} from "./path";
+  topmostDirectory,
+  upwardDirectoriesUntil,
+} from "@ndcb/fs-util";
+import { filter, find, first, flatMap, map } from "@ndcb/util";
+
+import { ExtensionsMap } from "./extensionMap";
 
 export interface SiteFileSystem {
   readonly files: () => Iterable<File>;

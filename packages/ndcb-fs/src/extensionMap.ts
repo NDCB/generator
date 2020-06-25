@@ -1,17 +1,16 @@
 import {
-  HashMap,
-  hashMap,
-  inversedHashMap,
-  prepend,
-  map as mapIterable,
-} from "@ndcb/util";
-
-import {
-  Extension,
-  hashExtension,
-  extensionEquals,
   extension,
-} from "./extension";
+  Extension,
+  extensionEquals,
+  hashExtension,
+} from "@ndcb/fs-util";
+import {
+  hashMap,
+  HashMap,
+  inversedHashMap,
+  map as mapIterable,
+  prepend,
+} from "@ndcb/util";
 
 export interface ExtensionMap {
   readonly source: Extension;

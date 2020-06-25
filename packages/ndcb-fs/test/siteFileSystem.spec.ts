@@ -1,23 +1,29 @@
 import { sep } from "path";
 
 import { map, sequence, find } from "@ndcb/util";
-
 import {
-  absolutePathToString,
-  normalizedAbsolutePath,
   absolutePath,
-} from "../src/absolutePath";
-import {
-  directoryToPath,
-  Directory,
+  absolutePathToString,
   directory,
+  Directory,
+  directoryToPath,
+  Entry,
+  entryToPath,
+  extension,
+  Extension,
+  extensionToString,
+  file,
+  File,
+  fileContents,
+  FileContents,
+  fileToPath,
+  normalizedAbsolutePath,
   normalizedDirectory,
-} from "../src/directory";
-import { upwardDirectories, Entry, entryToPath } from "../src/entry";
-import { Extension, extensionToString, extension } from "../src/extension";
-import { File, fileToPath, file, normalizedFile } from "../src/file";
-import { FileContents, fileContents } from "../src/fileContents";
-import { normalizedRelativePath } from "../src/relativePath";
+  normalizedFile,
+  normalizedRelativePath,
+  upwardDirectories,
+} from "@ndcb/fs-util";
+
 import { siteFileSystem, SiteFileSystem } from "../src/siteFileSystem";
 
 describe("siteFileSystem", () => {

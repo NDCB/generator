@@ -1,6 +1,6 @@
+import { extension } from "@ndcb/fs-util";
 import { map } from "@ndcb/util";
 
-import { extension } from "../src/extension";
 import { extensionsMap, ExtensionMap } from "../src/extensionMap";
 
 describe("extensionMap", () => {

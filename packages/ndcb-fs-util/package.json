@@ -1,19 +1,21 @@
 {
-  "name": "@ndcb/fs-ignore",
+  "name": "@ndcb/fs-util",
   "version": "0.0.0",
-  "description": "File system exclusion predicates",
+  "description": "File system utilities",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
-  "repository": "https://github.com/NDCB/generator/tree/master/packages/ndcb-fs-ignore",
+  "repository": "https://github.com/NDCB/generator/tree/master/packages/ndcb-fs-util",
   "author": "Marc-Antoine Ouimet",
   "license": "MIT",
   "files": [
     "lib"
   ],
   "dependencies": {
-    "@ndcb/fs-util": "^0.0.0",
     "@ndcb/util": "^0.7.0",
-    "ignore": "^5.1.8"
+    "fs-extra": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^9.0.1"
   },
   "publishConfig": {
     "access": "public"
