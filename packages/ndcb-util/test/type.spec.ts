@@ -2,7 +2,6 @@ import {
   isArray,
   isIterable,
   isNumber,
-  isObject,
   isString,
   isStringArray,
   isTypeArray,
@@ -23,14 +22,6 @@ describe("isNumber", () => {
   for (const { input, expected } of require("./fixtures/isNumber")) {
     test(`returns "${expected}" for input "${input}"`, () => {
       expect(isNumber(input)).toBe(expected);
-    });
-  }
-});
-
-describe("isObject", () => {
-  for (const { input, expected } of require("./fixtures/isObject")) {
-    test(`returns "${expected}" for input "${input}"`, () => {
-      expect(isObject(input)).toBe(expected);
     });
   }
 });

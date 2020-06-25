@@ -1,6 +1,6 @@
 import { dirname, join, normalize, sep } from "path";
 
-import { hashString, isString, isObject, isNotNull } from "@ndcb/util";
+import { hashString, isString, isNotNull } from "@ndcb/util";
 
 const RELATIVE_PATH = Symbol();
 
@@ -29,7 +29,7 @@ export const relativePath = (value: string): RelativePath => ({
 });
 
 export const isRelativePath = (element: unknown): element is RelativePath =>
-  isObject(element) && isNotNull(element) && element[RELATIVE_PATH];
+  typeof element === "object" && isNotNull(element) && !!element[RELATIVE_PATH];
 
 export const relativePathToString = (path: RelativePath): string => path.value;
 

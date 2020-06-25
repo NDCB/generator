@@ -1,7 +1,7 @@
 import { existsSync } from "fs-extra";
 import { normalize, resolve, sep } from "path";
 
-import { hashString, rest, isNotNull, isObject } from "@ndcb/util";
+import { hashString, rest, isNotNull } from "@ndcb/util";
 
 const ABSOLUTE_PATH = Symbol();
 
@@ -22,7 +22,7 @@ export const absolutePath = (value: string): AbsolutePath => ({
 });
 
 export const isAbsolutePath = (element: unknown): element is AbsolutePath =>
-  isObject(element) && isNotNull(element) && element[ABSOLUTE_PATH];
+  typeof element === "object" && isNotNull(element) && !!element[ABSOLUTE_PATH];
 
 export const absolutePathToString = (path: AbsolutePath): string => path.value;
 

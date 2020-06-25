@@ -1,4 +1,4 @@
-import { isObject, isNotNull } from "@ndcb/util";
+import { isNotNull } from "@ndcb/util";
 
 import { statSync, ensureFileSync } from "fs-extra";
 
@@ -23,7 +23,7 @@ export interface File {
 }
 
 export const isFile = (element: unknown): element is File =>
-  isObject(element) && isNotNull(element) && element[FILE];
+  typeof element === "object" && isNotNull(element) && !!element[FILE];
 
 export const file = (path: AbsolutePath): File => ({
   path,

@@ -1,4 +1,4 @@
-import { hashString, isObject, isNotNull } from "@ndcb/util";
+import { hashString, isNotNull } from "@ndcb/util";
 
 const EXTENSION = Symbol();
 
@@ -22,4 +22,4 @@ export const hashExtension = (extension: Extension): number =>
   hashString(extensionToString(extension));
 
 export const isExtension = (element: unknown): element is Extension =>
-  isObject(element) && isNotNull(element) && element[EXTENSION];
+  typeof element === "object" && isNotNull(element) && !!element[EXTENSION];

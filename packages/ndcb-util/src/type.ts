@@ -6,17 +6,13 @@ export const isString = (element: unknown): element is string =>
 export const isNumber = (element: unknown): element is number =>
   typeof element === "number";
 
-export const isObject = (
-  element: unknown,
-): element is Record<string, unknown> => typeof element === "object";
-
 export const isNull = (element: unknown): element is null => element === null;
 
 export const isNotNull = <T>(element: T | null): element is T =>
   !isNull(element);
 
 export const isIterable = (element: unknown): element is Iterable<unknown> =>
-  (isObject(element) || isString(element)) &&
+  (typeof element === "object" || isString(element)) &&
   isNotNull(element) &&
   !!element[Symbol.iterator];
 
