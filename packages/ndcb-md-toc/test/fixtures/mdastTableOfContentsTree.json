@@ -1,0 +1,262 @@
+[
+  {
+    "file": "./mdast-toc-empty.md",
+    "description": "returns `null` if the file has no headings",
+    "expected": null
+  },
+  {
+    "file": "./mdast-toc-normalized.md",
+    "description": "returns a proper tree of headings",
+    "expected": {
+      "heading": "Title",
+      "children": [
+        {
+          "heading": "Section 1",
+          "children": [
+            {
+              "heading": "Section 1.1",
+              "children": [
+                {
+                  "heading": "Section 1.1.1",
+                  "children": [
+                    {
+                      "heading": "Section 1.1.1.1",
+                      "children": [
+                        {
+                          "heading": "Section 1.1.1.1.1",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "heading": "Section 1.2",
+              "children": []
+            },
+            {
+              "heading": "Section 1.3",
+              "children": []
+            }
+          ]
+        },
+        {
+          "heading": "Section 2",
+          "children": [
+            {
+              "heading": "Section 2.1",
+              "children": []
+            },
+            {
+              "heading": "Section 2.2",
+              "children": []
+            },
+            {
+              "heading": "Section 2.3",
+              "children": []
+            }
+          ]
+        },
+        {
+          "heading": "Section 3",
+          "children": [
+            {
+              "heading": "Section 3.1",
+              "children": []
+            },
+            {
+              "heading": "Section 3.2",
+              "children": []
+            },
+            {
+              "heading": "Section 3.3",
+              "children": []
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "file": "./mdast-toc-duplicates.md",
+    "description": "does not remove duplicate sibling headings",
+    "expected": {
+      "heading": "Title",
+      "children": [
+        {
+          "heading": "Section 1",
+          "children": [
+            {
+              "heading": "Section 1.1",
+              "children": []
+            },
+            {
+              "heading": "Section 1.1",
+              "children": []
+            },
+            {
+              "heading": "Section 1.1",
+              "children": []
+            }
+          ]
+        },
+        {
+          "heading": "Section 1",
+          "children": [
+            {
+              "heading": "Section 2.1",
+              "children": []
+            },
+            {
+              "heading": "Section 2.2",
+              "children": []
+            },
+            {
+              "heading": "Section 2.3",
+              "children": []
+            }
+          ]
+        },
+        {
+          "heading": "Section 3",
+          "children": [
+            {
+              "heading": "Section 3.1",
+              "children": []
+            },
+            {
+              "heading": "Section 3.2",
+              "children": []
+            },
+            {
+              "heading": "Section 3.3",
+              "children": []
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "file": "./mdast-toc-unnormalized.md",
+    "description": "normalizes the depth of headings with respect to their parent",
+    "expected": {
+      "heading": "Title",
+      "children": [
+        {
+          "heading": "Section 1",
+          "children": [
+            {
+              "heading": "Section 1.1",
+              "children": []
+            },
+            {
+              "heading": "Section 1.2",
+              "children": []
+            },
+            {
+              "heading": "Section 1.3",
+              "children": []
+            }
+          ]
+        },
+        {
+          "heading": "Section 2",
+          "children": [
+            {
+              "heading": "Section 2.1",
+              "children": []
+            },
+            {
+              "heading": "Section 2.2",
+              "children": []
+            },
+            {
+              "heading": "Section 2.3",
+              "children": []
+            }
+          ]
+        },
+        {
+          "heading": "Section 3",
+          "children": [
+            {
+              "heading": "Section 3.1",
+              "children": []
+            },
+            {
+              "heading": "Section 3.2",
+              "children": []
+            },
+            {
+              "heading": "Section 3.3",
+              "children": []
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "file": "./mdast-toc-standard.md",
+    "description": "parses the table of contents in a use case",
+    "expected": {
+      "heading": "Actual Title",
+      "children": [
+        {
+          "heading": "Section 1",
+          "children": [
+            {
+              "heading": "Section 1.1",
+              "children": []
+            },
+            {
+              "heading": "Section 1.2",
+              "children": []
+            },
+            {
+              "heading": "Section 1.3",
+              "children": []
+            }
+          ]
+        },
+        {
+          "heading": "Section 2",
+          "children": [
+            {
+              "heading": "Section 2.1",
+              "children": []
+            },
+            {
+              "heading": "Section 2.2",
+              "children": []
+            },
+            {
+              "heading": "Section 2.3",
+              "children": []
+            }
+          ]
+        },
+        {
+          "heading": "Section 3",
+          "children": [
+            {
+              "heading": "Section 3.1",
+              "children": []
+            },
+            {
+              "heading": "Section 3.2",
+              "children": []
+            },
+            {
+              "heading": "Section 3.3",
+              "children": []
+            }
+          ]
+        }
+      ]
+    }
+  }
+]
