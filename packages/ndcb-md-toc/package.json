@@ -1,0 +1,16 @@
+{
+  "name": "@ndcb/md-toc",
+  "version": "0.0.0",
+  "description": "Markdown table of contents",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "repository": "https://github.com/NDCB/generator/tree/master/packages/ndcb-md-toc",
+  "author": "Marc-Antoine Ouimet",
+  "license": "MIT",
+  "files": [
+    "lib"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
