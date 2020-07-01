@@ -1,4 +1,4 @@
-import { reverse } from "./iterable";
+import { reverse, map } from "./iterable";
 
 export interface Tree<T> {
   readonly node: T;
@@ -27,3 +27,26 @@ export const breadthFirstTreeTraversal = function* <T>(
   }
 };
 
+export const mapTree = <T, K>(
+  root: Tree<T>,
+  mapper: (node: T) => K,
+): Tree<K> => {
+  const traverse = ({ node, children }: Tree<T>): Tree<K> => ({
+    node: mapper(node),
+    children: map(children, (child) => traverse(child)),
+  });
+  return traverse(root);
+};
+
+export interface ArrayTree<T> {
+  readonly node: T;
+  readonly children: Array<Tree<T>>;
+}
+
+export const arrayTree = <T>(root: Tree<T>): ArrayTree<T> => {
+  const traverse = ({ node, children }: Tree<T>): ArrayTree<T> => ({
+    node,
+    children: [...map(children, (child) => traverse(child))],
+  });
+  return traverse(root);
+};

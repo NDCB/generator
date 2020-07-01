@@ -1,4 +1,4 @@
-export * from "./graph";
+export * from "./tree";
 export * from "./hash";
 export * from "./hashMap";
 export * from "./iterable";
