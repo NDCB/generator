@@ -1,0 +1,46 @@
+[
+  {
+    "tree": {
+      "node": 0,
+      "children": [
+        {
+          "node": 1,
+          "children": [
+            {
+              "node": 2,
+              "children": []
+            },
+            {
+              "node": 3,
+              "children": []
+            },
+            {
+              "node": 4,
+              "children": []
+            }
+          ]
+        },
+        {
+          "node": 5,
+          "children": [
+            {
+              "node": 6,
+              "children": [
+                {
+                  "node": 7,
+                  "children": []
+                }
+              ]
+            },
+            {
+              "node": 8,
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    "expected": [0, 1, 2, 3, 4, 5, 6, 7, 8],
+    "description": "traverses the tree in depth-first order"
+  }
+]

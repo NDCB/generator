@@ -1,34 +1,28 @@
 import {
   breadthFirstTreeTraversal,
   depthFirstTreeTraversal,
-} from "../src/graph";
+} from "../src/tree";
 
 describe("depthFirstTreeTraversal", () => {
   for (const {
-    root,
-    children,
+    tree,
     expected,
     description,
   } of require("./fixtures/depthFirstTreeTraversal")) {
     test(description, () => {
-      expect([...depthFirstTreeTraversal(root, children)]).toStrictEqual(
-        expected,
-      );
+      expect([...depthFirstTreeTraversal(tree)]).toStrictEqual(expected);
     });
   }
 });
 
 describe("breadthFirstTreeTraversal", () => {
   for (const {
-    root,
-    children,
+    tree,
     expected,
     description,
   } of require("./fixtures/breadthFirstTreeTraversal")) {
     test(description, () => {
-      expect([...breadthFirstTreeTraversal(root, children)]).toStrictEqual(
-        expected,
-      );
+      expect([...breadthFirstTreeTraversal(tree)]).toStrictEqual(expected);
     });
   }
 });
