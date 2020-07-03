@@ -1,19 +1,20 @@
-import toString = require("mdast-util-to-string");
+import unist = require("unist");
 import visit = require("unist-util-visit");
 
-import unist = require("unist");
+import toString = require("mdast-util-to-string");
 
-export interface TableOfContentsTreeNode {
-  readonly heading: string;
-  readonly children: TableOfContentsTreeNode[];
-}
+import { ArrayTree } from "@ndcb/util";
+
+export type TableOfContents = ArrayTree<{
+  heading: string;
+}>;
 
 export const mdastTableOfContentsTree = (
   astRoot: unist.Node,
-): TableOfContentsTreeNode | null => {
+): TableOfContents | null => {
   // Traversed headings stack
   const stack: Array<{
-    node: TableOfContentsTreeNode;
+    node: TableOfContents;
     depth: number;
   }> = [];
   visit(astRoot, "heading", (node) => {
@@ -22,8 +23,10 @@ export const mdastTableOfContentsTree = (
     while (stack.length > 0 && stack[stack.length - 1].depth >= depth)
       stack.pop();
     // Parent node is at the top of the stack
-    const heading: TableOfContentsTreeNode = {
-      heading: toString(node),
+    const heading: TableOfContents = {
+      node: {
+        heading: toString(node),
+      },
       children: [],
     };
     if (stack.length > 0) stack[stack.length - 1].node.children.push(heading);
