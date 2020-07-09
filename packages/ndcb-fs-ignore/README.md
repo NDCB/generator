@@ -19,20 +19,11 @@ Use the `compositeExclusionRule` function to compose exclusion rules together, s
 
 Use the `exclusionRuleAsFilter` function to convert an exclusion rule into a filter for use when filtering over iterables.
 
-### `gitignore` Exclusion Rule
+### Exclusion Rules
 
 Use the `gitignoreExclusionRule` function to create an exclusion rule matching the contents of a `.gitignore` file.
 Only files that are descendant from the `.gitignore` file's directory are considered for exclusion.
 This uses the [`ignore` package](https://www.npmjs.com/package/ignore).
-
-### File Extension Exclusion Rule
-
-Use the `extensionsExclusionRule` function to create an exclusion rule which excludes files by their extension.
-
-### Path Segment Exclusion Rule
-
-Use the `segmentsExclusionRule` function to create an exclusion rule which excludes files containing at least one path segment excluded by segment exclusion rules.
-For instance, using the `leadingUnderscoreExclusionRule`, files containing a path segment with a leading `_` will be excluded.
 
 [npm-shield]: https://img.shields.io/npm/v/@ndcb/fs-ignore.svg
 [npm-url]: https://www.npmjs.com/package/@ndcb/fs-ignore

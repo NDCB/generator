@@ -12,10 +12,10 @@ describe("gitignoreExclusionRule", () => {
     directory,
     cases,
   } of require("./fixtures/gitignoreExclusionRule")) {
-    const applies = gitignoreExclusionRule({
-      readFile: () => fileContents(rules),
-      fileExists: () => rules !== null,
-    })(normalizedDirectory(directory));
+    const applies = gitignoreExclusionRule(() => fileContents(rules))(
+      normalizedDirectory(directory),
+      null,
+    );
     for (const { file, expected, description } of cases) {
       test(description, () => {
         expect(applies(normalizedFile(file))).toBe(expected);
