@@ -10,7 +10,7 @@ import {
   fileContentsToString,
 } from "@ndcb/fs-util";
 
-import { mdastTableOfContentsTree } from "../src/toc";
+import { mdastTableOfContentsTree, TableOfContentsNode } from "../src/toc";
 import { slugifyTableOfContents } from "../src/slugger";
 import { arrayTree } from "@ndcb/util";
 
@@ -36,7 +36,7 @@ describe("slugifyTableOfContents", () => {
     const map = slugifyTableOfContents(slugger);
     if (toc)
       test(description, () => {
-        expect(arrayTree(map<{ heading: string }>(toc))).toEqual(expected);
+        expect(arrayTree(map<TableOfContentsNode>(toc))).toEqual(expected);
       });
   }
 });

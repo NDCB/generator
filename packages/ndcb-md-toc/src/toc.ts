@@ -3,34 +3,34 @@ import visit = require("unist-util-visit");
 
 import toString = require("mdast-util-to-string");
 
-import { ArrayTree } from "@ndcb/util";
+import { ArrayTree, Tree } from "@ndcb/util";
 
-export type TableOfContents = ArrayTree<{
-  heading: string;
-}>;
+export type TableOfContentsNode = { heading: string };
+
+export type TableOfContents = Tree<TableOfContentsNode>;
 
 export const mdastTableOfContentsTree = (
   astRoot: unist.Node,
 ): TableOfContents | null => {
   // Traversed headings stack
   const stack: Array<{
-    node: TableOfContents;
+    node: ArrayTree<TableOfContentsNode>;
     depth: number;
   }> = [];
-  visit(astRoot, "heading", (node) => {
-    // https://github.com/syntax-tree/mdast#nodes
-    const depth = node.depth as number;
+  visit(astRoot, "heading", (astNode) => {
+    // https://github.com/syntax-tree/mdast#heading
+    const depth = astNode.depth as number;
     while (stack.length > 0 && stack[stack.length - 1].depth >= depth)
       stack.pop();
     // Parent node is at the top of the stack
-    const heading: TableOfContents = {
+    const node: ArrayTree<TableOfContentsNode> = {
       node: {
-        heading: toString(node),
+        heading: toString(astNode),
       },
       children: [],
     };
-    if (stack.length > 0) stack[stack.length - 1].node.children.push(heading);
-    stack.push({ node: heading, depth });
+    if (stack.length > 0) stack[stack.length - 1].node.children.push(node);
+    stack.push({ node, depth });
   });
   return stack.length > 0 ? stack[0].node : null;
 };

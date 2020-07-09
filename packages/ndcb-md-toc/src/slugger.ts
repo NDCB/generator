@@ -1,16 +1,14 @@
 import { mapTree, Tree } from "@ndcb/util";
 
+import { TableOfContentsNode } from "./toc";
+
 export type Slugger = (token: string) => string;
 
 export const slugifyTableOfContents = (slugger: Slugger) => <T>(
-  toc: Tree<
-    T & {
-      heading: string;
-    }
-  >,
+  toc: Tree<T & TableOfContentsNode>,
 ): Tree<
-  T & {
-    heading: string;
-    slug: string;
-  }
+  T &
+    TableOfContentsNode & {
+      slug: string;
+    }
 > => mapTree(toc, (node) => ({ ...node, slug: slugger(node.heading) }));
