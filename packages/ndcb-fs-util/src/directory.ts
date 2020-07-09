@@ -6,6 +6,7 @@ import {
   AbsolutePath,
   absolutePath,
   absolutePathEquals,
+  absolutePathBaseName,
   absolutePathToString,
   pathExists,
   normalizedAbsolutePath,
@@ -70,3 +71,6 @@ export const isDirectoryEmpty = (directory: Directory): boolean =>
 
 export const emptyDirectory = (directory: Directory): void =>
   emptyDirSync(absolutePathToString(directoryToPath(directory)));
+
+export const directoryName = (directory: Directory): string =>
+  absolutePathBaseName(directoryToPath(directory));

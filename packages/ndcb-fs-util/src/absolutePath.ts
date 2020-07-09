@@ -1,5 +1,5 @@
 import { existsSync } from "fs-extra";
-import { normalize, resolve, sep } from "path";
+import { normalize, resolve, sep, basename } from "path";
 
 import { hashString, rest, isNotNull } from "@ndcb/util";
 
@@ -63,3 +63,6 @@ export const parentPath = (path: AbsolutePath): AbsolutePath | null => {
 
 export const absolutePathSegments = (path: AbsolutePath): Iterable<string> =>
   rest(absolutePathToString(path).split(sep));
+
+export const absolutePathBaseName = (path: AbsolutePath): string =>
+  basename(absolutePathToString(path));

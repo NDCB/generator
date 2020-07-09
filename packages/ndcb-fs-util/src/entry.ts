@@ -16,6 +16,7 @@ import {
   directoryExists,
   directoryEquals,
   ensureDirectory,
+  directoryName,
 } from "./directory";
 import { Extension } from "./extension";
 import {
@@ -26,6 +27,7 @@ import {
   fileToString,
   isFile,
   fileExists,
+  fileName,
 } from "./file";
 import { pathExtension, relativePathFromAbsolutePaths } from "./path";
 import { RelativePath } from "./relativePath";
@@ -141,3 +143,8 @@ export const entryRelativePath = (from: Directory, to: Entry): RelativePath =>
 
 export const fileExtension = (file: File): Extension | null =>
   pathExtension(fileToPath(file));
+
+export const entryName: (entry: Entry) => string = matchEntry({
+  file: fileName,
+  directory: directoryName,
+});

@@ -5,6 +5,7 @@ import { statSync, ensureFileSync } from "fs-extra";
 import {
   AbsolutePath,
   absolutePathEquals,
+  absolutePathBaseName,
   absolutePathToString,
   pathExists,
   normalizedAbsolutePath,
@@ -48,3 +49,6 @@ export const fileExists = (file: File): boolean => {
 
 export const ensureFile = (file: File): void =>
   ensureFileSync(absolutePathToString(fileToPath(file)));
+
+export const fileName = (file: File): string =>
+  absolutePathBaseName(fileToPath(file));
