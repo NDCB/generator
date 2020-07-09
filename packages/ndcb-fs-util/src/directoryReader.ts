@@ -10,7 +10,7 @@ import {
   fileFromDirectory,
   directoryFromDirectory,
 } from "./directory";
-import { Entry, entryIsFile, entryIsDirectory } from "./entry";
+import { Entry, entryIsDirectory } from "./entry";
 import { File, isFile } from "./file";
 import { relativePath } from "./relativePath";
 
@@ -58,35 +58,14 @@ export const readDirectoryFiles = (readDirectory: DirectoryReader) => (
 ): Iterable<File> => filter<Entry, File>(readDirectory(directory), isFile);
 
 export const downwardEntries = (readDirectory: DirectoryReader) =>
-  function* (directories: Iterable<Directory>): Iterable<Entry> {
-    for (const rootDirectory of directories) {
-      yield rootDirectory;
-      const directoriesToRead: Directory[] = [rootDirectory];
-      while (directoriesToRead.length > 0) {
-        for (const entry of readDirectory(
-          directoriesToRead.shift() as Directory,
-        )) {
-          yield entry;
-          if (entryIsDirectory(entry)) {
-            directoriesToRead.push(entry);
-          }
-        }
-      }
-    }
-  };
-
-export const downwardFiles = (readDirectory: DirectoryReader) =>
-  function* (directories: Iterable<Directory>): Iterable<File> {
-    const directoriesToRead: Directory[] = [...directories];
-    while (directoriesToRead.length > 0) {
-      for (const entry of readDirectory(
-        directoriesToRead.shift() as Directory,
-      )) {
-        if (entryIsFile(entry)) {
-          yield entry;
-        } else if (entryIsDirectory(entry)) {
-          directoriesToRead.push(entry);
-        }
+  function* (directory: Directory): Iterable<Entry> {
+    yield directory;
+    const stack: Directory[] = [directory]; // Directories to read
+    while (stack.length > 0) {
+      const directory = stack.pop() as Directory;
+      for (const entry of readDirectory(directory)) {
+        yield entry;
+        if (entryIsDirectory(entry)) stack.push(entry);
       }
     }
   };
