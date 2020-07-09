@@ -1,2 +1,2 @@
-export * from "./extensionMap";
-export * from "./siteFileSystem";
+export * from "./fileSystem";
+export * from "./rootedFileSystem";
