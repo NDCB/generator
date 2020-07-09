@@ -14,7 +14,7 @@ describe("gitignoreExclusionRule", () => {
   } of require("./fixtures/gitignoreExclusionRule")) {
     const applies = gitignoreExclusionRule(() => fileContents(rules))(
       normalizedDirectory(directory),
-      null,
+      normalizedFile("./null"),
     );
     for (const { file, expected, description } of cases) {
       test(description, () => {
