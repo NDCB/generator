@@ -1,0 +1,20 @@
+{
+  "name": "@ndcb/mock-fs",
+  "version": "0.0.0",
+  "description": "File system mocking utility",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "repository": "https://github.com/NDCB/generator/tree/master/packages/ndcb-mock-fs",
+  "author": "Marc-Antoine Ouimet",
+  "license": "MIT",
+  "files": [
+    "lib"
+  ],
+  "dependencies": {
+    "@ndcb/fs-util": "^0.1.0",
+    "@ndcb/util": "^0.8.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
