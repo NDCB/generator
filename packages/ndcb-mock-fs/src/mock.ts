@@ -26,10 +26,6 @@ export interface MockDirectory {
 
 export type MockEntry = MockFile | MockDirectory;
 
-export interface MockFs {
-  readonly "/": MockDirectory;
-}
-
 const mockEntryIsFile = (entry: MockEntry): entry is MockFile =>
   typeof entry === "string";
 
@@ -37,7 +33,7 @@ const mockEntryIsDirectory = (entry: MockEntry): entry is MockDirectory =>
   typeof entry === "object";
 
 export const mockFileSystem = (
-  structure: MockFs,
+  structure: MockDirectory,
 ): {
   fileExists: (file: File) => boolean;
   directoryExists: (directory: Directory) => boolean;
@@ -48,9 +44,10 @@ export const mockFileSystem = (
   const mockDirectories: Directory[] = [];
   const mockFileContents: Map<string, string> = new Map();
   const mockDirectoryContents: Map<string, Entry[]> = new Map();
-  const traverse = (root: MockDirectory, base: string): void => {
+  const traverse = (root: MockDirectory, base = ""): void => {
     for (const segment in root) {
       const entry: MockEntry = root[segment];
+      /* istanbul ignore else */
       if (mockEntryIsFile(entry)) {
         mockFiles.push(normalizedFile(base + segment));
         mockFileContents.set(
@@ -73,10 +70,10 @@ export const mockFileSystem = (
           entries,
         );
         traverse(entry, directoryBase);
-      }
+      } else throw new Error(`Unexpected mock entry object: ${entry}`);
     }
   };
-  traverse(structure["/"], "/");
+  traverse(structure);
   return {
     fileExists: (file: File) =>
       some(mockFiles, (mock) => fileEquals(file, mock)),

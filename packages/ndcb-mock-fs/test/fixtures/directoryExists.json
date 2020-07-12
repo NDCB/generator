@@ -1,0 +1,50 @@
+[
+  {
+    "fs": {
+      "/": {
+        "file.txt": "",
+        "directory": {
+          "file.txt": "",
+          "subdirectory": {}
+        }
+      }
+    },
+    "cases": [
+      {
+        "directory": "/inexistent",
+        "expected": false,
+        "description": "is false for inexistent directories"
+      },
+      {
+        "directory": "/directory/inexistent",
+        "expected": false,
+        "description": "is false for inexistent nested directories"
+      },
+      {
+        "directory": "/inexistent/inexistent",
+        "expected": false,
+        "description": "is false for directories in inexistent directories"
+      },
+      {
+        "directory": "/file.txt",
+        "expected": false,
+        "description": "is false for files"
+      },
+      {
+        "directory": "/",
+        "expected": true,
+        "description": "is true for existing directories"
+      },
+      {
+        "directory": "/directory",
+        "expected": true,
+        "description": "is true for existing directories"
+      },
+      {
+        "directory": "/directory/subdirectory",
+        "expected": true,
+        "description": "is true for existing nested directories"
+      }
+    ]
+  }
+]

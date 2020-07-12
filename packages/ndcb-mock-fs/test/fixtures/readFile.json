@@ -1,0 +1,29 @@
+[
+  {
+    "fs": {
+      "/": {
+        "file.txt": "Root file",
+        "directory": {
+          "file.txt": "Nested file"
+        }
+      }
+    },
+    "cases": [
+      {
+        "file": "/inexistent.txt",
+        "expected": false,
+        "description": "throws for inexistent files"
+      },
+      {
+        "file": "/file.txt",
+        "expected": "Root file",
+        "description": "reads the contents of existing files"
+      },
+      {
+        "file": "/directory/file.txt",
+        "expected": "Nested file",
+        "description": "reads the contents of existing files"
+      }
+    ]
+  }
+]

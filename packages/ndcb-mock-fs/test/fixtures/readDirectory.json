@@ -1,0 +1,53 @@
+[
+  {
+    "fs": {
+      "/": {
+        "file.txt": "Root file",
+        "directory": {
+          "file.txt": "Nested file",
+          "subdirectory": {}
+        }
+      }
+    },
+    "cases": [
+      {
+        "directory": "/inexistent",
+        "expected": false,
+        "description": "throws for inexistent directories"
+      },
+      {
+        "directory": "/",
+        "expected": [
+          {
+            "type": "file",
+            "path": "/file.txt"
+          },
+          {
+            "type": "directory",
+            "path": "/directory"
+          }
+        ],
+        "description": "reads the contents of existing directories"
+      },
+      {
+        "directory": "/directory",
+        "expected": [
+          {
+            "type": "file",
+            "path": "/directory/file.txt"
+          },
+          {
+            "type": "directory",
+            "path": "/directory/subdirectory"
+          }
+        ],
+        "description": "reads the contents of existing directories"
+      },
+      {
+        "directory": "/directory/subdirectory",
+        "expected": [],
+        "description": "reads the contents of existing directories"
+      }
+    ]
+  }
+]
