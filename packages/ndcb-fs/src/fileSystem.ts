@@ -17,15 +17,16 @@ export interface FileSystem {
   readonly readDirectory: (path: RelativePath) => Iterable<Entry>;
 }
 
-export const compositeRootedFileSystem = (
+export const compositeFileSystem = (
   systems: Iterable<FileSystem>,
 ): FileSystem => {
   systems = [...systems];
+  const directoryExists = (path) =>
+    some(systems, (system) => system.directoryExists(path));
   return {
     files: () => flatMap(systems, (system) => system.files()),
     fileExists: (path) => some(systems, (system) => system.fileExists(path)),
-    directoryExists: (path) =>
-      some(systems, (system) => system.directoryExists(path)),
+    directoryExists,
     readFile: (path) =>
       find(
         systems,
@@ -34,10 +35,15 @@ export const compositeRootedFileSystem = (
           throw new Error(`File not found at "${relativePathToString(path)}"`);
         },
       ).readFile(path),
-    readDirectory: (path) =>
-      flatMap(
+    readDirectory: (path) => {
+      if (!directoryExists(path))
+        throw new Error(
+          `Directory not found at "${relativePathToString(path)}"`,
+        );
+      return flatMap(
         filter(systems, (system) => system.directoryExists(path)),
         (system) => system.readDirectory(path),
-      ),
+      );
+    },
   };
 };

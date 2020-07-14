@@ -2,6 +2,7 @@ import {
   ExclusionRule,
   deepEntryExclusionRule,
   downwardNotIgnoredEntries,
+  deepEntryExclusionRuleFromDirectory,
 } from "@ndcb/fs-ignore";
 import {
   Entry,
@@ -14,8 +15,8 @@ import {
   downwardEntries,
   entryIsFile,
   upwardDirectoriesUntil,
-  directoryHasDescendent,
   RelativePath,
+  relativePathToString,
 } from "@ndcb/fs-util";
 import { filter } from "@ndcb/util";
 
@@ -27,7 +28,6 @@ export interface RootedFileSystem extends FileSystem {
   readonly directory: (path: RelativePath) => Directory;
   readonly fileReader: FileReader;
   readonly directoryReader: DirectoryReader;
-  readonly includes: (entry: Entry) => boolean;
   readonly upwardDirectories: (entry: Entry) => Iterable<Directory>;
 }
 
@@ -51,7 +51,6 @@ export const rootedFileSystem = ({
     directory,
     fileReader: readFile,
     directoryReader: readDirectory,
-    includes: (entry) => directoryHasDescendent(root, entry),
     upwardDirectories: upwardDirectoriesUntil(root),
     files: () => filter(entries(root), entryIsFile),
     fileExists: (path) => fileExists(file(path)),
@@ -68,20 +67,33 @@ export const excludedRootedFileSystem = (
   const excluded = deepEntryExclusionRule(system.upwardDirectories)(
     exclusionRule,
   );
+  const excludedFromDirectory = deepEntryExclusionRuleFromDirectory(
+    system.upwardDirectories,
+  )(exclusionRule);
+  const entries = downwardNotIgnoredEntries(
+    system.directoryReader,
+    exclusionRule,
+  );
+  const fileExists = (path) =>
+    system.fileExists(path) && !excluded(system.file(path));
+  const directoryExists = (path) =>
+    system.directoryExists(path) && !excluded(system.directory(path));
   return {
-    files: () =>
-      filter(
-        downwardNotIgnoredEntries(
-          system.directoryReader,
-          exclusionRule,
-        )(system.root),
-        entryIsFile,
-      ),
-    fileExists: (path) =>
-      !excluded(system.file(path)) && system.fileExists(path),
-    directoryExists: (path) =>
-      !excluded(system.directory(path)) && system.directoryExists(path),
-    readFile: system.readFile,
-    readDirectory: system.readDirectory,
+    files: () => filter(entries(system.root), entryIsFile),
+    fileExists,
+    directoryExists,
+    readFile: (path) => {
+      if (!fileExists(path))
+        throw new Error(`File not found at "${relativePathToString(path)}"`);
+      return system.readFile(path);
+    },
+    readDirectory: (path) => {
+      if (!directoryExists(path))
+        throw new Error(
+          `Directory not found at "${relativePathToString(path)}"`,
+        );
+      const ignore = excludedFromDirectory(system.directory(path));
+      return filter(system.readDirectory(path), (entry) => !ignore(entry));
+    },
   };
 };

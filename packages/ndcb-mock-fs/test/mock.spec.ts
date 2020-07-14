@@ -66,8 +66,14 @@ describe("readDirectory", () => {
           ),
         ];
         test(description, () => {
-          expect([...readDirectory(normalizedDirectory(directory))]).toEqual(
-            expectedEntries,
+          const actualEntries = [
+            ...readDirectory(normalizedDirectory(directory)),
+          ];
+          expect(actualEntries).toEqual(
+            expect.arrayContaining(expectedEntries),
+          );
+          expect(expectedEntries).toEqual(
+            expect.arrayContaining(actualEntries),
           );
         });
       } else
