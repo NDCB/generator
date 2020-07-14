@@ -15,6 +15,7 @@ import {
   some,
   takeWhile,
   unorderedPairs,
+  enumerate,
 } from "./iterable";
 
 interface First<T> {
@@ -48,6 +49,7 @@ export interface Sequence<T> extends Iterable<T> {
   readonly takeWhile: (predicate: (element: T) => boolean) => Sequence<T>;
   readonly orderedPairs: () => Sequence<[T, T]>;
   readonly unorderedPairs: () => Sequence<[T, T]>;
+  readonly enumerate: () => Sequence<{ index: number; element: T }>;
   readonly toString: (
     elementToString?: (element: T) => string,
     delimiter?: string,
@@ -71,6 +73,7 @@ export const sequence = <T>(iterable: Iterable<T>): Sequence<T> => ({
   takeWhile: (predicate) => sequence(takeWhile(iterable, predicate)),
   orderedPairs: () => sequence(orderedPairs(iterable)),
   unorderedPairs: () => sequence(unorderedPairs(iterable)),
+  enumerate: () => sequence(enumerate(iterable)),
   toString: (elementToString, delimiter) =>
     iterableToString(iterable, elementToString, delimiter),
   [Symbol.iterator]: () => iterable[Symbol.iterator](),

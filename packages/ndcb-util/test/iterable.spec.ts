@@ -15,6 +15,7 @@ import {
   some,
   takeWhile,
   unorderedPairs,
+  enumerate,
 } from "../src/iterable";
 
 describe("iterableToString", () => {
@@ -236,6 +237,17 @@ describe("unorderedPairs", () => {
       (e) => `[${e}]`,
     )}" for input "${iterableToString(input)}"`, () => {
       expect([...unorderedPairs(input)]).toStrictEqual(expected);
+    });
+  }
+});
+
+describe("enumerate", () => {
+  for (const { input, expected } of require("./fixtures/enumerate")) {
+    test(`returns "${iterableToString(
+      expected,
+      (e) => `[${e}]`,
+    )}" for input "${iterableToString(input)}"`, () => {
+      expect([...enumerate(input)]).toStrictEqual(expected);
     });
   }
 });
