@@ -1,0 +1,24 @@
+[
+  {
+    "fs": {
+      "/": {
+        "root": {
+          "index.html": "",
+          "about.html": "",
+          "directory": {
+            "index.html": "",
+            "posts.html": ""
+          }
+        },
+        "file.exclude": ""
+      }
+    },
+    "root": "/root",
+    "expected": [
+      "/root/about.html",
+      "/root/index.html",
+      "/root/directory/index.html",
+      "/root/directory/posts.html"
+    ]
+  }
+]

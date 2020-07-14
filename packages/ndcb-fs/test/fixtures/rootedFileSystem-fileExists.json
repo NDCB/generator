@@ -1,0 +1,55 @@
+[
+  {
+    "fs": {
+      "/": {
+        "root": {
+          "index.html": "",
+          "about.html": "",
+          "directory": {
+            "index.html": "",
+            "posts.html": ""
+          }
+        }
+      }
+    },
+    "root": "/root",
+    "cases": [
+      {
+        "path": "",
+        "expected": false
+      },
+      {
+        "path": "index.html",
+        "expected": true
+      },
+      {
+        "path": "about.html",
+        "expected": true
+      },
+      {
+        "path": "inexistent.html",
+        "expected": false
+      },
+      {
+        "path": "directory",
+        "expected": false
+      },
+      {
+        "path": "directory/index.html",
+        "expected": true
+      },
+      {
+        "path": "directory/posts.html",
+        "expected": true
+      },
+      {
+        "path": "directory/inexistent.html",
+        "expected": false
+      },
+      {
+        "path": "inexistent/index.html",
+        "expected": false
+      }
+    ]
+  }
+]

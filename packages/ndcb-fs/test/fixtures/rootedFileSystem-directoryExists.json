@@ -1,0 +1,40 @@
+[
+  {
+    "fs": {
+      "/": {
+        "root": {
+          "index.html": "",
+          "about.html": "",
+          "directory": {
+            "index.html": "",
+            "posts.html": "",
+            "subdirectory": {}
+          }
+        }
+      }
+    },
+    "root": "/root",
+    "cases": [
+      {
+        "path": "",
+        "expected": true
+      },
+      {
+        "path": "directory",
+        "expected": true
+      },
+      {
+        "path": "directory/subdirectory",
+        "expected": true
+      },
+      {
+        "path": "index.html",
+        "expected": false
+      },
+      {
+        "path": "inexistent",
+        "expected": false
+      }
+    ]
+  }
+]
