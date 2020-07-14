@@ -53,6 +53,10 @@
     "transform": {
       "^.+\\.ts?$": "ts-jest"
     },
+    "collectCoverageFrom": [
+      "**/src/**/*.ts",
+      "!**/src/**/index.ts"
+    ],
     "testPathIgnorePatterns": [
       "fixtures",
       "lib"
