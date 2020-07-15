@@ -1,0 +1,202 @@
+[
+  {
+    "fs": {
+      "/": {
+        "content": {
+          ".gitignore": "TODO.md",
+          ".siteignore": ".editorconfig",
+          ".editorconfig": "",
+          "index.html": "Root index",
+          "fr-CA": {
+            "index.html": "fr-CA index",
+            "TODO.md": "",
+            "figures": {
+              ".siteignore": "*.py",
+              "figure.py": "",
+              "figure.png": ""
+            }
+          },
+          "en-CA": {
+            "index.html": "en-CA index"
+          }
+        },
+        "layout": {
+          ".siteignore": "**/_*",
+          "main.css": "",
+          "favicon.png": "",
+          "_layouts": {
+            "main.pug": ""
+          },
+          "_templates": {
+            "post.pug": "",
+            "category.pug": ""
+          },
+          "_locales": {
+            "fr-CA": "",
+            "en-CA": ""
+          }
+        }
+      }
+    },
+    "roots": ["/content", "/layout"],
+    "exclusionRulesFileNames": [".gitignore", ".siteignore"],
+    "expectedFiles": [
+      "/content/index.html",
+      "/content/fr-CA/index.html",
+      "/content/fr-CA/figures/figure.png",
+      "/content/en-CA/index.html",
+      "/layout/main.css",
+      "/layout/favicon.png"
+    ],
+    "fileExistsCases": [
+      {
+        "path": ".gitignore",
+        "expected": false
+      },
+      {
+        "path": ".siteignore",
+        "expected": false
+      },
+      {
+        "path": "fr-CA/figures/.siteignore",
+        "expected": false
+      },
+      {
+        "path": "fr-CA/TODO.md",
+        "expected": false
+      },
+      {
+        "path": "fr-CA/figures/figure.py",
+        "expected": false
+      },
+      {
+        "path": "_layouts/main.pug",
+        "expected": false
+      },
+      {
+        "path": "main.css",
+        "expected": true
+      },
+      {
+        "path": "favicon.png",
+        "expected": true
+      },
+      {
+        "path": "index.html",
+        "expected": true
+      },
+      {
+        "path": "fr-CA/index.html",
+        "expected": true
+      },
+      {
+        "path": "fr-CA/figures/figure.png",
+        "expected": true
+      },
+      {
+        "path": "en-CA/index.html",
+        "expected": true
+      },
+      {
+        "path": "inexistent.txt",
+        "expected": false
+      }
+    ],
+    "directoryExistsCases": [
+      {
+        "path": "",
+        "expected": true
+      },
+      {
+        "path": "fr-CA",
+        "expected": true
+      },
+      {
+        "path": "fr-CA/figures",
+        "expected": true
+      },
+      {
+        "path": "fr-CA/inexistent",
+        "expected": false
+      },
+      {
+        "path": "en-CA",
+        "expected": true
+      },
+      {
+        "path": "_layouts",
+        "expected": false
+      },
+      {
+        "path": "_templates",
+        "expected": false
+      },
+      {
+        "path": "inexistent",
+        "expected": false
+      }
+    ],
+    "readFileCases": [
+      {
+        "path": "index.html",
+        "expected": "Root index"
+      },
+      {
+        "path": "fr-CA/index.html",
+        "expected": "fr-CA index"
+      },
+      {
+        "path": "en-CA/index.html",
+        "expected": "en-CA index"
+      },
+      {
+        "path": "inexistent.txt",
+        "expected": false
+      }
+    ],
+    "readDirectoryCases": [
+      {
+        "path": "",
+        "expected": [
+          {
+            "path": "/content/index.html",
+            "type": "file"
+          },
+          {
+            "path": "/content/fr-CA",
+            "type": "directory"
+          },
+          {
+            "path": "/content/en-CA",
+            "type": "directory"
+          },
+          {
+            "path": "/layout/main.css",
+            "type": "file"
+          },
+          {
+            "path": "/layout/favicon.png",
+            "type": "file"
+          }
+        ]
+      },
+      {
+        "path": "fr-CA",
+        "expected": [
+          {
+            "path": "/content/fr-CA/index.html",
+            "type": "file"
+          },
+          {
+            "path": "/content/fr-CA/figures",
+            "type": "directory"
+          }
+        ]
+      },
+      {
+        "path": "inexistent",
+        "expected": false
+      }
+    ]
+  }
+]

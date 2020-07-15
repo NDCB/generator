@@ -19,7 +19,9 @@ export const gitignoreExclusionRule = (readFile: FileReader) => (
 ): ExclusionRule => {
   const ignore = gitignore();
   ignore.add(fileContentsToString(readFile(rulesFile)));
-  return (entry: Entry): boolean =>
-    directoryHasDescendent(directory, entry) &&
-    ignore.ignores(relativePathToString(entryRelativePath(directory, entry)));
+  return (entry: Entry): boolean => {
+    if (!directoryHasDescendent(directory, entry)) return false;
+    const pathname = relativePathToString(entryRelativePath(directory, entry));
+    return pathname !== "" && ignore.ignores(pathname);
+  };
 };
