@@ -5,7 +5,6 @@ import {
   File,
   normalizedRelativePath,
   fileContents,
-  Entry,
 } from "@ndcb/fs-util";
 import { mockFileSystem } from "@ndcb/mock-fs";
 import { map, enumerate, isIterable } from "@ndcb/util";

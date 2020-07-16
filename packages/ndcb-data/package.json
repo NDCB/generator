@@ -1,0 +1,26 @@
+{
+  "name": "@ndcb/data",
+  "version": "0.0.0",
+  "description": "Data file parsing",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "repository": "https://github.com/NDCB/generator/tree/master/packages/ndcb-data",
+  "author": "Marc-Antoine Ouimet",
+  "license": "MIT",
+  "files": [
+    "lib"
+  ],
+  "dependencies": {
+    "@ndcb/fs-util": "0.1.0",
+    "@ndcb/util": "0.8.0",
+    "json5": "2.1.3",
+    "yaml": "1.10.0",
+    "toml": "3.0.0"
+  },
+  "devDependencies": {
+    "@types/json5": "0.0.29"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
