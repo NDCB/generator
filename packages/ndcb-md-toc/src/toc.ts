@@ -1,7 +1,8 @@
-import unist = require("unist");
-import visit = require("unist-util-visit");
+// eslint-disable-next-line import/no-unresolved
+import * as unist from "unist";
+import * as visit from "unist-util-visit";
 
-import toString = require("mdast-util-to-string");
+import * as toString from "mdast-util-to-string";
 
 import { ArrayTree, Tree } from "@ndcb/util";
 
