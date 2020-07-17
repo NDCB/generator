@@ -154,3 +154,11 @@ export const enumerate = function* <T>(
   let count = 0;
   for (const element of iterable) yield { index: ++count, element };
 };
+
+export const forEach = <T>(
+  iterable: Iterable<T>,
+  callback: (element: T) => void,
+): void => {
+  for (const element of iterable) callback(element);
+};
+
