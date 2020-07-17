@@ -1,20 +1,3 @@
-export const iterableToString = <T>(
-  iterable: Iterable<T>,
-  elementToString: (element: T) => string = (e): string => `${e}`,
-  delimiter = ", ",
-): string => {
-  let result = "[";
-  const iterator = iterable[Symbol.iterator]();
-  let current = iterator.next();
-  while (!current.done) {
-    result += elementToString(current.value);
-    current = iterator.next();
-    if (!current.done) result += delimiter;
-  }
-  result += "]";
-  return result;
-};
-
 export const every = <T>(
   iterable: Iterable<T>,
   predicate: (element: T) => boolean,
@@ -162,3 +145,20 @@ export const forEach = <T>(
   for (const element of iterable) callback(element);
 };
 
+export const join = (iterable: Iterable<string>, delimiter = ", "): string => {
+  let result = "";
+  const iterator = iterable[Symbol.iterator]();
+  let current = iterator.next();
+  while (!current.done) {
+    result += current.value;
+    current = iterator.next();
+    if (!current.done) result += delimiter;
+  }
+  return result;
+};
+
+export const iterableToString = <T>(
+  iterable: Iterable<T>,
+  elementToString: (element: T) => string = (e): string => `${e}`,
+  delimiter?: string,
+): string => `[${join(map(iterable, elementToString), delimiter)}]`;
