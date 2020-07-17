@@ -1,4 +1,5 @@
 import { readdirSync } from "fs-extra";
+import { readdir } from "fs/promises";
 
 import { map, filter } from "@ndcb/util";
 
@@ -43,21 +44,35 @@ const directoryEntryAsEntry = (
   };
 };
 
-export type DirectoryReader = (directory: Directory) => Iterable<Entry>;
+export type DirectoryReaderAsync = (
+  directory: Directory,
+) => Promise<Iterable<Entry>>;
 
-export const readDirectory: DirectoryReader = (directory) =>
+export type DirectoryReaderSync = (directory: Directory) => Iterable<Entry>;
+
+export const readDirectory: DirectoryReaderAsync = async (directory) =>
   map(
-    readdirSync(absolutePathToString(directoryToPath(directory)), {
+    await readdir(absolutePathToString(directoryToPath(directory)), {
       withFileTypes: true,
+      encoding: "utf8",
     }),
     directoryEntryAsEntry(directory),
   );
 
-export const readDirectoryFiles = (readDirectory: DirectoryReader) => (
+export const readDirectorySync: DirectoryReaderSync = (directory) =>
+  map(
+    readdirSync(absolutePathToString(directoryToPath(directory)), {
+      withFileTypes: true,
+      encoding: "utf8",
+    }),
+    directoryEntryAsEntry(directory),
+  );
+
+export const readDirectoryFiles = (readDirectory: DirectoryReaderSync) => (
   directory: Directory,
 ): Iterable<File> => filter<Entry, File>(readDirectory(directory), isFile);
 
-export const downwardEntries = (readDirectory: DirectoryReader) =>
+export const downwardEntries = (readDirectory: DirectoryReaderSync) =>
   function* (directory: Directory): Iterable<Entry> {
     yield directory;
     const stack: Directory[] = [directory]; // Directories to read
