@@ -10,6 +10,7 @@ export * from "./directory";
 
 export * from "./entry";
 
+export * from "./fileExtension";
 export * from "./fileContents";
 export * from "./fileReader";
 export * from "./fileWriter";

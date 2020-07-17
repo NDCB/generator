@@ -1,4 +1,4 @@
-import { takeWhile, map, some } from "@ndcb/util";
+import { takeWhile } from "@ndcb/util";
 
 import {
   AbsolutePath,
@@ -18,7 +18,6 @@ import {
   ensureDirectory,
   directoryName,
 } from "./directory";
-import { Extension, extensionEquals } from "./extension";
 import {
   ensureFile,
   File,
@@ -29,7 +28,7 @@ import {
   fileExists,
   fileName,
 } from "./file";
-import { pathExtension, relativePathFromAbsolutePaths } from "./path";
+import { relativePathFromAbsolutePaths } from "./path";
 import { RelativePath } from "./relativePath";
 
 /**
@@ -145,20 +144,3 @@ export const upwardDirectoriesUntil = (root: Directory) =>
 
 export const entryRelativePath = (from: Directory, to: Entry): RelativePath =>
   relativePathFromAbsolutePaths(directoryToPath(from), entryToPath(to));
-
-export const fileExtension = (file: File): Extension | null =>
-  pathExtension(fileToPath(file));
-
-export const fileHasExtension = (target: Extension) => (
-  file: File,
-): boolean => {
-  const extension = fileExtension(file);
-  return !!extension && extensionEquals(target, extension);
-};
-
-export const fileHasSomeExtensionFrom = (
-  targets: Iterable<Extension>,
-): ((file: File) => boolean) => {
-  const matchers = [...map(targets, (target) => fileHasExtension(target))];
-  return (file: File): boolean => some(matchers, (matches) => matches(file));
-};
