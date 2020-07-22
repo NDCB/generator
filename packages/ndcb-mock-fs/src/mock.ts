@@ -1,8 +1,8 @@
 import {
   File,
   Directory,
-  FileReader,
-  DirectoryReader,
+  FileReaderSync,
+  DirectoryReaderSync,
   Entry,
   normalizedFile,
   normalizedDirectory,
@@ -37,8 +37,8 @@ export const mockFileSystem = (
 ): {
   fileExists: (file: File) => boolean;
   directoryExists: (directory: Directory) => boolean;
-  readFile: FileReader;
-  readDirectory: DirectoryReader;
+  readFile: FileReaderSync;
+  readDirectory: DirectoryReaderSync;
 } => {
   const mockFiles: File[] = [];
   const mockDirectories: Directory[] = [];

@@ -2,8 +2,8 @@ import {
   Entry,
   Directory,
   entryIsDirectory,
-  FileReader,
-  DirectoryReader,
+  FileReaderSync,
+  DirectoryReaderSync,
   File,
   entryIsFile,
   fileName,
@@ -14,8 +14,8 @@ import { ExclusionRule, compositeExclusionRule } from "./exclusionRule";
 import { gitignoreExclusionRule } from "./gitignore";
 
 export const exclusionRuleFromDirectory = (
-  readFile: FileReader,
-  readDirectory: DirectoryReader,
+  readFile: FileReaderSync,
+  readDirectory: DirectoryReaderSync,
 ) => (
   ruleFileNames: Iterable<string>,
 ): ((directory: Directory) => ExclusionRule) => {

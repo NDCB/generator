@@ -10,8 +10,8 @@ import {
   Directory,
   fileFromDirectory,
   directoryFromDirectory,
-  FileReader,
-  DirectoryReader,
+  FileReaderSync,
+  DirectoryReaderSync,
   downwardEntries,
   entryIsFile,
   upwardDirectoriesUntil,
@@ -26,8 +26,8 @@ export interface RootedFileSystem extends FileSystem {
   readonly root: Directory;
   readonly file: (path: RelativePath) => File;
   readonly directory: (path: RelativePath) => Directory;
-  readonly fileReader: FileReader;
-  readonly directoryReader: DirectoryReader;
+  readonly fileReader: FileReaderSync;
+  readonly directoryReader: DirectoryReaderSync;
   readonly upwardDirectories: (entry: Entry) => Iterable<Directory>;
 }
 
@@ -39,8 +39,8 @@ export const rootedFileSystem = ({
 }: {
   fileExists: (file: File) => boolean;
   directoryExists: (directory: Directory) => boolean;
-  readFile: FileReader;
-  readDirectory: DirectoryReader;
+  readFile: FileReaderSync;
+  readDirectory: DirectoryReaderSync;
 }) => (root: Directory): RootedFileSystem => {
   const file = fileFromDirectory(root);
   const directory = directoryFromDirectory(root);

@@ -3,7 +3,7 @@ import gitignore from "ignore";
 import {
   Directory,
   File,
-  FileReader,
+  FileReaderSync,
   fileContentsToString,
   directoryHasDescendent,
   relativePathToString,
@@ -13,7 +13,7 @@ import {
 
 import { ExclusionRule } from "./exclusionRule";
 
-export const gitignoreExclusionRule = (readFile: FileReader) => (
+export const gitignoreExclusionRule = (readFile: FileReaderSync) => (
   directory: Directory,
   rulesFile: File,
 ): ExclusionRule => {
