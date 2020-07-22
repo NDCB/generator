@@ -1,5 +1,4 @@
-import { readdirSync } from "fs-extra";
-import { readdir } from "fs/promises";
+import { readdirSync, readdir } from "fs-extra";
 
 import { map, filter } from "@ndcb/util";
 
@@ -52,7 +51,16 @@ export type DirectoryReaderSync = (directory: Directory) => Iterable<Entry>;
 
 export const readDirectory: DirectoryReaderAsync = async (directory) =>
   map(
-    await readdir(absolutePathToString(directoryToPath(directory)), {
+    await (readdir as /* Missing type annotation for `Dirent` readdir */ (
+      path: string,
+      options: { withFileTypes: boolean; encoding: BufferEncoding },
+    ) => Promise<
+      Iterable<{
+        name: string;
+        isFile: () => boolean;
+        isDirectory: () => boolean;
+      }>
+    >)(absolutePathToString(directoryToPath(directory)), {
       withFileTypes: true,
       encoding: "utf8",
     }),

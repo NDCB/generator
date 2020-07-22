@@ -6,7 +6,7 @@ import {
   normalizedDirectory,
   fileFromDirectory,
   normalizedRelativePath,
-  readFile,
+  readFileSync,
   fileContentsToString,
 } from "@ndcb/fs-util";
 
@@ -21,7 +21,7 @@ describe("mdastTableOfContentsTree", () => {
   const fileInFixtures = fileFromDirectory(fixturesDirectory);
   const contents = (path: string): string =>
     fileContentsToString(
-      readFile(fileInFixtures(normalizedRelativePath(path))),
+      readFileSync(fileInFixtures(normalizedRelativePath(path))),
     );
   for (const {
     file,
