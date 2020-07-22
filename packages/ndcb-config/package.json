@@ -1,0 +1,23 @@
+{
+  "name": "@ndcb/config",
+  "version": "0.0.0",
+  "description": "Website configuration",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "repository": "https://github.com/NDCB/generator/tree/master/packages/ndcb-config",
+  "author": "Marc-Antoine Ouimet",
+  "license": "MIT",
+  "files": [
+    "lib"
+  ],
+  "dependencies": {
+    "yup": "^0.29.1",
+    "@ndcb/fs-util": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/yup": "^0.29.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
