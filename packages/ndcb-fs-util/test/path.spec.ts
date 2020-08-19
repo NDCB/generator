@@ -1,4 +1,4 @@
-import { sequence } from "@ndcb/util";
+import { map } from "@ndcb/util";
 
 import { extension } from "../src/extension";
 import { normalizedRelativePath } from "../src/relativePath";
@@ -33,14 +33,13 @@ describe("relativePathWithExtensions", () => {
     description,
   } of require("./fixtures/relativePathWithExtensions")) {
     test(description, () => {
+      map;
       expect([
         ...relativePathWithExtensions(
           normalizedRelativePath(input),
-          sequence<string>(targets).map(extension),
+          map(targets, extension),
         ),
-      ]).toStrictEqual([
-        ...sequence<string>(expected).map(normalizedRelativePath),
-      ]);
+      ]).toStrictEqual([...map(expected, normalizedRelativePath)]);
     });
   }
 });

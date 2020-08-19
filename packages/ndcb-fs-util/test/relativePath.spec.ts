@@ -1,4 +1,4 @@
-import { sequence } from "@ndcb/util";
+import { map } from "@ndcb/util";
 
 import {
   normalizedRelativePath,
@@ -15,9 +15,7 @@ describe("upwardRelativePaths", () => {
     test(description, () => {
       expect([
         ...upwardRelativePaths(normalizedRelativePath(input)),
-      ]).toStrictEqual([
-        ...sequence<string>(expected).map(normalizedRelativePath),
-      ]);
+      ]).toStrictEqual([...map(expected, normalizedRelativePath)]);
     });
   }
 });
