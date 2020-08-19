@@ -22,13 +22,13 @@ describe("hashMap", () => {
       }
     });
     describe("get", () => {
-      for (const { key, otherwise, expected } of get || []) {
+      for (const { key, expected } of get || []) {
         test(
           expected !== null
             ? "returns the value with the associated key"
             : "returns `null` if there is no value associated with the key",
           () => {
-            expect(map.get(key, otherwise)).toEqual(expected);
+            expect(map.get(key).value).toEqual(expected);
           },
         );
       }
@@ -58,16 +58,16 @@ describe("inversedHashMap", () => {
       }
     });
     describe("get", () => {
-      for (const { key, otherwise, expected } of get || []) {
+      for (const { key, expected } of get || []) {
         if (expected !== null) {
           test("returns the value with the associated key", () => {
-            const actual = map.get(key, otherwise);
+            const actual = map.get(key).value;
             expect(actual).toEqual(expect.arrayContaining(expected));
             expect(actual).toHaveLength(expected.length);
           });
         } else {
           test("returns `null` if there is no value associated with the key", () => {
-            expect(map.get(key, otherwise)).toBeNull();
+            expect(map.get(key).value).toBeNull();
           });
         }
       }

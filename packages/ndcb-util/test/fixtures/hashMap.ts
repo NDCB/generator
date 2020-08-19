@@ -46,11 +46,6 @@ module.exports = [
         key: -2,
         expected: null,
       },
-      {
-        key: -2,
-        otherwise: (): number => 0,
-        expected: 0,
-      },
     ],
   },
   {

@@ -10,15 +10,7 @@ module.exports = [
     predicate: (n: number): boolean => n % 2 == 0,
     expected: null,
     description:
-      "returns `null` if none of the elements satisfies the predicate and there is no provided handler",
-  },
-  {
-    input: [1, 3, 5],
-    predicate: (n: number): boolean => n % 2 == 0,
-    ifNotFound: (): number => 0,
-    expected: 0,
-    description:
-      "returns the value of the handler if none of the elements satisfies the predicate",
+      "returns `null` if none of the elements satisfies the predicate",
   },
   {
     input: [1, 2, 3, 4],

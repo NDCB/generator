@@ -1,3 +1,5 @@
+import { Either, right, left } from "./either";
+
 export const every = <T>(
   iterable: Iterable<T>,
   predicate: (element: T) => boolean,
@@ -29,15 +31,10 @@ export function* filter<T>(
   for (const element of iterable) if (predicate(element)) yield element;
 }
 
-export function first<T>(iterable: Iterable<T>): T | null;
-export function first<T>(iterable: Iterable<T>, otherwise: () => T): T;
-export function first<T>(
-  iterable: Iterable<T>,
-  otherwise = (): null => null,
-): T | null {
-  for (const element of iterable) return element;
-  return otherwise();
-}
+export const first = <T>(iterable: Iterable<T>): Either<T, null> => {
+  for (const element of iterable) return right(element);
+  return left(null);
+};
 
 export const rest = function* <T>(iterable: Iterable<T>): Iterable<T> {
   let firstSkipped = false;
@@ -47,22 +44,10 @@ export const rest = function* <T>(iterable: Iterable<T>): Iterable<T> {
   }
 };
 
-export function find<T>(
+export const find = <T>(
   iterable: Iterable<T>,
   predicate: (element: T) => boolean,
-): T | null;
-export function find<T>(
-  iterable: Iterable<T>,
-  predicate: (element: T) => boolean,
-  otherwise: () => T,
-): T;
-export function find<T>(
-  iterable: Iterable<T>,
-  predicate: (element: T) => boolean,
-  otherwise = (): null => null,
-): T | null {
-  return first(filter(iterable, predicate), otherwise);
-}
+): Either<T, null> => first(filter(iterable, predicate));
 
 export const reverse = <T>(iterable: Iterable<T>): Iterable<T> =>
   [...iterable].reverse();
