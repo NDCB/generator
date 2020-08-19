@@ -6,8 +6,9 @@ import {
   fileHasSomeExtensionFrom,
   extension,
   fileContentsToString,
+  FileReaderSync,
 } from "@ndcb/fs-util";
-import { find } from "@ndcb/util";
+import { find, matchEitherPattern } from "@ndcb/util";
 
 import { parse as parseJson5 } from "json5";
 import { parse as parseYaml } from "yaml";
@@ -39,13 +40,12 @@ export const tomlParser: DataFileParser = {
 };
 
 export const readData = (
-  readFile: (file: File) => Promise<FileContents>,
+  readFile: FileReaderSync,
   parsers: DataFileParser[] = [jsonParser, json5Parser, yamlParser, tomlParser],
-) => async (file: File): Promise<unknown> =>
-  find(
-    parsers,
-    (parser) => parser.handles(file),
-    () => {
+) => (file: File): unknown =>
+  matchEitherPattern({
+    right: (parser: DataFileParser) => parser.parse(readFile(file)),
+    left: () => {
       throw new Error(`Unsupported file "${fileToString(file)}"`);
     },
-  ).parse(await readFile(file));
+  })(find(parsers, (parser) => parser.handles(file)));

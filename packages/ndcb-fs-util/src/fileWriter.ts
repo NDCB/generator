@@ -1,7 +1,7 @@
 import { writeFileSync } from "fs";
 
 import { absolutePathToString } from "./absolutePath";
-import { File, fileToPath } from "./file";
+import { File, filePath } from "./file";
 import { FileContents, fileContentsToString } from "./fileContents";
 
 export type FileWriter = (file: File, contents: FileContents) => void;
@@ -11,6 +11,6 @@ export const writeFile: FileWriter = (
   contents: FileContents,
 ): void =>
   writeFileSync(
-    absolutePathToString(fileToPath(file)),
+    absolutePathToString(filePath(file)),
     fileContentsToString(contents),
   );

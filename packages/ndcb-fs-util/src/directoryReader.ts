@@ -5,7 +5,7 @@ import { map, filter } from "@ndcb/util";
 import { absolutePathToString } from "./absolutePath";
 import {
   Directory,
-  directoryToPath,
+  directoryPath,
   directoryToString,
   fileFromDirectory,
   directoryFromDirectory,
@@ -21,8 +21,8 @@ const directoryEntryAsEntry = (
   isFile: () => boolean;
   isDirectory: () => boolean;
 }) => Entry) => {
-  const asFileDirectory = fileFromDirectory(directory);
-  const asDirectoryInDirectory = directoryFromDirectory(directory);
+  const asFileInReadDirectory = fileFromDirectory(directory);
+  const asDirectoryInReadDirectory = directoryFromDirectory(directory);
   return (directoryEntry: {
     name: string;
     isFile: () => boolean;
@@ -30,9 +30,9 @@ const directoryEntryAsEntry = (
   }): Entry => {
     const { name } = directoryEntry;
     if (directoryEntry.isFile()) {
-      return asFileDirectory(relativePath(name));
+      return asFileInReadDirectory(relativePath(name));
     } else if (directoryEntry.isDirectory()) {
-      return asDirectoryInDirectory(relativePath(name));
+      return asDirectoryInReadDirectory(relativePath(name));
     } else {
       throw new Error(
         `Entry named "${name}" in directory "${directoryToString(
@@ -60,7 +60,7 @@ export const readDirectory: DirectoryReaderAsync = async (directory) =>
         isFile: () => boolean;
         isDirectory: () => boolean;
       }>
-    >)(absolutePathToString(directoryToPath(directory)), {
+    >)(absolutePathToString(directoryPath(directory)), {
       withFileTypes: true,
       encoding: "utf8",
     }),
@@ -69,7 +69,7 @@ export const readDirectory: DirectoryReaderAsync = async (directory) =>
 
 export const readDirectorySync: DirectoryReaderSync = (directory) =>
   map(
-    readdirSync(absolutePathToString(directoryToPath(directory)), {
+    readdirSync(absolutePathToString(directoryPath(directory)), {
       withFileTypes: true,
       encoding: "utf8",
     }),

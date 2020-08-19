@@ -34,21 +34,21 @@ export const file = (path: AbsolutePath): File => ({
 export const normalizedFile = (path: string): File =>
   file(normalizedAbsolutePath(path));
 
-export const fileToPath = (file: File): AbsolutePath => file.path;
+export const filePath = (file: File): AbsolutePath => file.path;
 
 export const fileToString = (file: File): string =>
-  absolutePathToString(fileToPath(file));
+  absolutePathToString(filePath(file));
 
 export const fileEquals = (f1: File, f2: File): boolean =>
-  absolutePathEquals(fileToPath(f1), fileToPath(f2));
+  absolutePathEquals(filePath(f1), filePath(f2));
 
 export const fileExists = (file: File): boolean => {
-  const path = fileToPath(file);
+  const path = filePath(file);
   return pathExists(path) && statSync(absolutePathToString(path)).isFile();
 };
 
 export const ensureFile = (file: File): void =>
-  ensureFileSync(absolutePathToString(fileToPath(file)));
+  ensureFileSync(absolutePathToString(filePath(file)));
 
 export const fileName = (file: File): string =>
-  absolutePathBaseName(fileToPath(file));
+  absolutePathBaseName(filePath(file));

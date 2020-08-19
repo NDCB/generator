@@ -38,17 +38,17 @@ export const directory = (path: AbsolutePath): Directory => ({
 export const normalizedDirectory = (path: string): Directory =>
   directory(normalizedAbsolutePath(path));
 
-export const directoryToPath = (directory: Directory): AbsolutePath =>
+export const directoryPath = (directory: Directory): AbsolutePath =>
   directory.path;
 
 export const directoryToString = (directory: Directory): string =>
-  absolutePathToString(directoryToPath(directory));
+  absolutePathToString(directoryPath(directory));
 
 export const directoryEquals = (d1: Directory, d2: Directory): boolean =>
-  absolutePathEquals(directoryToPath(d1), directoryToPath(d2));
+  absolutePathEquals(directoryPath(d1), directoryPath(d2));
 
 export const directoryExists = (directory: Directory): boolean => {
-  const path = directoryToPath(directory);
+  const path = directoryPath(directory);
   return pathExists(path) && statSync(absolutePathToString(path)).isDirectory();
 };
 
@@ -57,20 +57,20 @@ export const currentWorkingDirectory = (): Directory =>
 
 export const fileFromDirectory = (from: Directory) => (
   to: RelativePath,
-): File => file(resolvedAbsolutePath(directoryToPath(from), to));
+): File => file(resolvedAbsolutePath(directoryPath(from), to));
 
 export const directoryFromDirectory = (from: Directory) => (
   to: RelativePath,
-): Directory => directory(resolvedAbsolutePath(directoryToPath(from), to));
+): Directory => directory(resolvedAbsolutePath(directoryPath(from), to));
 
 export const ensureDirectory = (directory: Directory): void =>
-  ensureDirSync(absolutePathToString(directoryToPath(directory)));
+  ensureDirSync(absolutePathToString(directoryPath(directory)));
 
 export const isDirectoryEmpty = (directory: Directory): boolean =>
-  readdirSync(absolutePathToString(directoryToPath(directory))).length === 0;
+  readdirSync(absolutePathToString(directoryPath(directory))).length === 0;
 
 export const emptyDirectory = (directory: Directory): void =>
-  emptyDirSync(absolutePathToString(directoryToPath(directory)));
+  emptyDirSync(absolutePathToString(directoryPath(directory)));
 
 export const directoryName = (directory: Directory): string =>
-  absolutePathBaseName(directoryToPath(directory));
+  absolutePathBaseName(directoryPath(directory));

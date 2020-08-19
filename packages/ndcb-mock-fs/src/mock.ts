@@ -10,11 +10,11 @@ import {
   normalizedAbsolutePath,
   fileEquals,
   directoryEquals,
-  fileToPath,
   fileContents,
-  directoryToPath,
   fileToString,
   directoryToString,
+  filePath,
+  directoryPath,
 } from "@ndcb/fs-util";
 import { some } from "@ndcb/util";
 
@@ -81,7 +81,7 @@ export const mockFileSystem = (
       some(mockDirectories, (mock) => directoryEquals(directory, mock)),
     readFile: (file: File) => {
       const contents = mockFileContents.get(
-        absolutePathToString(fileToPath(file)),
+        absolutePathToString(filePath(file)),
       );
       if (contents === undefined)
         throw new Error(`File does not exist "${fileToString(file)}"`);
@@ -89,7 +89,7 @@ export const mockFileSystem = (
     },
     readDirectory: (directory: Directory) => {
       const contents = mockDirectoryContents.get(
-        absolutePathToString(directoryToPath(directory)),
+        absolutePathToString(directoryPath(directory)),
       );
       if (contents === undefined)
         throw new Error(

@@ -1,4 +1,12 @@
-import { takeWhile } from "@ndcb/util";
+import {
+  takeWhile,
+  Either,
+  right,
+  left,
+  eitherIsRight,
+  Right,
+  eitherIsLeft,
+} from "@ndcb/util";
 
 import {
   AbsolutePath,
@@ -10,7 +18,7 @@ import {
 import {
   Directory,
   directory,
-  directoryToPath,
+  directoryPath,
   directoryToString,
   isDirectory,
   directoryExists,
@@ -21,8 +29,7 @@ import {
 import {
   ensureFile,
   File,
-  file,
-  fileToPath,
+  filePath,
   fileToString,
   isFile,
   fileExists,
@@ -62,9 +69,9 @@ export const matchEntry = <T>(pattern: EntryPattern<T>) => (
   );
 };
 
-export const entryToPath: (entry: Entry) => AbsolutePath = matchEntry({
-  file: fileToPath,
-  directory: directoryToPath,
+export const entryPath: (entry: Entry) => AbsolutePath = matchEntry({
+  file: filePath,
+  directory: directoryPath,
 });
 
 export const entryToString: (entry: Entry) => string = matchEntry({
@@ -75,13 +82,7 @@ export const entryToString: (entry: Entry) => string = matchEntry({
 export const entryEquals = (e1: Entry, e2: Entry): boolean =>
   ((entryIsFile(e1) && entryIsFile(e2)) ||
     (entryIsDirectory(e1) && entryIsDirectory(e2))) &&
-  absolutePathEquals(entryToPath(e1), entryToPath(e2));
-
-export const entryToFile = (entry: Entry): File =>
-  entryIsFile(entry) ? entry : file(entryToPath(entry));
-
-export const entryToDirectory = (entry: Entry): Directory =>
-  entryIsDirectory(entry) ? entry : directory(entryToPath(entry));
+  absolutePathEquals(entryPath(e1), entryPath(e2));
 
 export const entryExists: (entry: Entry) => boolean = matchEntry({
   file: fileExists,
@@ -99,27 +100,27 @@ export const entryName: (entry: Entry) => string = matchEntry({
 });
 
 export const topmostDirectory = (entry: Entry): Directory =>
-  directory(rootPath(entryToPath(entry)));
+  directory(rootPath(entryPath(entry)));
 
-export function parentDirectory(file: File): Directory;
-export function parentDirectory(directory: Directory): Directory | null;
-export function parentDirectory(entry: Entry): Directory | null {
-  const path = parentPath(entryToPath(entry));
-  return !path ? null : directory(path);
+export function parentDirectory(file: File): Right<Directory>;
+export function parentDirectory(directory: Directory): Either<Directory, null>;
+export function parentDirectory(entry: Entry): Either<Directory, null> {
+  const path = parentPath(entryPath(entry));
+  return eitherIsLeft(path) ? left(null) : right(directory(path.value));
 }
 
 const upwardDirectoriesFromDirectory = function* (
   directory: Directory,
 ): Iterable<Directory> {
-  let current: Directory | null = directory;
-  while (current) {
-    yield current;
-    current = parentDirectory(current);
+  let current: Either<Directory, null> = right(directory);
+  while (eitherIsRight(current)) {
+    yield current.value;
+    current = parentDirectory(current.value);
   }
 };
 
 const upwardDirectoriesFromFile = (file: File): Iterable<Directory> =>
-  upwardDirectoriesFromDirectory(parentDirectory(file));
+  upwardDirectoriesFromDirectory(parentDirectory(file).value);
 
 export const upwardDirectories: (
   entry: Entry,
@@ -131,7 +132,7 @@ export const upwardDirectories: (
 export const directoryHasDescendent = (
   directory: Directory,
   entry: Entry,
-): boolean => isUpwardPath(directoryToPath(directory), entryToPath(entry));
+): boolean => isUpwardPath(directoryPath(directory), entryPath(entry));
 
 export const upwardDirectoriesUntil = (root: Directory) =>
   function* (entry: Entry): Iterable<Directory> {
@@ -143,4 +144,4 @@ export const upwardDirectoriesUntil = (root: Directory) =>
   };
 
 export const entryRelativePath = (from: Directory, to: Entry): RelativePath =>
-  relativePathFromAbsolutePaths(directoryToPath(from), entryToPath(to));
+  relativePathFromAbsolutePaths(directoryPath(from), entryPath(to));

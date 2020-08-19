@@ -1,6 +1,6 @@
 import { extname, resolve, relative, join, dirname, basename } from "path";
 
-import { isNotNull, map } from "@ndcb/util";
+import { map, Either, left, right, eitherIsRight } from "@ndcb/util";
 
 import {
   AbsolutePath,
@@ -49,13 +49,13 @@ export const pathToString: (path: Path) => string = matchPath({
   relative: relativePathToString,
 });
 
-export const pathExtension = (path: Path): Extension | null => {
+export const pathExtension = (path: Path): Either<Extension, null> => {
   const extensionName = extname(pathToString(path));
-  return !extensionName ? null : extension(extensionName);
+  return !extensionName ? left(null) : right(extension(extensionName));
 };
 
 export const pathHasExtension = (path: Path): boolean =>
-  isNotNull(pathExtension(path));
+  eitherIsRight(pathExtension(path));
 
 export const pathSegments: (path: Path) => Iterable<string> = matchPath({
   absolute: absolutePathSegments,

@@ -5,7 +5,7 @@ import {
   Entry,
   relativePathToString,
 } from "@ndcb/fs-util";
-import { flatMap, some, find, filter } from "@ndcb/util";
+import { flatMap, some, find, filter, matchEitherPattern } from "@ndcb/util";
 
 export interface FileSystem {
   readonly files: () => Iterable<File>;
@@ -28,13 +28,12 @@ export const compositeFileSystem = (
     fileExists: (path) => some(systems, (system) => system.fileExists(path)),
     directoryExists,
     readFile: (path) =>
-      find(
-        systems,
-        (system) => system.fileExists(path),
-        () => {
+      matchEitherPattern({
+        right: (system: FileSystem) => system.readFile(path),
+        left: () => {
           throw new Error(`File not found at "${relativePathToString(path)}"`);
         },
-      ).readFile(path),
+      })(find(systems, (system) => system.fileExists(path))),
     readDirectory: (path) => {
       if (!directoryExists(path))
         throw new Error(

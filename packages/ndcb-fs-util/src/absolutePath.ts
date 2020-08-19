@@ -1,7 +1,7 @@
 import { existsSync } from "fs-extra";
 import { normalize, resolve, sep, basename } from "path";
 
-import { hashString, rest, isNotNull } from "@ndcb/util";
+import { hashString, rest, isNotNull, Either, left, right } from "@ndcb/util";
 
 const ABSOLUTE_PATH = Symbol();
 
@@ -43,8 +43,6 @@ export const pathExists = (path: AbsolutePath): boolean =>
 /**
  * Determines whether an absolute path is located upwards from another.
  *
- * This defines a total order on absolute paths.
- *
  * @param up The queried upward path.
  * @param down The queried downward path.
  *
@@ -56,9 +54,9 @@ export const isUpwardPath = (up: AbsolutePath, down: AbsolutePath): boolean =>
 export const rootPath = (path: AbsolutePath): AbsolutePath =>
   absolutePath(resolve(absolutePathToString(path), "/"));
 
-export const parentPath = (path: AbsolutePath): AbsolutePath | null => {
+export const parentPath = (path: AbsolutePath): Either<AbsolutePath, null> => {
   const parent = absolutePath(resolve(absolutePathToString(path), ".."));
-  return absolutePathEquals(path, parent) ? null : parent;
+  return absolutePathEquals(path, parent) ? left(null) : right(parent);
 };
 
 export const absolutePathSegments = (path: AbsolutePath): Iterable<string> =>
