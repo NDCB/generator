@@ -1,0 +1,24 @@
+{
+  "name": "@ndcb/cli",
+  "version": "0.0.0",
+  "description": "Website CLI",
+  "bin": {
+    "generator": "./lib/index.js"
+  },
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "repository": "https://github.com/NDCB/generator/tree/master/packages/ndcb-cli",
+  "author": "Marc-Antoine Ouimet",
+  "license": "MIT",
+  "files": [
+    "lib"
+  ],
+  "dependencies": {
+    "commander": "^5.1.0",
+    "@ndcb/builder": "^0.0.0",
+    "@ndcb/server": "^0.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "@ndcb/builder",
+  "version": "0.0.0",
+  "description": "Website builder",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "repository": "https://github.com/NDCB/generator/tree/master/packages/ndcb-processor",
+  "author": "Marc-Antoine Ouimet",
+  "license": "MIT",
+  "files": [
+    "lib"
+  ],
+  "dependencies": {},
+  "publishConfig": {
+    "access": "public"
+  }
+}
