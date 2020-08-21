@@ -1,9 +1,20 @@
-import { existsSync } from "fs-extra";
+import { existsSync, Stats, statSync } from "fs-extra";
 import { resolve, sep, basename } from "path";
 
-import { hashString, rest, isNotNull, Either, left, right } from "@ndcb/util";
+import {
+  hashString,
+  rest,
+  isNotNull,
+  IO,
+  Either,
+  eitherFromThrowable,
+  mapLeft,
+} from "@ndcb/util";
+import { Option, none, some } from "@ndcb/util/lib/option";
 
-const ABSOLUTE_PATH = Symbol();
+import { StatusErrorCode } from "./error";
+
+const ABSOLUTE_PATH = Symbol(); // For discriminated union
 
 /**
  * An absolute path to an entry in the file system.
@@ -22,7 +33,7 @@ export const absolutePath = (value: string): AbsolutePath => ({
 });
 
 export const isAbsolutePath = (element: unknown): element is AbsolutePath =>
-  typeof element === "object" && isNotNull(element) && !!element[ABSOLUTE_PATH];
+  typeof element === "object" && isNotNull(element) && element[ABSOLUTE_PATH];
 
 export const absolutePathToString = (path: AbsolutePath): string => path.value;
 
@@ -37,7 +48,7 @@ export const hashAbsolutePath = (path: AbsolutePath): number =>
 export const normalizedAbsolutePath = (value: string): AbsolutePath =>
   absolutePath(resolve(value));
 
-export const pathExists = (path: AbsolutePath): boolean =>
+export const pathExists = (path: AbsolutePath): IO<boolean> => () =>
   existsSync(absolutePathToString(path));
 
 /**
@@ -54,9 +65,9 @@ export const isUpwardPath = (up: AbsolutePath, down: AbsolutePath): boolean =>
 export const rootPath = (path: AbsolutePath): AbsolutePath =>
   absolutePath(resolve(absolutePathToString(path), "/"));
 
-export const parentPath = (path: AbsolutePath): Either<AbsolutePath, null> => {
+export const parentPath = (path: AbsolutePath): Option<AbsolutePath> => {
   const parent = absolutePath(resolve(absolutePathToString(path), ".."));
-  return absolutePathEquals(path, parent) ? left(null) : right(parent);
+  return absolutePathEquals(path, parent) ? none() : some(parent);
 };
 
 export const absolutePathSegments = (path: AbsolutePath): Iterable<string> =>
@@ -64,3 +75,50 @@ export const absolutePathSegments = (path: AbsolutePath): Iterable<string> =>
 
 export const absolutePathBaseName = (path: AbsolutePath): string =>
   basename(absolutePathToString(path));
+
+export interface StatusError {
+  readonly code: StatusErrorCode;
+  readonly path: AbsolutePath;
+  readonly message: string;
+}
+
+const statsErrorToMessage = (
+  path: AbsolutePath,
+  code: StatusErrorCode,
+): string => {
+  const pathAsString = absolutePathToString(path);
+  switch (code) {
+    case StatusErrorCode.EACCES:
+      return `Permission denied to access status of entry at path "${pathAsString}"`;
+    case StatusErrorCode.ELOOP:
+      return `Too many symbolic links encountered while accessing path "${pathAsString}"`;
+    case StatusErrorCode.ENAMETOOLONG:
+      return `Path name "${pathAsString}" is too long to be accessed`;
+    case StatusErrorCode.ENOENT:
+      return `Entry could not be found at path "${pathAsString}"`;
+    case StatusErrorCode.ENOTDIR:
+      return `A component of the path prefix is not a directory in path name "${pathAsString}"`;
+    default:
+      return `Unexpected status error code "${code}" while accessing status of entry at path "${pathAsString}"`;
+  }
+};
+
+const errorToStatsError = (
+  path: AbsolutePath,
+  { code }: Error & { code: StatusErrorCode },
+): StatusError => ({
+  path,
+  code,
+  message: statsErrorToMessage(path, code),
+});
+
+export const pathStatus = (
+  path: AbsolutePath,
+): IO<Either<StatusError, Stats>> => () =>
+  mapLeft(
+    eitherFromThrowable(() => statSync(absolutePathToString(path))) as Either<
+      Error & { code: StatusErrorCode },
+      Stats
+    >,
+    (error) => errorToStatsError(path, error),
+  );
