@@ -1,4 +1,4 @@
-import { Either, right, left } from "./either";
+import * as Option from "./option";
 
 export const every = <T>(
   iterable: Iterable<T>,
@@ -31,9 +31,9 @@ export function* filter<T>(
   for (const element of iterable) if (predicate(element)) yield element;
 }
 
-export const first = <T>(iterable: Iterable<T>): Either<T, null> => {
-  for (const element of iterable) return right(element);
-  return left(null);
+export const first = <T>(iterable: Iterable<T>): Option.Option<T> => {
+  for (const element of iterable) return Option.some(element);
+  return Option.none();
 };
 
 export const rest = function* <T>(iterable: Iterable<T>): Iterable<T> {
@@ -47,7 +47,7 @@ export const rest = function* <T>(iterable: Iterable<T>): Iterable<T> {
 export const find = <T>(
   iterable: Iterable<T>,
   predicate: (element: T) => boolean,
-): Either<T, null> => first(filter(iterable, predicate));
+): Option.Option<T> => first(filter(iterable, predicate));
 
 export const reverse = <T>(iterable: Iterable<T>): Iterable<T> =>
   [...iterable].reverse();

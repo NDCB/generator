@@ -10,28 +10,28 @@ export type Left<T> = { readonly [LEFT]: true; readonly value: T };
 
 export const left = <T>(value: T): Left<T> => ({ [LEFT]: true, value });
 
-export type Either<R, L> = Right<R> | Left<L>; // Discriminated union
+export type Either<L, R> = Left<L> | Right<R>; // Discriminated union
 
-export function eitherValue<R, L>(right: Left<L>): L;
-export function eitherValue<R, L>(right: Right<R>): R;
-export function eitherValue<R, L>(either: Either<R, L>): R | L {
+export function eitherValue<L, R>(right: Left<L>): L;
+export function eitherValue<L, R>(right: Right<R>): R;
+export function eitherValue<L, R>(either: Either<L, R>): L | R {
   return either.value;
 }
 
-export const eitherIsRight = <R, L>(either: Either<R, L>): either is Right<R> =>
+export const eitherIsRight = <L, R>(either: Either<L, R>): either is Right<R> =>
   either[RIGHT];
 
-export const eitherIsLeft = <R, L>(either: Either<R, L>): either is Left<L> =>
+export const eitherIsLeft = <L, R>(either: Either<L, R>): either is Left<L> =>
   either[LEFT];
 
-export type EitherPattern<R, L, T> = {
-  readonly right: (value: R) => T;
+export type EitherPattern<L, R, T> = {
   readonly left: (value: L) => T;
+  readonly right: (value: R) => T;
 };
 
-export const matchEitherPattern = <R, L, T>(
-  pattern: EitherPattern<R, L, T>,
-) => (either: Either<R, L>): T => {
+export const matchEitherPattern = <L, R, T>(
+  pattern: EitherPattern<L, R, T>,
+) => (either: Either<L, R>): T => {
   /* istanbul ignore else: unreachable branch */
   if (eitherIsRight(either)) return pattern.right(eitherValue(either));
   else if (eitherIsLeft(either)) return pattern.left(eitherValue(either));
@@ -45,7 +45,7 @@ export const matchEitherPattern = <R, L, T>(
 
 export const eitherFromThrowable = <T>(
   throwable: () => T,
-): Either<T, Error> => {
+): Either<unknown, T> => {
   try {
     return right(throwable());
   } catch (error) {
@@ -53,36 +53,30 @@ export const eitherFromThrowable = <T>(
   }
 };
 
-export const mapRight = <R, L, RR>(
-  either: Either<R, L>,
-  mapper: (right: R) => RR,
-): Either<RR, L> =>
-  matchEitherPattern<R, L, Either<RR, L>>({
-    right: (value) => right(mapper(value)),
-    left: (value) => left(value),
-  })(either);
+export const mapRight = <L, R, RR>(
+  either: Either<L, R>,
+  map: (right: R) => RR,
+): Either<L, RR> =>
+  eitherIsRight(either) ? right(map(eitherValue(either))) : either;
 
-export const mapLeft = <R, L, LL>(
-  either: Either<R, L>,
-  mapper: (left: L) => LL,
-): Either<R, LL> =>
-  matchEitherPattern<R, L, Either<R, LL>>({
-    right: (value) => right(value),
-    left: (value) => left(mapper(value)),
-  })(either);
+export const mapLeft = <L, R, LL>(
+  either: Either<L, R>,
+  map: (left: L) => LL,
+): Either<LL, R> =>
+  eitherIsLeft(either) ? left(map(eitherValue(either))) : either;
 
-export const mapEither = <R, L, RR, LL>(
-  either: Either<R, L>,
+export const mapEither = <L, R, LL, RR>(
+  either: Either<L, R>,
+  mapL: (value: L) => LL,
   mapR: (value: R) => RR,
-  mapL: (value: L) => LL,
-): Either<RR, LL> => mapRight(mapLeft(either, mapL), mapR);
+): Either<LL, RR> => mapRight(mapLeft(either, mapL), mapR);
 
-export const chainRight = <R, L, RR, LL>(
-  either: Either<R, L>,
-  mapR: (value: R) => Either<RR, LL>,
-  mapL: (value: L) => LL,
-): Either<RR, LL> =>
-  matchEitherPattern<R, L, Either<RR, LL>>({
-    right: mapR,
-    left: (value) => left(mapL(value)),
+export const chainRight = <L, R, LL, RR>(
+  either: Either<L, R>,
+  mapLeft: (value: L) => LL,
+  mapRight: (value: R) => Either<LL, RR>,
+): Either<LL, RR> =>
+  matchEitherPattern<L, R, Either<LL, RR>>({
+    left: (value) => left(mapLeft(value)),
+    right: mapRight,
   })(either);

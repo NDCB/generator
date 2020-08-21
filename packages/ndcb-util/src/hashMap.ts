@@ -1,9 +1,9 @@
 import { find, some } from "./iterable";
-import { Either, matchEitherPattern, right, left } from "./either";
+import * as Option from "./option";
 
 export interface HashMap<K, V> {
   readonly has: (key: K) => boolean;
-  readonly get: (key: K) => Either<V | null, null>;
+  readonly get: (key: K) => Option.Option<V | null>;
 }
 
 export const hashMap = <K, V>(
@@ -16,28 +16,23 @@ export const hashMap = <K, V>(
   for (const [key, value] of entries) {
     const hashCode = hash(key);
     if (!buckets[hashCode]) buckets[hashCode] = [];
-    matchEitherPattern<[K, V], null, [K, V]>({
-      right: (bucket) => bucket,
-      left: () => {
+    Option.bimap<[K, V], [K, V], [K, V]>(
+      (bucket) => bucket,
+      () => {
         const bucket: [K, V] = [key, value];
         buckets[hashCode].push(bucket);
         return bucket;
       },
-    })(
+    )(
       find<[K, V]>(buckets[hashCode], (bucket) => equals(key, bucket[0])),
     )[1] = value;
   }
   const has = (key: K): boolean =>
     some<[K, V]>(buckets[hash(key)] || [], (bucket) => equals(key, bucket[0]));
-  const bucketValue = matchEitherPattern<
-    [K, V | null],
-    null,
-    Either<V | null, null>
-  >({
-    right: (bucket) => right(bucket[1]),
-    left: () => left(null),
-  });
-  const get = (key: K): Either<V | null, null> =>
+  const bucketValue = Option.map<[K, V | null], V | null>(
+    (bucket) => bucket[1],
+  );
+  const get = (key: K): Option.Option<V | null> =>
     bucketValue(
       find<[K, V | null]>(buckets[hash(key)] || [], (bucket) =>
         equals(key, bucket[0]),
