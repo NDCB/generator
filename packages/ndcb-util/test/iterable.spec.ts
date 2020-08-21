@@ -123,7 +123,7 @@ describe("flatMap", () => {
 describe("first", () => {
   for (const { input, expected, description } of require("./fixtures/first")) {
     test(description, () => {
-      expect(first(input).value).toBe(expected);
+      expect(first(input)).toStrictEqual(expected);
     });
   }
 });
@@ -208,7 +208,7 @@ describe("find", () => {
     description,
   } of require("./fixtures/find")) {
     test(description, () => {
-      expect(find(input, predicate).value).toBe(expected);
+      expect(find(input, predicate)).toStrictEqual(expected);
     });
   }
 });

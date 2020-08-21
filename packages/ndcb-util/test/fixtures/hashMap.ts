@@ -1,3 +1,5 @@
+import { some, none } from "../../src/option";
+
 module.exports = [
   {
     entries: [
@@ -32,19 +34,19 @@ module.exports = [
     get: [
       {
         key: -1,
-        expected: 1,
+        expected: some(1),
       },
       {
         key: 0,
-        expected: 0,
+        expected: some(0),
       },
       {
         key: 1,
-        expected: 10,
+        expected: some(10),
       },
       {
         key: -2,
-        expected: null,
+        expected: none(),
       },
     ],
   },
@@ -58,7 +60,7 @@ module.exports = [
     get: [
       {
         key: 0,
-        expected: 1,
+        expected: some(1),
       },
     ],
   },

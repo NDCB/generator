@@ -20,11 +20,7 @@ export const isSome = <T>(option: Option<T>): option is Some<T> => option[SOME];
 
 export const isNone = <T>(option: Option<T>): option is None => option[NONE];
 
-export function optionValue<T>(option: None): null;
-export function optionValue<T>(option: Some<T>): T;
-export function optionValue<T>(option: Option<T>): T | null {
-  return isSome(option) ? option.value : null;
-}
+export const optionValue = <T>(option: Some<T>): T => option.value;
 
 export const map = <T, K>(map: (value: T) => K) => (
   option: Option<T>,
@@ -36,3 +32,7 @@ export const bimap = <T, S, N>(mapSome: (value: T) => S, mapNone: () => N) => (
   isSome(option)
     ? Either.right(mapSome(optionValue(option)))
     : Either.left(mapNone());
+
+export const join = <T, S>(mapSome: (value: T) => S, mapNone: () => S) => (
+  option: Option<T>,
+): S => (isSome(option) ? mapSome(optionValue(option)) : mapNone());

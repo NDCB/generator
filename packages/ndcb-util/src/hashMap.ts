@@ -1,9 +1,9 @@
 import { find, some } from "./iterable";
-import * as Option from "./option";
+import { Option, join, map } from "./option";
 
 export interface HashMap<K, V> {
   readonly has: (key: K) => boolean;
-  readonly get: (key: K) => Option.Option<V | null>;
+  readonly get: (key: K) => Option<V | null>;
 }
 
 export const hashMap = <K, V>(
@@ -16,7 +16,7 @@ export const hashMap = <K, V>(
   for (const [key, value] of entries) {
     const hashCode = hash(key);
     if (!buckets[hashCode]) buckets[hashCode] = [];
-    Option.bimap<[K, V], [K, V], [K, V]>(
+    join<[K, V], [K, V]>(
       (bucket) => bucket,
       () => {
         const bucket: [K, V] = [key, value];
@@ -28,13 +28,13 @@ export const hashMap = <K, V>(
     )[1] = value;
   }
   const has = (key: K): boolean =>
-    some<[K, V]>(buckets[hash(key)] || [], (bucket) => equals(key, bucket[0]));
-  const bucketValue = Option.map<[K, V | null], V | null>(
+    some<[K, V]>(buckets[hash(key)] ?? [], (bucket) => equals(key, bucket[0]));
+  const bucketOptionalValue = map<[K, V | null], V | null>(
     (bucket) => bucket[1],
   );
-  const get = (key: K): Option.Option<V | null> =>
-    bucketValue(
-      find<[K, V | null]>(buckets[hash(key)] || [], (bucket) =>
+  const get = (key: K): Option<V | null> =>
+    bucketOptionalValue(
+      find<[K, V | null]>(buckets[hash(key)] ?? [], (bucket) =>
         equals(key, bucket[0]),
       ),
     );
