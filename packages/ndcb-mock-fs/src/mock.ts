@@ -1,7 +1,7 @@
 import {
   File,
   Directory,
-  FileReaderSync,
+  FileReader,
   DirectoryReaderSync,
   Entry,
   normalizedFile,
@@ -10,13 +10,14 @@ import {
   normalizedAbsolutePath,
   fileEquals,
   directoryEquals,
-  fileContents,
-  fileToString,
   directoryToString,
   filePath,
   directoryPath,
+  FileReadingError,
+  TextFileReader,
+  readTextFile,
 } from "@ndcb/fs-util";
-import { some } from "@ndcb/util";
+import { some, left, right } from "@ndcb/util";
 
 export type MockFile = string;
 
@@ -37,7 +38,8 @@ export const mockFileSystem = (
 ): {
   fileExists: (file: File) => boolean;
   directoryExists: (directory: Directory) => boolean;
-  readFile: FileReaderSync;
+  readFile: FileReader;
+  readTextFile: TextFileReader;
   readDirectory: DirectoryReaderSync;
 } => {
   const mockFiles: File[] = [];
@@ -74,19 +76,20 @@ export const mockFileSystem = (
     }
   };
   traverse(structure);
+  const readFile: FileReader = (file: File) => () => {
+    const pathString = absolutePathToString(filePath(file));
+    // TODO: EISDIR error handling
+    const contents = mockFileContents.get(pathString);
+    if (contents === undefined) return left(FileReadingError.FILE_NOT_FOUND);
+    return right(Buffer.from(contents));
+  };
   return {
     fileExists: (file: File) =>
       some(mockFiles, (mock) => fileEquals(file, mock)),
     directoryExists: (directory: Directory) =>
       some(mockDirectories, (mock) => directoryEquals(directory, mock)),
-    readFile: (file: File) => {
-      const contents = mockFileContents.get(
-        absolutePathToString(filePath(file)),
-      );
-      if (contents === undefined)
-        throw new Error(`File does not exist "${fileToString(file)}"`);
-      return fileContents(contents);
-    },
+    readFile,
+    readTextFile: readTextFile(readFile, "utf8"),
     readDirectory: (directory: Directory) => {
       const contents = mockDirectoryContents.get(
         absolutePathToString(directoryPath(directory)),

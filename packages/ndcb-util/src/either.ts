@@ -42,3 +42,47 @@ export const matchEitherPattern = <R, L, T>(
       )}"`,
     );
 };
+
+export const eitherFromThrowable = <T>(
+  throwable: () => T,
+): Either<T, Error> => {
+  try {
+    return right(throwable());
+  } catch (error) {
+    return left(error);
+  }
+};
+
+export const mapRight = <R, L, RR>(
+  either: Either<R, L>,
+  mapper: (right: R) => RR,
+): Either<RR, L> =>
+  matchEitherPattern<R, L, Either<RR, L>>({
+    right: (value) => right(mapper(value)),
+    left: (value) => left(value),
+  })(either);
+
+export const mapLeft = <R, L, LL>(
+  either: Either<R, L>,
+  mapper: (left: L) => LL,
+): Either<R, LL> =>
+  matchEitherPattern<R, L, Either<R, LL>>({
+    right: (value) => right(value),
+    left: (value) => left(mapper(value)),
+  })(either);
+
+export const mapEither = <R, L, RR, LL>(
+  either: Either<R, L>,
+  mapR: (value: R) => RR,
+  mapL: (value: L) => LL,
+): Either<RR, LL> => mapRight(mapLeft(either, mapL), mapR);
+
+export const chainRight = <R, L, RR, LL>(
+  either: Either<R, L>,
+  mapR: (value: R) => Either<RR, LL>,
+  mapL: (value: L) => LL,
+): Either<RR, LL> =>
+  matchEitherPattern<R, L, Either<RR, LL>>({
+    right: mapR,
+    left: (value) => left(mapL(value)),
+  })(either);

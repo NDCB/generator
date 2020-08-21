@@ -1,3 +1,4 @@
+export * from "./io";
 export * from "./either";
 export * from "./tree";
 export * from "./hash";

@@ -1,5 +1,5 @@
 import { existsSync } from "fs-extra";
-import { normalize, resolve, sep, basename } from "path";
+import { resolve, sep, basename } from "path";
 
 import { hashString, rest, isNotNull, Either, left, right } from "@ndcb/util";
 
@@ -35,7 +35,7 @@ export const hashAbsolutePath = (path: AbsolutePath): number =>
   hashString(absolutePathToString(path));
 
 export const normalizedAbsolutePath = (value: string): AbsolutePath =>
-  absolutePath(normalize(value));
+  absolutePath(resolve(value));
 
 export const pathExists = (path: AbsolutePath): boolean =>
   existsSync(absolutePathToString(path));

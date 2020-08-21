@@ -10,15 +10,16 @@ import {
   Directory,
   fileFromDirectory,
   directoryFromDirectory,
-  FileReaderSync,
+  FileReader,
   DirectoryReaderSync,
   downwardEntries,
   entryIsFile,
   upwardDirectoriesUntil,
   RelativePath,
   relativePathToString,
+  fileContents,
 } from "@ndcb/fs-util";
-import { filter } from "@ndcb/util";
+import { filter, mapRight } from "@ndcb/util";
 
 import { FileSystem } from "./fileSystem";
 
@@ -26,7 +27,7 @@ export interface RootedFileSystem extends FileSystem {
   readonly root: Directory;
   readonly file: (path: RelativePath) => File;
   readonly directory: (path: RelativePath) => Directory;
-  readonly fileReader: FileReaderSync;
+  readonly fileReader: FileReader;
   readonly directoryReader: DirectoryReaderSync;
   readonly upwardDirectories: (entry: Entry) => Iterable<Directory>;
 }
@@ -39,7 +40,7 @@ export const rootedFileSystem = ({
 }: {
   fileExists: (file: File) => boolean;
   directoryExists: (directory: Directory) => boolean;
-  readFile: FileReaderSync;
+  readFile: FileReader;
   readDirectory: DirectoryReaderSync;
 }) => (root: Directory): RootedFileSystem => {
   const file = fileFromDirectory(root);
@@ -55,7 +56,8 @@ export const rootedFileSystem = ({
     files: () => filter(entries(root), entryIsFile),
     fileExists: (path) => fileExists(file(path)),
     directoryExists: (path) => directoryExists(directory(path)),
-    readFile: (path) => readFile(file(path)),
+    readFile: (path) =>
+      mapRight(readFile(file(path))(), (r) => fileContents(r.toString())),
     readDirectory: (path) => readDirectory(directory(path)),
   };
 };

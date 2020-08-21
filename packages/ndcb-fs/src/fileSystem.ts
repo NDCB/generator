@@ -4,15 +4,25 @@ import {
   FileContents,
   Entry,
   relativePathToString,
+  FileReadingError,
 } from "@ndcb/fs-util";
-import { flatMap, some, find, filter, matchEitherPattern } from "@ndcb/util";
+import {
+  flatMap,
+  some,
+  find,
+  filter,
+  matchEitherPattern,
+  Either,
+} from "@ndcb/util";
 
 export interface FileSystem {
   readonly files: () => Iterable<File>;
   readonly fileExists: (path: RelativePath) => boolean;
   readonly directoryExists: (path: RelativePath) => boolean;
   /** @precondition fileExists(path) */
-  readonly readFile: (path: RelativePath) => FileContents;
+  readonly readFile: (
+    path: RelativePath,
+  ) => Either<FileContents, FileReadingError>;
   /** @precondition directoryExists(path) */
   readonly readDirectory: (path: RelativePath) => Iterable<Entry>;
 }

@@ -1,8 +1,5 @@
-import {
-  fileContents,
-  normalizedDirectory,
-  normalizedFile,
-} from "@ndcb/fs-util";
+import { normalizedDirectory, normalizedFile } from "@ndcb/fs-util";
+import { right } from "@ndcb/util";
 
 import { gitignoreExclusionRule } from "../src/gitignore";
 
@@ -12,7 +9,7 @@ describe("gitignoreExclusionRule", () => {
     directory,
     cases,
   } of require("./fixtures/gitignoreExclusionRule")) {
-    const applies = gitignoreExclusionRule(() => fileContents(rules))(
+    const applies = gitignoreExclusionRule(() => () => right(rules))(
       normalizedDirectory(directory),
       normalizedFile("./null"),
     );

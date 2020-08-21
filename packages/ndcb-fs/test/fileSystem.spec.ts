@@ -32,7 +32,7 @@ describe("FileSystem", () => {
         excludedRootedFileSystem(
           rootedFileSystem(mockFs)(normalizedDirectory(root)),
           exclusionRuleFromDirectory(
-            mockFs.readFile,
+            mockFs.readTextFile,
             mockFs.readDirectory,
           )(exclusionRulesFileNames),
         ),

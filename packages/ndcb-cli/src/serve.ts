@@ -11,7 +11,18 @@ program
     require("./../package.json").version,
   )
   .description("Start servers using the specified configuration file")
-  .option("-c --config <file>", "website configuration file")
+  .option(
+    "-c, --config <file>",
+    "website configuration file",
+    "./siteconfig.yml",
+  )
+  .option(
+    "-e, --encoding <charset>",
+    "website configuration file encoding",
+    "utf8",
+  )
   .parse(process.argv);
 
-serve(program.config);
+const { config, encoding } = program;
+
+serve({ config, encoding });

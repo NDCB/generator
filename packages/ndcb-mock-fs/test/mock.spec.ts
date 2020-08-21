@@ -4,7 +4,13 @@ import {
   fileContents,
   Entry,
 } from "@ndcb/fs-util";
-import { isIterable, map } from "@ndcb/util";
+import {
+  isIterable,
+  map,
+  eitherIsRight,
+  eitherValue,
+  eitherIsLeft,
+} from "@ndcb/util";
 
 import { mockFileSystem } from "../src/mock";
 
@@ -32,19 +38,20 @@ describe("directoryExists", () => {
   }
 });
 
-describe("readFile", () => {
+describe("readTextFile", () => {
   for (const { fs, cases } of require("./fixtures/readFile")) {
-    const { readFile } = mockFileSystem(fs);
+    const { readTextFile } = mockFileSystem(fs);
     for (const { file, expected, description } of cases) {
       if (typeof expected === "string")
         test(description, () => {
-          expect(readFile(normalizedFile(file))).toEqual(
-            fileContents(expected),
-          );
+          const result = readTextFile(normalizedFile(file))();
+          expect(eitherIsRight(result)).toBe(true);
+          if (eitherIsRight(result))
+            expect(eitherValue(result)).toEqual(fileContents(expected));
         });
       else
         test(description, () => {
-          expect(() => readFile(normalizedFile(file))).toThrow();
+          expect(eitherIsLeft(readTextFile(normalizedFile(file))())).toBe(true);
         });
     }
   }
