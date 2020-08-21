@@ -1,7 +1,13 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const consola = require("consola");
 
-type MessageLogger = (message: string) => void;
+import { IO } from "@ndcb/util";
+
+export type MessageLogger = (message: string) => IO<void>;
+
+const messageLogger = (logger: (message: string) => void): MessageLogger => (
+  message: string,
+) => () => logger(message);
 
 export interface Logger {
   readonly fatal: MessageLogger;
@@ -16,5 +22,29 @@ export interface Logger {
   readonly trace: MessageLogger;
 }
 
-export const scoppedLogger = (scope: string): Logger =>
-  consola.create({ scope, level: Infinity });
+export const scoppedLogger = (scope: string): Logger => {
+  const {
+    fatal,
+    error,
+    warn,
+    log,
+    info,
+    start,
+    success,
+    ready,
+    debug,
+    trace,
+  } = consola.create({ scope, level: Infinity });
+  return {
+    fatal: messageLogger(fatal),
+    error: messageLogger(error),
+    warn: messageLogger(warn),
+    log: messageLogger(log),
+    info: messageLogger(info),
+    start: messageLogger(start),
+    success: messageLogger(success),
+    ready: messageLogger(ready),
+    debug: messageLogger(debug),
+    trace: messageLogger(trace),
+  };
+};
