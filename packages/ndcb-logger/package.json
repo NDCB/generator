@@ -1,0 +1,22 @@
+{
+  "name": "@ndcb/logger",
+  "version": "0.0.0",
+  "description": "Logging utility",
+  "bin": {
+    "generator": "./lib/index.js"
+  },
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "repository": "https://github.com/NDCB/generator/tree/master/packages/ndcb-logger",
+  "author": "Marc-Antoine Ouimet",
+  "license": "MIT",
+  "files": [
+    "lib"
+  ],
+  "dependencies": {
+    "consola": "^2.15.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
