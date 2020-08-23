@@ -130,20 +130,20 @@ export const forEach = <T>(
   for (const element of iterable) callback(element);
 };
 
-export const join = (iterable: Iterable<string>, delimiter = ", "): string => {
-  let result = "";
-  const iterator = iterable[Symbol.iterator]();
-  let current = iterator.next();
-  while (!current.done) {
-    result += current.value;
-    current = iterator.next();
-    if (!current.done) result += delimiter;
+export function* zip<T>(...iterables: Iterable<T>[]): Iterable<T[]> {
+  const iterators = iterables.map((iterable) => iterable[Symbol.iterator]());
+  while (true) {
+    const current = iterators.map((iterator) => iterator.next());
+    if (some(current, ({ done }) => done ?? false)) return;
+    yield current.map(({ value }) => value);
   }
-  return result;
-};
+}
+
+export const join = (iterable: Iterable<string>, separator = ", "): string =>
+  [...iterable].join(separator);
 
 export const iterableToString = <T>(
   iterable: Iterable<T>,
-  elementToString: (element: T) => string = (e): string => `${e}`,
-  delimiter?: string,
-): string => `[${join(map(iterable, elementToString), delimiter)}]`;
+  elementToString: (element: T) => string = JSON.stringify,
+  separator?: string,
+): string => `[${join(map(iterable, elementToString), separator)}]`;
