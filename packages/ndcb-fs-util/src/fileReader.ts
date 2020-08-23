@@ -1,40 +1,37 @@
 import { readFileSync } from "fs-extra";
 
-import { Either, eitherFromThrowable, mapLeft, mapRight, IO } from "@ndcb/util";
+import { IO } from "@ndcb/util/lib/io";
+import {
+  Either,
+  eitherFromThrowable,
+  mapLeft,
+  mapRight,
+} from "@ndcb/util/lib/either";
 
 import { absolutePathToString } from "./absolutePath";
 import { File, filePath } from "./file";
 
-export enum FileReadingError {
-  FILE_NOT_FOUND = "FILE_NOT_FOUND",
-  ENTRY_IS_DIRECTORY = "ENTRY_IS_DIRECTORY",
-  IO_ERROR = "IO_ERROR",
+export type FileReadingErrorCode = string;
+
+export interface FileReadingError {
+  readonly code: FileReadingErrorCode;
+  readonly file: File;
+  readonly message: string;
 }
 
-const errorToFileReadingError = (error: Error): FileReadingError => {
-  switch ((error as Error & { code }).code) {
-    case "ENOENT":
-      return FileReadingError.FILE_NOT_FOUND;
-    case "EISDIR":
-      return FileReadingError.ENTRY_IS_DIRECTORY;
-    default:
-      return FileReadingError.IO_ERROR;
-  }
-};
-
-export type FileReader = (file: File) => IO<Either<Buffer, FileReadingError>>;
+export type FileReader = (file: File) => IO<Either<FileReadingError, Buffer>>;
 
 export const readFile: FileReader = (file) => () =>
-  mapLeft<Buffer, Error, FileReadingError>(
+  mapLeft(
     eitherFromThrowable(() =>
       readFileSync(absolutePathToString(filePath(file))),
-    ),
-    errorToFileReadingError,
+    ) as Either<Error & { code }, Buffer>,
+    (error) => ({ ...error, file }),
   );
 
 export type TextFileReader = (
   file: File,
-) => IO<Either<string, FileReadingError>>;
+) => IO<Either<FileReadingError, string>>;
 
 export const readTextFile = (
   readFile: FileReader,

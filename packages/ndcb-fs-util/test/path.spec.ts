@@ -1,4 +1,5 @@
 import { map } from "@ndcb/util";
+import { some } from "@ndcb/util/lib/option";
 
 import { extension } from "../src/extension";
 import { normalizedRelativePath } from "../src/relativePath";
@@ -18,7 +19,7 @@ describe("relativePathWithExtension", () => {
       expect(
         relativePathWithExtension(
           normalizedRelativePath(input),
-          extension(target),
+          some(extension(target)),
         ),
       ).toStrictEqual(normalizedRelativePath(expected));
     });
@@ -37,7 +38,7 @@ describe("relativePathWithExtensions", () => {
       expect([
         ...relativePathWithExtensions(
           normalizedRelativePath(input),
-          map(targets, extension),
+          map(targets as string[], (target) => some(extension(target))),
         ),
       ]).toStrictEqual([...map(expected, normalizedRelativePath)]);
     });

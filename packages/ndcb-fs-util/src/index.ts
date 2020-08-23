@@ -1,5 +1,3 @@
-export * from "./error";
-
 export * from "./absolutePath";
 export * from "./relativePath";
 

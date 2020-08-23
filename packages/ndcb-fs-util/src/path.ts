@@ -1,6 +1,7 @@
 import { extname, resolve, relative, join, dirname, basename } from "path";
 
-import { map, Either, left, right, eitherIsRight } from "@ndcb/util";
+import { map } from "@ndcb/util/lib/iterable";
+import { Option, optionValue, isSome, some, none } from "@ndcb/util/lib/option";
 
 import {
   AbsolutePath,
@@ -18,7 +19,7 @@ import {
   relativePath,
 } from "./relativePath";
 
-export type Path = AbsolutePath | RelativePath;
+export type Path = AbsolutePath | RelativePath; // Discriminated union
 
 export interface PathPattern<T> {
   readonly absolute: (absolute: AbsolutePath) => T;
@@ -49,13 +50,13 @@ export const pathToString: (path: Path) => string = matchPath({
   relative: relativePathToString,
 });
 
-export const pathExtension = (path: Path): Either<Extension, null> => {
+export const pathExtension = (path: Path): Option<Extension> => {
   const extensionName = extname(pathToString(path));
-  return !extensionName ? left(null) : right(extension(extensionName));
+  return !extensionName ? none() : some(extension(extensionName));
 };
 
 export const pathHasExtension = (path: Path): boolean =>
-  eitherIsRight(pathExtension(path));
+  isSome(pathExtension(path));
 
 export const pathSegments: (path: Path) => Iterable<string> = matchPath({
   absolute: absolutePathSegments,
@@ -73,6 +74,15 @@ export const relativePathFromAbsolutePaths = (
   to: AbsolutePath,
 ): RelativePath =>
   relativePath(relative(absolutePathToString(from), absolutePathToString(to)));
+
+const base = (path: string): string =>
+  join(dirname(path), basename(path, extname(path)));
+
+const baseWithExtension = (
+  base: string,
+  extension: Option<Extension>,
+): string =>
+  isSome(extension) ? base + extensionToString(optionValue(extension)) : base;
 
 /**
  * Constructs a relative path corresponding to the given one with its extension
@@ -92,14 +102,10 @@ export const relativePathFromAbsolutePaths = (
  */
 export const relativePathWithExtension = (
   path: RelativePath,
-  extension: Extension | null,
+  extension: Option<Extension>,
 ): RelativePath => {
-  const pathAsString = relativePathToString(path);
-  const base = join(
-    dirname(pathAsString),
-    basename(pathAsString, extname(pathAsString)),
-  );
-  return relativePath(extension ? base + extensionToString(extension) : base);
+  const b = base(relativePathToString(path));
+  return relativePath(baseWithExtension(b, extension));
 };
 
 /**
@@ -117,14 +123,10 @@ export const relativePathWithExtension = (
  */
 export const relativePathWithExtensions = (
   path: RelativePath,
-  extensions: Iterable<Extension | null>,
+  extensions: Iterable<Option<Extension>>,
 ): Iterable<RelativePath> => {
-  const pathAsString = relativePathToString(path);
-  const base = join(
-    dirname(pathAsString),
-    basename(pathAsString, extname(pathAsString)),
-  );
+  const b = base(relativePathToString(path));
   return map(extensions, (extension) =>
-    relativePath(extension ? base + extensionToString(extension) : base),
+    relativePath(baseWithExtension(b, extension)),
   );
 };

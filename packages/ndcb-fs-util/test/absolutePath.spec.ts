@@ -20,7 +20,7 @@ describe("isUpwardPath", () => {
 
 describe("isUpwardPath reflexivity", () => {
   for (const path of require("./fixtures/isUpwardPath-reflexivity")) {
-    test("is reflexive", () => {
+    test(`is reflexive on "${path}"`, () => {
       expect(
         isUpwardPath(
           normalizedAbsolutePath(path),
@@ -33,7 +33,7 @@ describe("isUpwardPath reflexivity", () => {
 
 describe("isUpwardPath transitivity", () => {
   for (const { a, b, c } of require("./fixtures/isUpwardPath-transitivity")) {
-    test("is transitive", () => {
+    test(`is transitive with "${a}" <= "${b}" <= "${c}"`, () => {
       expect(
         isUpwardPath(normalizedAbsolutePath(a), normalizedAbsolutePath(b)),
       ).toBe(true);

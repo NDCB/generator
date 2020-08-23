@@ -1,6 +1,15 @@
-import { isNotNull } from "@ndcb/util";
+import { readdirSync, ensureDirSync, emptyDirSync } from "fs-extra";
 
-import { statSync, readdirSync, ensureDirSync, emptyDirSync } from "fs-extra";
+import { IO } from "@ndcb/util/lib/io";
+import {
+  Either,
+  right,
+  mapRight,
+  mapLeft,
+  mapEither,
+  eitherFromThrowable,
+} from "@ndcb/util/lib/either";
+import { isNotNull } from "@ndcb/util/lib/type";
 
 import {
   AbsolutePath,
@@ -10,6 +19,8 @@ import {
   absolutePathToString,
   pathExists,
   normalizedAbsolutePath,
+  pathStatus,
+  PathIOError,
 } from "./absolutePath";
 import { file, File } from "./file";
 import { RelativePath } from "./relativePath";
@@ -28,7 +39,7 @@ export interface Directory {
 }
 
 export const isDirectory = (element: unknown): element is Directory =>
-  typeof element === "object" && isNotNull(element) && !!element[DIRECTORY];
+  typeof element === "object" && isNotNull(element) && element[DIRECTORY];
 
 export const directory = (path: AbsolutePath): Directory => ({
   path,
@@ -47,12 +58,17 @@ export const directoryToString = (directory: Directory): string =>
 export const directoryEquals = (d1: Directory, d2: Directory): boolean =>
   absolutePathEquals(directoryPath(d1), directoryPath(d2));
 
-export const directoryExists = (directory: Directory): boolean => {
+export const directoryExists = (
+  directory: Directory,
+): IO<Either<PathIOError, boolean>> => {
   const path = directoryPath(directory);
-  return pathExists(path) && statSync(absolutePathToString(path)).isDirectory();
+  return () => {
+    if (!pathExists(path)()) return right(false);
+    return mapRight(pathStatus(path)(), (stats) => stats.isDirectory());
+  };
 };
 
-export const currentWorkingDirectory = (): Directory =>
+export const currentWorkingDirectory = (): IO<Directory> => () =>
   directory(absolutePath(process.cwd()));
 
 export const fileFromDirectory = (from: Directory) => (
@@ -63,14 +79,41 @@ export const directoryFromDirectory = (from: Directory) => (
   to: RelativePath,
 ): Directory => directory(resolvedAbsolutePath(directoryPath(from), to));
 
-export const ensureDirectory = (directory: Directory): void =>
-  ensureDirSync(absolutePathToString(directoryPath(directory)));
+export interface DirectoryIOError extends Error {
+  readonly code: string;
+  readonly directory: Directory;
+}
 
-export const isDirectoryEmpty = (directory: Directory): boolean =>
-  readdirSync(absolutePathToString(directoryPath(directory))).length === 0;
+export const ensureDirectory = (
+  directory: Directory,
+): IO<Either<DirectoryIOError, void>> => () =>
+  mapLeft(
+    eitherFromThrowable(() =>
+      ensureDirSync(absolutePathToString(directoryPath(directory))),
+    ) as Either<Error & { code }, void>,
+    (error) => ({ ...error, directory }),
+  );
 
-export const emptyDirectory = (directory: Directory): void =>
-  emptyDirSync(absolutePathToString(directoryPath(directory)));
+export const isDirectoryEmpty = (
+  directory: Directory,
+): IO<Either<DirectoryIOError, boolean>> => () =>
+  mapEither(
+    eitherFromThrowable(() =>
+      readdirSync(absolutePathToString(directoryPath(directory))),
+    ) as Either<Error & { code }, string[]>,
+    (error) => ({ ...error, directory }),
+    (filenames) => !(filenames.length > 0),
+  );
+
+export const emptyDirectory = (
+  directory: Directory,
+): IO<Either<DirectoryIOError, void>> => () =>
+  mapLeft(
+    eitherFromThrowable(() =>
+      emptyDirSync(absolutePathToString(directoryPath(directory))),
+    ) as Either<Error & { code }, void>,
+    (error) => ({ ...error, directory }),
+  );
 
 export const directoryName = (directory: Directory): string =>
   absolutePathBaseName(directoryPath(directory));

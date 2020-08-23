@@ -28,5 +28,15 @@
     "up": "/directory",
     "down": "/other-directory",
     "expected": false
+  },
+  {
+    "up": "/contents",
+    "down": "/contents-other",
+    "expected": false
+  },
+  {
+    "up": "/contents-other",
+    "down": "/contents",
+    "expected": false
   }
 ]

@@ -1,6 +1,14 @@
-import { isNotNull } from "@ndcb/util";
+import { ensureFileSync } from "fs-extra";
 
-import { statSync, ensureFileSync } from "fs-extra";
+import { isNotNull } from "@ndcb/util/lib/type";
+import { IO } from "@ndcb/util/lib/io";
+import {
+  Either,
+  right,
+  mapRight,
+  mapLeft,
+  eitherFromThrowable,
+} from "@ndcb/util/lib/either";
 
 import {
   AbsolutePath,
@@ -8,7 +16,9 @@ import {
   absolutePathBaseName,
   absolutePathToString,
   pathExists,
+  pathStatus,
   normalizedAbsolutePath,
+  PathIOError,
 } from "./absolutePath";
 
 const FILE: unique symbol = Symbol();
@@ -24,7 +34,7 @@ export interface File {
 }
 
 export const isFile = (element: unknown): element is File =>
-  typeof element === "object" && isNotNull(element) && !!element[FILE];
+  typeof element === "object" && isNotNull(element) && element[FILE];
 
 export const file = (path: AbsolutePath): File => ({
   path,
@@ -42,13 +52,26 @@ export const fileToString = (file: File): string =>
 export const fileEquals = (f1: File, f2: File): boolean =>
   absolutePathEquals(filePath(f1), filePath(f2));
 
-export const fileExists = (file: File): boolean => {
+export const fileExists = (file: File): IO<Either<PathIOError, boolean>> => {
   const path = filePath(file);
-  return pathExists(path) && statSync(absolutePathToString(path)).isFile();
+  return () => {
+    if (!pathExists(path)()) return right(false);
+    return mapRight(pathStatus(path)(), (stats) => stats.isFile());
+  };
 };
 
-export const ensureFile = (file: File): void =>
-  ensureFileSync(absolutePathToString(filePath(file)));
+export interface FileIOError extends Error {
+  readonly code: string;
+  readonly file: File;
+}
+
+export const ensureFile = (file: File): IO<Either<FileIOError, void>> => () =>
+  mapLeft(
+    eitherFromThrowable(() =>
+      ensureFileSync(absolutePathToString(filePath(file))),
+    ) as Either<Error & { code }, void>,
+    (error) => ({ ...error, file }),
+  );
 
 export const fileName = (file: File): string =>
   absolutePathBaseName(filePath(file));

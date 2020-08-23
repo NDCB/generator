@@ -1,19 +1,21 @@
+import { IO } from "@ndcb/util/lib/io";
+import { Either } from "@ndcb/util/lib/either";
+import { takeWhile } from "@ndcb/util/lib/iterable";
 import {
-  takeWhile,
-  Either,
-  right,
-  left,
-  eitherIsRight,
-  Right,
-  eitherIsLeft,
-} from "@ndcb/util";
+  Option,
+  Some,
+  isSome,
+  some,
+  optionValue,
+  map,
+} from "@ndcb/util/lib/option";
 
 import {
   AbsolutePath,
-  absolutePathEquals,
   rootPath,
   parentPath,
   isUpwardPath,
+  PathIOError,
 } from "./absolutePath";
 import {
   Directory,
@@ -25,6 +27,7 @@ import {
   directoryEquals,
   ensureDirectory,
   directoryName,
+  DirectoryIOError,
 } from "./directory";
 import {
   ensureFile,
@@ -34,6 +37,8 @@ import {
   isFile,
   fileExists,
   fileName,
+  fileEquals,
+  FileIOError,
 } from "./file";
 import { relativePathFromAbsolutePaths } from "./path";
 import { RelativePath } from "./relativePath";
@@ -43,7 +48,7 @@ import { RelativePath } from "./relativePath";
  *
  * The entry and its path may not exist.
  */
-export type Entry = File | Directory;
+export type Entry = File | Directory; // Discriminated union
 
 export interface EntryPattern<T> {
   readonly file: (file: File) => T;
@@ -65,7 +70,7 @@ export const matchEntry = <T>(pattern: EntryPattern<T>) => (
     return pattern.directory(entry);
   }
   throw new Error(
-    `Failed entry pattern matching for object "${JSON.stringify(entry)}"`,
+    `Failed <Entry> pattern matching for object "${JSON.stringify(entry)}"`,
   );
 };
 
@@ -80,16 +85,21 @@ export const entryToString: (entry: Entry) => string = matchEntry({
 });
 
 export const entryEquals = (e1: Entry, e2: Entry): boolean =>
-  ((entryIsFile(e1) && entryIsFile(e2)) ||
-    (entryIsDirectory(e1) && entryIsDirectory(e2))) &&
-  absolutePathEquals(entryPath(e1), entryPath(e2));
+  (entryIsFile(e1) && entryIsFile(e2) && fileEquals(e1, e2)) ||
+  (entryIsDirectory(e1) && entryIsDirectory(e2) && directoryEquals(e1, e2));
 
-export const entryExists: (entry: Entry) => boolean = matchEntry({
+export const entryExists: (
+  entry: Entry,
+) => IO<Either<PathIOError, boolean>> = matchEntry({
   file: fileExists,
   directory: directoryExists,
 });
 
-export const ensureEntry: (entry: Entry) => void = matchEntry({
+export const ensureEntry: (
+  entry: Entry,
+) => IO<Either<FileIOError | DirectoryIOError, void>> = matchEntry<
+  IO<Either<FileIOError | DirectoryIOError, void>>
+>({
   file: ensureFile,
   directory: ensureDirectory,
 });
@@ -102,20 +112,20 @@ export const entryName: (entry: Entry) => string = matchEntry({
 export const topmostDirectory = (entry: Entry): Directory =>
   directory(rootPath(entryPath(entry)));
 
-export function parentDirectory(file: File): Right<Directory>;
-export function parentDirectory(directory: Directory): Either<Directory, null>;
-export function parentDirectory(entry: Entry): Either<Directory, null> {
-  const path = parentPath(entryPath(entry));
-  return eitherIsLeft(path) ? left(null) : right(directory(path.value));
+export function parentDirectory(file: File): Some<Directory>;
+export function parentDirectory(directory: Directory): Option<Directory>;
+export function parentDirectory(entry: Entry): Option<Directory> {
+  return map<AbsolutePath, Directory>(directory)(parentPath(entryPath(entry)));
 }
 
 const upwardDirectoriesFromDirectory = function* (
   directory: Directory,
 ): Iterable<Directory> {
-  let current: Either<Directory, null> = right(directory);
-  while (eitherIsRight(current)) {
-    yield current.value;
-    current = parentDirectory(current.value);
+  let current: Option<Directory> = some(directory);
+  while (isSome(current)) {
+    const value = optionValue(current);
+    yield value;
+    current = parentDirectory(value);
   }
 };
 
