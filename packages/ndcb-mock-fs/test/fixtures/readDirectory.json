@@ -13,7 +13,7 @@
       {
         "directory": "/inexistent",
         "expected": false,
-        "description": "throws for inexistent directories"
+        "description": "returns an error for inexistent directories"
       },
       {
         "directory": "/",

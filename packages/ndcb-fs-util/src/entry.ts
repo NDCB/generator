@@ -64,14 +64,13 @@ export const entryIsDirectory: (
 export const matchEntry = <T>(pattern: EntryPattern<T>) => (
   entry: Entry,
 ): T => {
-  if (entryIsFile(entry)) {
-    return pattern.file(entry);
-  } else if (entryIsDirectory(entry)) {
-    return pattern.directory(entry);
-  }
-  throw new Error(
-    `Failed <Entry> pattern matching for object "${JSON.stringify(entry)}"`,
-  );
+  /* istanbul ignore else */
+  if (entryIsFile(entry)) return pattern.file(entry);
+  else if (entryIsDirectory(entry)) return pattern.directory(entry);
+  else
+    throw new Error(
+      `Failed <Entry> pattern matching for object "${JSON.stringify(entry)}"`,
+    );
 };
 
 export const entryPath: (entry: Entry) => AbsolutePath = matchEntry({

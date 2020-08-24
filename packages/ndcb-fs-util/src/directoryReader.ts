@@ -36,17 +36,16 @@ const directoryEntryAsEntry = (
   const asFileInReadDirectory = fileFromDirectory(directory);
   const asDirectoryInReadDirectory = directoryFromDirectory(directory);
   return (entry: Dirent): Entry => {
-    if (entry.isFile()) {
-      return asFileInReadDirectory(relativePath(entry.name));
-    } else if (entry.isDirectory()) {
+    /* istanbul ignore else */
+    if (entry.isFile()) return asFileInReadDirectory(relativePath(entry.name));
+    else if (entry.isDirectory())
       return asDirectoryInReadDirectory(relativePath(entry.name));
-    } else {
+    else
       throw new Error(
         `Entry named "${entry.name}" in directory "${directoryToString(
           directory,
         )}" is neither a file nor a directory`,
       );
-    }
   };
 };
 

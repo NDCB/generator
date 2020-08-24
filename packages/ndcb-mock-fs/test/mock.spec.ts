@@ -1,9 +1,4 @@
-import {
-  normalizedFile,
-  normalizedDirectory,
-  fileContents,
-  Entry,
-} from "@ndcb/fs-util";
+import { normalizedFile, normalizedDirectory, Entry } from "@ndcb/fs-util";
 import {
   isIterable,
   map,
@@ -19,7 +14,10 @@ describe("fileExists", () => {
     const { fileExists } = mockFileSystem(fs);
     for (const { file, expected, description } of cases) {
       test(description, () => {
-        expect(fileExists(normalizedFile(file))).toEqual(expected);
+        const exists = fileExists(normalizedFile(file))();
+        expect(eitherIsRight(exists)).toBe(true);
+        if (eitherIsRight(exists))
+          expect(eitherValue(exists)).toEqual(expected);
       });
     }
   }
@@ -30,28 +28,29 @@ describe("directoryExists", () => {
     const { directoryExists } = mockFileSystem(fs);
     for (const { directory, expected, description } of cases) {
       test(description, () => {
-        expect(directoryExists(normalizedDirectory(directory))).toEqual(
-          expected,
-        );
+        const exists = directoryExists(normalizedDirectory(directory))();
+        expect(eitherIsRight(exists)).toBe(true);
+        if (eitherIsRight(exists))
+          expect(eitherValue(exists)).toEqual(expected);
       });
     }
   }
 });
 
-describe("readTextFile", () => {
+describe("readFile", () => {
   for (const { fs, cases } of require("./fixtures/readFile")) {
-    const { readTextFile } = mockFileSystem(fs);
+    const { readFile } = mockFileSystem(fs);
     for (const { file, expected, description } of cases) {
       if (typeof expected === "string")
         test(description, () => {
-          const result = readTextFile(normalizedFile(file))();
+          const result = readFile(normalizedFile(file))();
           expect(eitherIsRight(result)).toBe(true);
           if (eitherIsRight(result))
-            expect(eitherValue(result)).toEqual(fileContents(expected));
+            expect(eitherValue(result)).toEqual(Buffer.from(expected));
         });
       else
         test(description, () => {
-          expect(eitherIsLeft(readTextFile(normalizedFile(file))())).toBe(true);
+          expect(eitherIsLeft(readFile(normalizedFile(file))())).toBe(true);
         });
     }
   }
@@ -68,24 +67,33 @@ describe("readDirectory", () => {
             ({ type, path }) => {
               if (type === "file") return normalizedFile(path);
               else if (type === "directory") return normalizedDirectory(path);
-              else throw new Error(`Failed to match type "${type}"`);
+              else
+                throw new Error(
+                  `Unexpected <"file" | "directory"> pattern matching error for object "${JSON.stringify(
+                    type,
+                  )}"`,
+                );
             },
           ),
         ];
         test(description, () => {
-          const actualEntries = [
-            ...readDirectory(normalizedDirectory(directory)),
-          ];
-          expect(actualEntries).toEqual(
-            expect.arrayContaining(expectedEntries),
-          );
-          expect(expectedEntries).toEqual(
-            expect.arrayContaining(actualEntries),
-          );
+          const entries = readDirectory(normalizedDirectory(directory))();
+          expect(eitherIsRight(entries)).toBe(true);
+          if (eitherIsRight(entries)) {
+            const actualEntries = [...eitherValue(entries)];
+            expect(actualEntries).toEqual(
+              expect.arrayContaining(expectedEntries),
+            );
+            expect(expectedEntries).toEqual(
+              expect.arrayContaining(actualEntries),
+            );
+          }
         });
       } else
         test(description, () => {
-          expect(() => readDirectory(normalizedDirectory(directory))).toThrow();
+          expect(
+            eitherIsLeft(readDirectory(normalizedDirectory(directory))()),
+          ).toBe(true);
         });
     }
   }

@@ -12,7 +12,7 @@
       {
         "file": "/inexistent.txt",
         "expected": false,
-        "description": "throws for inexistent files"
+        "description": "returns an error for inexistent files"
       },
       {
         "file": "/file.txt",

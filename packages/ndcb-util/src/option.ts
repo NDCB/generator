@@ -33,6 +33,11 @@ export const bimap = <T, S, N>(mapSome: (value: T) => S, mapNone: () => N) => (
     ? Either.right(mapSome(optionValue(option)))
     : Either.left(mapNone());
 
+export const mapNone = <T, S>(map: () => S) => (
+  option: Option<T>,
+): Either.Either<S, T> =>
+  isNone(option) ? Either.left(map()) : Either.right(optionValue(option));
+
 export const join = <T, S>(mapSome: (value: T) => S, mapNone: () => S) => (
   option: Option<T>,
 ): S => (isSome(option) ? mapSome(optionValue(option)) : mapNone());

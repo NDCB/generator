@@ -1,9 +1,10 @@
 import { find, some } from "./iterable";
 import { Option, join, map } from "./option";
+import { hashString } from "./hash";
 
 export interface HashMap<K, V> {
   readonly has: (key: K) => boolean;
-  readonly get: (key: K) => Option<V | null>;
+  readonly get: (key: K) => Option<V>;
 }
 
 export const hashMap = <K, V>(
@@ -29,14 +30,10 @@ export const hashMap = <K, V>(
   }
   const has = (key: K): boolean =>
     some<[K, V]>(buckets[hash(key)] ?? [], (bucket) => equals(key, bucket[0]));
-  const bucketOptionalValue = map<[K, V | null], V | null>(
-    (bucket) => bucket[1],
-  );
-  const get = (key: K): Option<V | null> =>
+  const bucketOptionalValue = map<[K, V], V>((bucket) => bucket[1]);
+  const get = (key: K): Option<V> =>
     bucketOptionalValue(
-      find<[K, V | null]>(buckets[hash(key)] ?? [], (bucket) =>
-        equals(key, bucket[0]),
-      ),
+      find(buckets[hash(key)] ?? [], (bucket) => equals(key, bucket[0])),
     );
   return { has, get };
 };
@@ -65,3 +62,7 @@ export const inversedHashMap = <K, V>(
   };
   return hashMap(inversedEntries(), hash, equals);
 };
+
+export const stringHashMap = <V>(
+  entries: Iterable<[string, V]>,
+): HashMap<string, V> => hashMap(entries, hashString, (s1, s2) => s1 === s2);
