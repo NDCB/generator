@@ -4,77 +4,78 @@ import {
   Extension,
   extensionEquals,
   fileExtension,
+  extensionToString,
+  fileToString,
 } from "@ndcb/fs-util";
+import { Either, eitherFromThrowable, monad } from "@ndcb/util/lib/either";
 import {
-  find,
-  matchEitherPattern,
-  eitherFromThrowable,
-  Either,
-  left,
-  map,
-  some,
-  right,
-  eitherIsRight,
-  eitherValue,
-} from "@ndcb/util";
+  Option,
+  isSome,
+  optionValue,
+  mapNone,
+  join,
+} from "@ndcb/util/lib/option";
+import { some, find, map } from "@ndcb/util/lib/iterable";
 
-const parseJson = JSON.parse;
+const parseJson = (contents: string) => JSON.parse(contents);
 import { parse as parseJson5 } from "json5";
 import { parse as parseYaml } from "yaml";
 import { parse as parseToml } from "toml";
 
-export type Data = unknown;
-
-export type TextFileDataParserInput = {
-  file: File;
-  extension: Extension;
-  contents: string;
-};
+export type TextDataParser = (contents: string) => Either<unknown, unknown>;
 
 export interface TextFileDataParser {
-  readonly handles: (extension: Either<Extension, null>) => boolean;
-  readonly parse: (contents: string) => Either<Data, Error>;
+  readonly handles: (extension: Option<Extension>) => boolean;
+  readonly parse: TextDataParser;
 }
 
 const parserForExtensions = (
-  extensionTokens: Iterable<string>,
-  parse: (contents: string) => Data,
-): TextFileDataParser => {
-  const handledExtensions = [...map(extensionTokens, extension)];
-  return {
-    handles: (extension) =>
-      eitherIsRight(extension) &&
-      some(handledExtensions, (handledExtension) =>
-        extensionEquals(eitherValue(extension), handledExtension),
-      ),
-    parse: (contents) => eitherFromThrowable(() => parse(contents)),
-  };
-};
+  handledExtensions: Extension[],
+  parse: (contents: string) => unknown,
+): TextFileDataParser => ({
+  handles: (extension) =>
+    isSome(extension) &&
+    some(handledExtensions, (handledExtension) =>
+      extensionEquals(optionValue(extension), handledExtension),
+    ),
+  parse: (contents) => eitherFromThrowable(() => parse(contents)),
+});
 
-export const jsonParser: TextFileDataParser = parserForExtensions(
+const parserForExtensionTokens = (extensionTokens: Iterable<string>, parse) =>
+  parserForExtensions([...map(extensionTokens, extension)], parse);
+
+export const jsonParser: TextFileDataParser = parserForExtensionTokens(
   [".json"],
   parseJson,
 );
 
-export const json5Parser: TextFileDataParser = parserForExtensions(
+export const json5Parser: TextFileDataParser = parserForExtensionTokens(
   [".json5"],
   parseJson5,
 );
 
-export const yamlParser: TextFileDataParser = parserForExtensions(
+export const yamlParser: TextFileDataParser = parserForExtensionTokens(
   [".yml", ".yaml"],
   parseYaml,
 );
 
-export const tomlParser: TextFileDataParser = parserForExtensions(
+export const tomlParser: TextFileDataParser = parserForExtensionTokens(
   [".toml"],
   parseToml,
 );
 
-export enum CompositeTextDataParserError {
-  TEXT_DATA_PARSING_ERROR = "TEXT_DATA_PARSING_ERROR",
-  UNHANDLED_FILE_EXTENSION_ERROR = "UNHANDLED_FILE_EXTENSION_ERROR",
-}
+const getCorrespondingTextDataParser = (
+  parsers: Iterable<TextFileDataParser>,
+  extension: Option<Extension>,
+) =>
+  mapNone<TextFileDataParser, Error>(() => ({
+    name: "Unhandled text data file extension",
+    message: `No parser registered for text data file with extension: "${join(
+      extensionToString,
+      () => "none",
+    )(extension)}"`,
+    extension,
+  }))(find(parsers, (parser) => parser.handles(extension)));
 
 export const compositeTextDataParser = (
   parsers: TextFileDataParser[] = [
@@ -83,31 +84,14 @@ export const compositeTextDataParser = (
     yamlParser,
     tomlParser,
   ],
-): ((
-  file: File,
-  contents: string,
-) => Either<Data, CompositeTextDataParserError>) => {
-  const matchParserResult = matchEitherPattern<
-    Data,
-    Error,
-    Either<Data, CompositeTextDataParserError>
-  >({
-    right: (data) => right(data),
-    left: () => left(CompositeTextDataParserError.TEXT_DATA_PARSING_ERROR),
-  });
-  return (
-    file: File,
-    contents: string,
-  ): Either<Data, CompositeTextDataParserError> => {
-    const extension = fileExtension(file);
-    return matchEitherPattern<
-      TextFileDataParser,
-      null,
-      Either<Data, CompositeTextDataParserError>
-    >({
-      right: (parser) => matchParserResult(parser.parse(contents)),
-      left: () =>
-        left(CompositeTextDataParserError.UNHANDLED_FILE_EXTENSION_ERROR),
-    })(find(parsers, (parser) => parser.handles(extension)));
-  };
-};
+) => (file: File, contents: string): Either<Error, unknown> =>
+  monad(getCorrespondingTextDataParser(parsers, fileExtension(file)))
+    .chainRight((parser) => parser.parse(contents))
+    .mapLeft((error) => ({
+      name: "Text data parsing error",
+      message: `Failed to parse text data from file ${fileToString(
+        file,
+      )} with error: "${JSON.stringify(error)}"`,
+      file,
+    }))
+    .toEither();
