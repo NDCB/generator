@@ -6,13 +6,14 @@ import {
   normalizedDirectory,
   fileFromDirectory,
   normalizedRelativePath,
-  readFileSync,
-  fileContentsToString,
+  readFile,
+  readTextFile,
 } from "@ndcb/fs-util";
+import { arrayTree } from "@ndcb/util/lib/tree";
+import { eitherIsLeft, eitherValue } from "@ndcb/util/lib/either";
 
 import { mdastTableOfContentsTree, TableOfContentsNode } from "../src/toc";
 import { slugifyTableOfContents } from "../src/slugger";
-import { arrayTree } from "@ndcb/util";
 
 const { parse } = unified()
   .use(markdown, { commonmark: true })
@@ -21,16 +22,18 @@ const { parse } = unified()
 describe("slugifyTableOfContents", () => {
   const fixturesDirectory = normalizedDirectory(`${__dirname}/fixtures`);
   const fileInFixtures = fileFromDirectory(fixturesDirectory);
-  const contents = (path: string): string =>
-    fileContentsToString(
-      readFileSync(fileInFixtures(normalizedRelativePath(path))),
-    );
+  const textFileReader = readTextFile(readFile, "utf-8");
+  const readContents = (path: string) =>
+    textFileReader(fileInFixtures(normalizedRelativePath(path)));
   for (const {
     file,
     description,
     expected,
   } of require("./fixtures/slugifyTableOfContents")) {
-    const ast = parse(contents(file));
+    const contents = readContents(file)();
+    if (eitherIsLeft(contents))
+      throw new Error(`Failed to read fixtures file "${file}"`);
+    const ast = parse(eitherValue(contents));
     const toc = mdastTableOfContentsTree(ast);
     const slugger = (token: string): string => token.toLowerCase();
     const map = slugifyTableOfContents(slugger);
