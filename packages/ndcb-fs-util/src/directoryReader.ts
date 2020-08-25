@@ -108,7 +108,7 @@ export type DirectoryWalker = (
 export const downwardEntries = (
   readDirectory: DirectoryReader,
 ): DirectoryWalker =>
-  function* (directory: Directory) {
+  function* (directory) {
     const stack: Directory[] = [directory]; // Directories to read
     while (stack.length > 0) {
       const directory = stack.pop() as Directory;

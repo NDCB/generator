@@ -1,6 +1,6 @@
 import { IO } from "@ndcb/util/lib/io";
 import { Either } from "@ndcb/util/lib/either";
-import { takeWhile } from "@ndcb/util/lib/iterable";
+import { takeWhile, filter } from "@ndcb/util/lib/iterable";
 import {
   Option,
   Some,
@@ -73,6 +73,13 @@ export const matchEntry = <T>(pattern: EntryPattern<T>) => (
     );
 };
 
+export const filterFiles = (entries: Iterable<Entry>): Iterable<File> =>
+  filter(entries, entryIsFile);
+
+export const filterDirectories = (
+  entries: Iterable<Entry>,
+): Iterable<Directory> => filter(entries, entryIsDirectory);
+
 export const entryPath: (entry: Entry) => AbsolutePath = matchEntry({
   file: filePath,
   directory: directoryPath,
@@ -116,6 +123,9 @@ export function parentDirectory(directory: Directory): Option<Directory>;
 export function parentDirectory(entry: Entry): Option<Directory> {
   return map<AbsolutePath, Directory>(directory)(parentPath(entryPath(entry)));
 }
+
+export const fileDirectory = (file: File): Directory =>
+  optionValue(parentDirectory(file));
 
 const upwardDirectoriesFromDirectory = function* (
   directory: Directory,

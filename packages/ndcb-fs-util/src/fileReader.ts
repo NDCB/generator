@@ -9,17 +9,9 @@ import {
 } from "@ndcb/util/lib/either";
 
 import { absolutePathToString } from "./absolutePath";
-import { File, filePath } from "./file";
+import { File, filePath, FileIOError } from "./file";
 
-export type FileReadingErrorCode = string;
-
-export interface FileReadingError {
-  readonly code: FileReadingErrorCode;
-  readonly file: File;
-  readonly message: string;
-}
-
-export type FileReader = (file: File) => IO<Either<FileReadingError, Buffer>>;
+export type FileReader = (file: File) => IO<Either<FileIOError, Buffer>>;
 
 export const readFile: FileReader = (file) => () =>
   mapLeft(
@@ -29,9 +21,7 @@ export const readFile: FileReader = (file) => () =>
     (error) => ({ ...error, file }),
   );
 
-export type TextFileReader = (
-  file: File,
-) => IO<Either<FileReadingError, string>>;
+export type TextFileReader = (file: File) => IO<Either<FileIOError, string>>;
 
 export const readTextFile = (
   readFile: FileReader,

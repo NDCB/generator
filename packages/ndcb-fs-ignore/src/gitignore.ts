@@ -1,29 +1,44 @@
 import gitignore from "ignore";
 
 import {
-  Directory,
   File,
   TextFileReader,
   directoryHasDescendent,
   relativePathToString,
   entryRelativePath,
   Entry,
+  FileIOError,
+  fileDirectory,
+  Directory,
+  fileName,
 } from "@ndcb/fs-util";
+import { IO } from "@ndcb/util/lib/io";
+import { Either, mapRight } from "@ndcb/util/lib/either";
 
 import { ExclusionRule } from "./exclusionRule";
-import { eitherValue, eitherIsLeft } from "@ndcb/util";
 
-export const gitignoreExclusionRule = (readFile: TextFileReader) => (
-  directory: Directory,
-  rulesFile: File,
-): ExclusionRule => {
-  const read = readFile(rulesFile)();
-  if (eitherIsLeft(read)) return () => false;
-  const ignore = gitignore();
-  ignore.add(eitherValue(read));
-  return (entry: Entry): boolean => {
-    if (!directoryHasDescendent(directory, entry)) return false;
-    const pathname = relativePathToString(entryRelativePath(directory, entry));
-    return pathname !== "" && ignore.ignores(pathname);
-  };
+const parseGitignoreToPathnameExcluder = (
+  file: File,
+  contents: string,
+): ((pathname: string) => boolean) => {
+  const ignore = gitignore().add(contents).add(fileName(file));
+  return (pathname) => pathname.length > 0 && ignore.ignores(pathname);
 };
+
+const parseGitignoreToExclusionRule = (
+  directory: Directory,
+  ignoresPathname: (pathname: string) => boolean,
+): ExclusionRule => (entry: Entry): boolean =>
+  directoryHasDescendent(directory, entry)
+    ? ignoresPathname(relativePathToString(entryRelativePath(directory, entry)))
+    : false;
+
+export const gitignoreExclusionRule = (readTextFile: TextFileReader) => (
+  rules: File,
+): IO<Either<FileIOError, ExclusionRule>> => () =>
+  mapRight(readTextFile(rules)(), (contents) =>
+    parseGitignoreToExclusionRule(
+      fileDirectory(rules),
+      parseGitignoreToPathnameExcluder(rules, contents),
+    ),
+  );

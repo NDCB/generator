@@ -69,14 +69,39 @@ export const mapEither = <L, R, LL, RR>(
   either: Either<L, R>,
   mapL: (value: L) => LL,
   mapR: (value: R) => RR,
-): Either<LL, RR> => mapRight(mapLeft(either, mapL), mapR);
-
-export const chainRight = <L, R, LL, RR>(
-  either: Either<L, R>,
-  mapLeft: (value: L) => LL,
-  mapRight: (value: R) => Either<LL, RR>,
 ): Either<LL, RR> =>
-  matchEitherPattern<L, R, Either<LL, RR>>({
-    left: (value) => left(mapLeft(value)),
-    right: mapRight,
-  })(either);
+  eitherIsRight(either)
+    ? right(mapR(eitherValue(either)))
+    : left(mapL(eitherValue(either)));
+
+export interface EitherMonad<L, R> {
+  readonly toEither: () => Either<L, R>;
+  readonly mapRight: <RR>(map: (value: R) => RR) => EitherMonad<L, RR>;
+  readonly mapLeft: <LL>(map: (value: L) => LL) => EitherMonad<LL, R>;
+  readonly chainRight: <LL, RR>(
+    map: (value: R) => Either<L | LL, RR>,
+  ) => EitherMonad<L | LL, RR>;
+  readonly chainLeft: <LL, RR>(
+    map: (value: L) => Either<LL, R | RR>,
+  ) => EitherMonad<LL, R | RR>;
+}
+
+export const monad = <L, R>(either: Either<L, R>): EitherMonad<L, R> => ({
+  toEither: () => either,
+  mapRight: (map) => monad(mapRight(either, map)),
+  mapLeft: (map) => monad(mapLeft(either, map)),
+  chainRight: <LL, RR>(map: (value: R) => Either<L | LL, RR>) =>
+    monad(
+      matchEitherPattern({
+        left: (value: L) => left(value),
+        right: map,
+      })(either),
+    ),
+  chainLeft: <LL, RR>(map: (value: L) => Either<LL, R | RR>) =>
+    monad(
+      matchEitherPattern({
+        left: map,
+        right: (value: R) => right(value),
+      })(either),
+    ),
+});

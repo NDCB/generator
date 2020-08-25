@@ -39,6 +39,7 @@ const mockEntryIsFile = (entry: MockEntry): entry is MockFile =>
 const mockEntryIsDirectory = (entry: MockEntry): entry is MockDirectory =>
   typeof entry === "object";
 
+/* istanbul ignore next: only occurs when the library is misused */
 const mockEntryPatternMatchingError = (entry: unknown): Error =>
   new Error(
     `Failed <MockEntry> pattern matching for object "${JSON.stringify(entry)}"`,

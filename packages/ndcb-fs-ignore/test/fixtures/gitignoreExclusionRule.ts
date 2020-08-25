@@ -1,11 +1,18 @@
 module.exports = [
   {
-    rules: `
+    rules: {
+      file: "/project/.gitignore",
+      contents: `
 node_modules
 **/*.log
 		`,
-    directory: "/project",
+    },
     cases: [
+      {
+        file: "/project/.gitignore",
+        expected: true,
+        description: "excludes the exclusion rules file itself",
+      },
       {
         file: "/node_modules/index.js",
         expected: false,
