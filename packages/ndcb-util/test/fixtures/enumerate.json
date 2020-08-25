@@ -2,9 +2,9 @@
   {
     "input": ["a", "b", "c"],
     "expected": [
-      { "index": 1, "element": "a" },
-      { "index": 2, "element": "b" },
-      { "index": 3, "element": "c" }
+      { "index": 0, "element": "a" },
+      { "index": 1, "element": "b" },
+      { "index": 2, "element": "c" }
     ]
   }
 ]

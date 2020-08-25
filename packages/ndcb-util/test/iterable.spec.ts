@@ -239,7 +239,8 @@ describe("enumerate", () => {
   for (const { input, expected } of require("./fixtures/enumerate")) {
     test(`returns "${iterableToString(
       expected,
-      (e) => `[${e}]`,
+      (item) =>
+        `(${(item as { index }).index}, ${(item as { element }).element})`,
     )}" for input "${iterableToString(input)}"`, () => {
       expect([...enumerate(input)]).toStrictEqual(expected);
     });
