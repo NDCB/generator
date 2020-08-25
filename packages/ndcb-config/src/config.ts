@@ -1,11 +1,9 @@
-import { Either, chainRight, right } from "@ndcb/util";
+import { IO } from "@ndcb/util/lib/io";
+import { Either, monad } from "@ndcb/util/lib/either";
 
-import { LOGGER } from "./logger";
 import { coerceCLIArguments, coerceConfiguration } from "./coerce";
 import { readConfiguration } from "./read";
 import { parseConfiguration } from "./parse";
-
-const errorReporter = (report) => report(LOGGER.error);
 
 export const fetchConfiguration = ({
   config,
@@ -13,24 +11,9 @@ export const fetchConfiguration = ({
 }: {
   config?: string;
   encoding?: string;
-}): Either<unknown, void> =>
-  chainRight(
-    coerceCLIArguments({ config, encoding }),
-    ({ config, encoding }) =>
-      chainRight(
-        readConfiguration(config, encoding)(),
-        ({ file, contents }) =>
-          chainRight(
-            parseConfiguration(file, contents),
-            (data) =>
-              chainRight(
-                coerceConfiguration(data),
-                (configuration) => right(configuration),
-                errorReporter,
-              ),
-            errorReporter,
-          ),
-        errorReporter,
-      ),
-    errorReporter,
-  );
+}): IO<Either<Error, unknown>> => () =>
+  monad(coerceCLIArguments({ config, encoding }))
+    .chainRight(({ config, encoding }) => readConfiguration(config, encoding)())
+    .chainRight(({ file, contents }) => parseConfiguration(file, contents))
+    .chainRight((data) => coerceConfiguration(data))
+    .toEither();

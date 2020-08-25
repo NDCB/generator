@@ -15,6 +15,9 @@
     "@ndcb/util": "^0.8.0",
     "ignore": "^5.1.8"
   },
+  "devDependencies": {
+    "@ndcb/mock-fs": "0.0.0"
+  },
   "publishConfig": {
     "access": "public"
   }

@@ -14,8 +14,7 @@
     "@ndcb/data": "^0.0.0",
     "@ndcb/fs-util": "^0.1.0",
     "@ndcb/util": "^0.8.0",
-    "joi": "^17.2.1",
-    "consola": "^2.15.0"
+    "joi": "^17.2.1"
   },
   "publishConfig": {
     "access": "public"

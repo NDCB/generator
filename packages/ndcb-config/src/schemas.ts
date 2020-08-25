@@ -2,70 +2,49 @@ import * as Joi from "joi";
 
 import {
   normalizedFile,
-  fileExists,
-  fileToString,
   normalizedDirectory,
-  directoryExists,
   directoryToString,
   Directory,
   directoryHasDescendent,
 } from "@ndcb/fs-util";
-import {
-  orderedPairs,
-  filter,
-  find,
-  eitherIsRight,
-  eitherValue,
-} from "@ndcb/util";
+import { orderedPairs, filter, find } from "@ndcb/util/lib/iterable";
+import { Either, left, right } from "@ndcb/util/lib/either";
+import { isSome, optionValue } from "@ndcb/util/lib/option";
 
 export const fileSchema = Joi.string().custom(normalizedFile);
 
-export const existingFileSchema = fileSchema.custom((value) => {
-  if (!fileExists(value))
-    throw new Error(`file "${fileToString(value)}" is required to exist`);
-  return value;
-});
-
 export const directorySchema = Joi.string().custom(normalizedDirectory);
 
-export const existingDirectorySchema = directorySchema.custom(
-  (value: Directory) => {
-    if (!directoryExists(value))
-      throw new Error(
-        `directory "${directoryToString(value)}" is required to exist`,
-      );
-    return value;
-  },
-);
-
-export const bufferEncodingSchema = Joi.string().equal(
-  "ascii",
-  "utf8",
-  "utf-8",
-  "utf16le",
-  "ucs2",
-  "ucs-2",
-  "base64",
-  "latin1",
-  "binary",
-  "hex",
-);
+export const bufferEncodingSchema = Joi.string()
+  .equal(
+    "ascii",
+    "utf8",
+    "utf-8",
+    "utf16le",
+    "ucs2",
+    "ucs-2",
+    "base64",
+    "latin1",
+    "binary",
+    "hex",
+  )
+  .default("utf8");
 
 export const cliArgumentsSchema = Joi.object({
-  config: existingFileSchema,
+  config: fileSchema,
   encoding: bufferEncodingSchema,
 });
 
 export const mutuallyDisjointSourceDirectoriesSchema = Joi.array()
-  .items(existingDirectorySchema)
+  .items(directorySchema)
   .min(1)
   .custom((value: Directory[]) => {
     const meetingSourceDirectories = find(
       filter(orderedPairs(value), ([d1, d2]) => d1 !== d2),
       ([d1, d2]) => directoryHasDescendent(d1, d2),
     );
-    if (eitherIsRight(meetingSourceDirectories)) {
-      const [d1, d2] = eitherValue(meetingSourceDirectories);
+    if (isSome(meetingSourceDirectories)) {
+      const [d1, d2] = optionValue(meetingSourceDirectories);
       throw new Error(
         `source directories must be mutually disjoint, and "${directoryToString(
           d1,
@@ -77,7 +56,8 @@ export const mutuallyDisjointSourceDirectoriesSchema = Joi.array()
 
 export const commonConfigurationSchema = Joi.object({
   sources: mutuallyDisjointSourceDirectoriesSchema.required(),
-});
+  pathEncoding: bufferEncodingSchema.default("utf8"),
+}).default();
 
 export const buildConfigurationSchema = Joi.object({
   output: directorySchema.default(normalizedDirectory("./build")),
@@ -104,3 +84,10 @@ export const configurationSchema = Joi.object({
   build: buildConfigurationSchema.default(),
   serve: serveConfigurationSchema.default(),
 }).default();
+
+export const validate = (schema: Joi.Schema) => (
+  element?: unknown,
+): Either<Joi.ValidationError, unknown> => {
+  const { value, error } = schema.validate(element);
+  return error ? left(error) : right(value);
+};
