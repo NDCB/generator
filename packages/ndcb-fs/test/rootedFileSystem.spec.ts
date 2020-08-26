@@ -5,10 +5,14 @@ import {
   normalizedRelativePath,
 } from "@ndcb/fs-util";
 import { mockFileSystem, MockDirectory } from "@ndcb/mock-fs";
-import { map } from "@ndcb/util";
+import {
+  eitherIsRight,
+  eitherValue,
+  eitherIsLeft,
+} from "@ndcb/util/lib/either";
+import { enumerate, map } from "@ndcb/util/src/iterable";
 
 import { rootedFileSystem } from "../src/rootedFileSystem";
-import { enumerate } from "@ndcb/util/src/iterable";
 
 describe("rootedFileSystem", () => {
   describe("#files", () => {
@@ -18,6 +22,7 @@ describe("rootedFileSystem", () => {
     } of enumerate<{ fs: MockDirectory; root: string; expected: string[] }>(
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       require("./fixtures/rootedFileSystem-files"),
+      1,
     )) {
       const { files } = rootedFileSystem(mockFileSystem(fs))(
         normalizedDirectory(root),
@@ -26,7 +31,14 @@ describe("rootedFileSystem", () => {
         ...map<string, File>(expected, (path) => normalizedFile(path)),
       ];
       test(`case #${index}`, () => {
-        const actualFiles = [...files()];
+        const flattenFiles = function* (): Iterable<Error | File> {
+          for (const readFiles of files()) {
+            const filesRead = readFiles();
+            if (eitherIsRight(filesRead)) yield* eitherValue(filesRead);
+            else yield eitherValue(filesRead);
+          }
+        };
+        const actualFiles = [...flattenFiles()];
         expect(actualFiles).toEqual(expect.arrayContaining(expectedFiles));
         expect(expectedFiles).toEqual(expect.arrayContaining(actualFiles));
       });
@@ -44,9 +56,14 @@ describe("rootedFileSystem", () => {
       for (const {
         index,
         element: { path, expected },
-      } of enumerate<{ path: string; expected: boolean }>(cases)) {
+      } of enumerate<{ path: string; expected: boolean }>(cases, 1)) {
         test(`case #${index}`, () => {
-          expect(fileExists(normalizedRelativePath(path))).toBe(expected);
+          const fileExistenceTest = fileExists(normalizedRelativePath(path))();
+          if (eitherIsLeft(fileExistenceTest))
+            throw new Error(
+              `Unexpectdly failed to determine the existence of file "${path}"`,
+            );
+          expect(eitherValue(fileExistenceTest)).toBe(expected);
         });
       }
     }
@@ -63,9 +80,16 @@ describe("rootedFileSystem", () => {
       for (const {
         index,
         element: { path, expected },
-      } of enumerate<{ path: string; expected: boolean }>(cases)) {
+      } of enumerate<{ path: string; expected: boolean }>(cases, 1)) {
         test(`case #${index}`, () => {
-          expect(directoryExists(normalizedRelativePath(path))).toBe(expected);
+          const directoryExistenceTest = directoryExists(
+            normalizedRelativePath(path),
+          )();
+          if (eitherIsLeft(directoryExistenceTest))
+            throw new Error(
+              `Unexpectdly failed to determine the existence of directory "${path}"`,
+            );
+          expect(eitherValue(directoryExistenceTest)).toBe(expected);
         });
       }
     }

@@ -118,9 +118,9 @@ export const unorderedPairs = function* <T>(
 
 export const enumerate = function* <T>(
   iterable: Iterable<T>,
+  base = 0,
 ): Iterable<{ index: number; element: T }> {
-  let count = 0;
-  for (const element of iterable) yield { index: count++, element };
+  for (const element of iterable) yield { index: base++, element };
 };
 
 export const forEach = <T>(

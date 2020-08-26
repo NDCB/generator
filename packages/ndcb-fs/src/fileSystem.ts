@@ -1,58 +1,148 @@
-import {
-  File,
-  RelativePath,
-  FileContents,
-  Entry,
-  relativePathToString,
-  FileReadingError,
-} from "@ndcb/fs-util";
+import { File, RelativePath, Entry, relativePathToString } from "@ndcb/fs-util";
+import { bimap } from "@ndcb/util/lib/option";
 import {
   flatMap,
   some,
   find,
+  map,
+  every,
   filter,
-  matchEitherPattern,
+} from "@ndcb/util/lib/iterable";
+import { IO } from "@ndcb/util/lib/io";
+import {
   Either,
-} from "@ndcb/util";
+  eitherIsRight,
+  Right,
+  eitherValue,
+  right,
+  left,
+  monad,
+} from "@ndcb/util/lib/either";
 
 export interface FileSystem {
-  readonly files: () => Iterable<File>;
-  readonly fileExists: (path: RelativePath) => boolean;
-  readonly directoryExists: (path: RelativePath) => boolean;
-  /** @precondition fileExists(path) */
-  readonly readFile: (
+  readonly files: () => Iterable<IO<Either<Error, Iterable<File>>>>;
+  readonly fileExists: (path: RelativePath) => IO<Either<Error, boolean>>;
+  readonly directoryExists: (path: RelativePath) => IO<Either<Error, boolean>>;
+  readonly readFile: (path: RelativePath) => IO<Either<Error, Buffer>>;
+  readonly readDirectory: (
     path: RelativePath,
-  ) => Either<FileContents, FileReadingError>;
-  /** @precondition directoryExists(path) */
-  readonly readDirectory: (path: RelativePath) => Iterable<Entry>;
+  ) => IO<Either<Error, Iterable<Entry>>>;
 }
+
+// istanbul ignore next: constructor for unexpected error
+const fileExistsError = (path: RelativePath): Error =>
+  new Error(
+    `Failed to determine the existence of the file at "${relativePathToString(
+      path,
+    )}"`,
+  );
+
+const fileNotFoundError = (path: RelativePath): Error =>
+  new Error(`File not found at "${relativePathToString(path)}"`);
+
+// istanbul ignore next: constructor for unexpected error
+const directoryExistsError = (path: RelativePath): Error =>
+  new Error(
+    `Failed to determine the existence of the directory at "${relativePathToString(
+      path,
+    )}"`,
+  );
+
+// istanbul ignore next: constructor for unexpected error
+const directoryReadError = (path: RelativePath): Error =>
+  new Error(`Failed to read the directory at "${relativePathToString(path)}"`);
+
+const directoryNotFoundError = (path: RelativePath): Error =>
+  new Error(`Directory not found at "${relativePathToString(path)}"`);
 
 export const compositeFileSystem = (
   systems: Iterable<FileSystem>,
 ): FileSystem => {
   systems = [...systems];
-  const directoryExists = (path) =>
-    some(systems, (system) => system.directoryExists(path));
+  const ioTests = <T>(
+    systems: Iterable<FileSystem>,
+    path: RelativePath,
+    ioTest: (system: FileSystem, path: RelativePath) => IO<Either<Error, T>>,
+  ): IO<Array<{ system: FileSystem; ioTest: Either<Error, T> }>> => () => [
+    ...map(systems, (system) => ({
+      system,
+      ioTest: ioTest(system, path)(),
+    })),
+  ];
+  const ioTestsAllRight = <T>(
+    ioTests: Array<{ system: FileSystem; ioTest: Either<Error, T> }>,
+  ): ioTests is Array<{ system: FileSystem; ioTest: Right<T> }> =>
+    every(ioTests, ({ ioTest }) => eitherIsRight(ioTest));
   return {
     files: () => flatMap(systems, (system) => system.files()),
-    fileExists: (path) => some(systems, (system) => system.fileExists(path)),
-    directoryExists,
-    readFile: (path) =>
-      matchEitherPattern({
-        right: (system: FileSystem) => system.readFile(path),
-        left: () => {
-          throw new Error(`File not found at "${relativePathToString(path)}"`);
-        },
-      })(find(systems, (system) => system.fileExists(path))),
-    readDirectory: (path) => {
-      if (!directoryExists(path))
-        throw new Error(
-          `Directory not found at "${relativePathToString(path)}"`,
-        );
-      return flatMap(
-        filter(systems, (system) => system.directoryExists(path)),
-        (system) => system.readDirectory(path),
-      );
+    fileExists: (path) => () => {
+      const fileExistsTests = ioTests(systems, path, (system, path) =>
+        system.fileExists(path),
+      )();
+      return ioTestsAllRight(fileExistsTests)
+        ? right(some(fileExistsTests, ({ ioTest }) => eitherValue(ioTest)))
+        : left(fileExistsError(path));
+    },
+    directoryExists: (path) => () => {
+      const directoryExistsTests = ioTests(systems, path, (system, path) =>
+        system.directoryExists(path),
+      )();
+      return ioTestsAllRight(directoryExistsTests)
+        ? right(some(directoryExistsTests, ({ ioTest }) => eitherValue(ioTest)))
+        : left(directoryExistsError(path));
+    },
+    readFile: (path) => () => {
+      const fileExistsTests = ioTests(systems, path, (system, path) =>
+        system.fileExists(path),
+      )();
+      return monad(
+        ioTestsAllRight(fileExistsTests)
+          ? right(fileExistsTests)
+          : left(fileExistsError(path)),
+      )
+        .mapRight((fileExistsTests) =>
+          find(fileExistsTests, ({ ioTest }) => eitherValue(ioTest)),
+        )
+        .chainRight(
+          bimap(
+            ({ system }) => system,
+            () => fileNotFoundError(path),
+          ),
+        )
+        .chainRight((system) => system.readFile(path)())
+        .toEither();
+    },
+    readDirectory: (path) => () => {
+      const directoryExistsTests = ioTests(systems, path, (system, path) =>
+        system.directoryExists(path),
+      )();
+      return monad(
+        ioTestsAllRight(directoryExistsTests)
+          ? right(directoryExistsTests)
+          : left(directoryExistsError(path)),
+      )
+        .mapRight((directoryExistsTests) =>
+          filter(directoryExistsTests, ({ ioTest }) => eitherValue(ioTest)),
+        )
+        .mapRight((systemsContainingQueriedDirectory) =>
+          map(systemsContainingQueriedDirectory, ({ system }) => system),
+        )
+        .mapRight((systems) =>
+          ioTests(systems, path, (system, path) =>
+            system.readDirectory(path),
+          )(),
+        )
+        .chainRight((systems) =>
+          systems.length > 0
+            ? right(systems)
+            : left(directoryNotFoundError(path)),
+        )
+        .chainRight((systems) =>
+          ioTestsAllRight(systems)
+            ? right(flatMap(systems, ({ ioTest }) => eitherValue(ioTest)))
+            : left(directoryReadError(path)),
+        )
+        .toEither();
     },
   };
 };

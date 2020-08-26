@@ -36,3 +36,7 @@ describe("exclusionRuleFromDirectory", () => {
     });
   }
 });
+
+// TODO: describe("deepEntryExclusionRule", () => {});
+
+// TODO: describe("downwardNotIgnoredEntries", () => {});

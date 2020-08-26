@@ -9,6 +9,7 @@ import {
   fileToString,
   filterFiles,
   directoryToString,
+  DirectoryWalker,
 } from "@ndcb/fs-util";
 import { filter, map, every, iterableToString } from "@ndcb/util/lib/iterable";
 import { IO } from "@ndcb/util/lib/io";
@@ -25,7 +26,11 @@ import {
   mapRight,
 } from "@ndcb/util/lib/either";
 
-import { ExclusionRule, compositeExclusionRule } from "./exclusionRule";
+import {
+  ExclusionRule,
+  compositeExclusionRule,
+  exclusionRuleAsFilter,
+} from "./exclusionRule";
 import { gitignoreExclusionRule } from "./gitignore";
 
 const exclusionRuleFilesFilteringError = (
@@ -217,7 +222,7 @@ export const deepEntryExclusionRule = (
 export const downwardNotIgnoredEntries = (
   readDirectory: DirectoryReader,
   directoryExclusionRule: DirectoryExclusionRuleRetriever,
-) =>
+): DirectoryWalker =>
   function* (
     directory: Directory,
   ): Iterable<IO<Either<Error, Iterable<Entry>>>> {
@@ -243,7 +248,10 @@ export const downwardNotIgnoredEntries = (
           )
           .mapRight(function* ({ exclude, entries }): Iterable<Entry> {
             yield directory;
-            for (const entry of filter(entries, exclude)) {
+            for (const entry of filter(
+              entries,
+              exclusionRuleAsFilter(exclude),
+            )) {
               yield entry;
               if (entryIsDirectory(entry))
                 stack.push({ directory: entry, parentExclusionRule: exclude });

@@ -4,10 +4,20 @@ import {
   normalizedFile,
   File,
   normalizedRelativePath,
-  fileContents,
+  readTextFile,
+  Entry,
+  fileName,
 } from "@ndcb/fs-util";
 import { mockFileSystem } from "@ndcb/mock-fs";
-import { map, enumerate, isIterable } from "@ndcb/util";
+import { isIterable } from "@ndcb/util/lib/type";
+import { map, enumerate } from "@ndcb/util/lib/iterable";
+import {
+  Either,
+  eitherValue,
+  eitherIsLeft,
+  right,
+  eitherIsRight,
+} from "@ndcb/util/lib/either";
 
 import { compositeFileSystem, FileSystem } from "../src/fileSystem";
 import {
@@ -26,15 +36,28 @@ describe("FileSystem", () => {
     readFileCases,
     readDirectoryCases,
   } of require("./fixtures/fileSystem")) {
-    const mockFs = mockFileSystem(fs);
+    const {
+      readFile,
+      readDirectory,
+      directoryExists,
+      fileExists,
+    } = mockFileSystem(fs);
+    const textFileReader = readTextFile(readFile, "utf8");
     const system = compositeFileSystem(
       map<string, FileSystem>(roots, (root) =>
         excludedRootedFileSystem(
-          rootedFileSystem(mockFs)(normalizedDirectory(root)),
+          rootedFileSystem({
+            readFile,
+            readDirectory,
+            directoryExists,
+            fileExists,
+          })(normalizedDirectory(root)),
           exclusionRuleFromDirectory(
-            mockFs.readTextFile,
-            mockFs.readDirectory,
-          )(exclusionRulesFileNames),
+            textFileReader,
+            readDirectory,
+          )((file) => () =>
+            right((exclusionRulesFileNames ?? []).includes(fileName(file))),
+          ),
         ),
       ),
     );
@@ -43,7 +66,16 @@ describe("FileSystem", () => {
         ...map<string, File>(expectedFiles, (path) => normalizedFile(path)),
       ];
       test("yields all the files", () => {
-        const actual = [...system.files()];
+        const flattenFiles = function* (
+          system: FileSystem,
+        ): Iterable<Error | File> {
+          for (const readFiles of system.files()) {
+            const filesRead = readFiles();
+            if (eitherIsRight(filesRead)) yield* eitherValue(filesRead);
+            else yield eitherValue(filesRead);
+          }
+        };
+        const actual = [...flattenFiles(system)];
         expect(actual).toEqual(expect.arrayContaining(expected));
         expect(expected).toEqual(expect.arrayContaining(actual));
       });
@@ -52,11 +84,16 @@ describe("FileSystem", () => {
       for (const {
         index,
         element: { path, expected },
-      } of enumerate<{ path: string; expected: boolean }>(fileExistsCases)) {
+      } of enumerate<{ path: string; expected: boolean }>(fileExistsCases, 1)) {
         test(`case #${index}`, () => {
-          expect(system.fileExists(normalizedRelativePath(path))).toBe(
-            expected,
-          );
+          const fileExistenceTest = system.fileExists(
+            normalizedRelativePath(path),
+          )();
+          if (eitherIsLeft(fileExistenceTest))
+            throw new Error(
+              `Unexpectdly failed to determine the existence of file "${path}"`,
+            );
+          expect(eitherValue(fileExistenceTest)).toBe(expected);
         });
       }
     });
@@ -66,11 +103,17 @@ describe("FileSystem", () => {
         element: { path, expected },
       } of enumerate<{ path: string; expected: boolean }>(
         directoryExistsCases,
+        1,
       )) {
         test(`case #${index}`, () => {
-          expect(system.directoryExists(normalizedRelativePath(path))).toBe(
-            expected,
-          );
+          const directoryExistenceTest = system.directoryExists(
+            normalizedRelativePath(path),
+          )();
+          if (eitherIsLeft(directoryExistenceTest))
+            throw new Error(
+              `Unexpectdly failed to determine the existence of directory "${path}"`,
+            );
+          expect(eitherValue(directoryExistenceTest)).toBe(expected);
         });
       }
     });
@@ -78,18 +121,23 @@ describe("FileSystem", () => {
       for (const {
         index,
         element: { path, expected },
-      } of enumerate<{ path: string; expected: boolean }>(readFileCases)) {
+      } of enumerate<{ path: string; expected: boolean }>(readFileCases, 1)) {
         if (typeof expected === "string")
           test(`case #${index}`, () => {
-            expect(system.readFile(normalizedRelativePath(path))).toStrictEqual(
-              fileContents(expected),
+            const contentsRead = system.readFile(
+              normalizedRelativePath(path),
+            )();
+            if (eitherIsLeft(contentsRead))
+              throw new Error(`Unexpectedly failed to read file "${path}"`);
+            expect(eitherValue(contentsRead)).toStrictEqual(
+              Buffer.from(expected),
             );
           });
         else
           test(`case #${index}`, () => {
-            expect(() =>
-              system.readFile(normalizedRelativePath(path)),
-            ).toThrow();
+            expect(
+              eitherIsLeft(system.readFile(normalizedRelativePath(path))()),
+            ).toBe(true);
           });
       }
     });
@@ -97,7 +145,10 @@ describe("FileSystem", () => {
       for (const {
         index,
         element: { path, expected },
-      } of enumerate<{ path: string; expected: boolean }>(readDirectoryCases)) {
+      } of enumerate<{ path: string; expected: boolean }>(
+        readDirectoryCases,
+        1,
+      )) {
         if (isIterable(expected)) {
           const expectedEntries = [
             ...map(
@@ -110,9 +161,15 @@ describe("FileSystem", () => {
             ),
           ];
           test(`case #${index}`, () => {
-            const actualEntries = [
-              ...system.readDirectory(normalizedRelativePath(path)),
-            ];
+            const entriesRead: Either<
+              Error,
+              Iterable<Entry>
+            > = system.readDirectory(normalizedRelativePath(path))();
+            if (eitherIsLeft<Error, Iterable<Entry>>(entriesRead))
+              throw new Error(
+                `Unexpectedly failed to read directory "${path}"`,
+              );
+            const actualEntries = [...eitherValue(entriesRead)];
             expect(actualEntries).toStrictEqual(
               expect.arrayContaining(expectedEntries),
             );
@@ -122,9 +179,11 @@ describe("FileSystem", () => {
           });
         } else
           test(`case #${index}`, () => {
-            expect(() =>
-              system.readDirectory(normalizedRelativePath(path)),
-            ).toThrow();
+            expect(
+              eitherIsLeft(
+                system.readDirectory(normalizedRelativePath(path))(),
+              ),
+            ).toBe(true);
           });
       }
     });

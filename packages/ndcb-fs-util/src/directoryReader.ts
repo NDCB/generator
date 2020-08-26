@@ -90,7 +90,7 @@ export const readDirectoryFiles = (readDirectory: DirectoryReader) => (
 
 export type DirectoryWalker = (
   directory: Directory,
-) => Iterable<IO<Either<DirectoryIOError, Iterable<Entry>>>>;
+) => Iterable<IO<Either<Error, Iterable<Entry>>>>;
 
 /**
  * Constructs a lazy depth-first directory walker
@@ -128,7 +128,7 @@ export const downwardEntries = (
 export const downwardFiles = (walk: DirectoryWalker) =>
   function* (
     directory: Directory,
-  ): Iterable<IO<Either<DirectoryIOError, Iterable<File>>>> {
+  ): Iterable<IO<Either<Error, Iterable<File>>>> {
     for (const readEntries of walk(directory)) {
       yield () =>
         mapRight(readEntries(), (entries) => filter(entries, entryIsFile));

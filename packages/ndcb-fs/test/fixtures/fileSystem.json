@@ -3,13 +3,13 @@
     "fs": {
       "/": {
         "content": {
-          ".gitignore": "TODO.md",
+          ".gitignore": "tmp.md",
           ".siteignore": ".editorconfig",
           ".editorconfig": "",
           "index.html": "Root index",
           "fr-CA": {
             "index.html": "fr-CA index",
-            "TODO.md": "",
+            "tmp.md": "",
             "figures": {
               ".siteignore": "*.py",
               "figure.py": "",
@@ -62,7 +62,7 @@
         "expected": false
       },
       {
-        "path": "fr-CA/TODO.md",
+        "path": "fr-CA/tmp.md",
         "expected": false
       },
       {
@@ -152,6 +152,18 @@
       {
         "path": "inexistent.txt",
         "expected": false
+      },
+      {
+        "path": "fr-CA/tmp.md",
+        "expected": false
+      },
+      {
+        "path": "fr-CA/figures/figure.py",
+        "expected": false
+      },
+      {
+        "path": "_layouts/main.pug",
+        "expected": false
       }
     ],
     "readDirectoryCases": [
@@ -195,6 +207,10 @@
       },
       {
         "path": "inexistent",
+        "expected": false
+      },
+      {
+        "path": "_layouts",
         "expected": false
       }
     ]
