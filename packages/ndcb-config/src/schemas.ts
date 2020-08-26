@@ -65,6 +65,7 @@ export interface Configuration {
       readonly port: number;
     };
     readonly browserSync: {
+      readonly hostname: string;
       readonly port: number;
     };
   };
@@ -88,6 +89,7 @@ export const serveConfigurationSchema = Joi.object({
     port: Joi.number().port().default(3000),
   }).default(),
   browserSync: Joi.object({
+    hostname: Joi.string().default("localhost").hostname(),
     port: Joi.number()
       .port()
       .default(3001)
