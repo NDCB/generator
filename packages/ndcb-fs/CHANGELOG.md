@@ -3,6 +3,34 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.6.0](https://github.com/NDCB/generator/tree/master/packages/ndcb-fs/compare/@ndcb/fs@0.5.0...@ndcb/fs@0.6.0) (2020-08-26)
+
+
+### Bug Fixes
+
+* update `FileReader` and `DirectoryReader` type references to synchronous versions ([fb2a746](https://github.com/NDCB/generator/tree/master/packages/ndcb-fs/commit/fb2a746e267154ebf1d8a4f35360a9fc539e96bd))
+
+
+### Features
+
+* **config:** implement loading of site configuration with validation and coercing ([9919161](https://github.com/NDCB/generator/tree/master/packages/ndcb-fs/commit/9919161decf957b19651ce868144ed334a4dd995))
+* **data:** implement simple file data parsers ([f144017](https://github.com/NDCB/generator/tree/master/packages/ndcb-fs/commit/f144017829116d0004efd6875288af32b837056a))
+* **fs:** revise implementation of file system ([24a1ee2](https://github.com/NDCB/generator/tree/master/packages/ndcb-fs/commit/24a1ee20215dc3c02061ebf9472e1515d276b935))
+* **fs:** update `@ndcb/fs` to new IO function signatures ([631ba53](https://github.com/NDCB/generator/tree/master/packages/ndcb-fs/commit/631ba532d763b0e6f8f53dc0bfb4458113d9827a))
+* update existing functions to use `Either` ([3b660e4](https://github.com/NDCB/generator/tree/master/packages/ndcb-fs/commit/3b660e4d6251b81641a70a52b4cf37dac3d799d1))
+* **fs:** simplify `@ndcb/fs` module ([5973720](https://github.com/NDCB/generator/tree/master/packages/ndcb-fs/commit/5973720bc4eb3800400b3866c72573904e00acc4))
+
+
+### BREAKING CHANGES
+
+* **fs:** `FileSystem` and `RootedFileSystem` interfaces have changed to reflect the changes
+made in `@ndcb/fs-util` and `@ndcb/fs-ignore`.
+* **fs:** removed previous site file system implementation entirely
+
+
+
+
+
 # [0.5.0](https://github.com/NDCB/generator/tree/master/packages/ndcb-fs/compare/@ndcb/fs@0.4.0...@ndcb/fs@0.5.0) (2020-06-25)
 
 

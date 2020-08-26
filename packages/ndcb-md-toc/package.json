@@ -1,6 +1,6 @@
 {
   "name": "@ndcb/md-toc",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Markdown table of contents parser and manipulation",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -18,7 +18,7 @@
     "unist-util-visit": "^2.0.2"
   },
   "devDependencies": {
-    "@ndcb/fs-util": "^0.1.0",
+    "@ndcb/fs-util": "^0.2.0",
     "@types/unist": "^2.0.0",
     "remark-frontmatter": "^2.0.0",
     "remark-parse": "^8.0.2",

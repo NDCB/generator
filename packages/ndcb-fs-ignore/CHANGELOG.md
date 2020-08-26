@@ -3,6 +3,39 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.2.0](https://github.com/NDCB/generator/tree/master/packages/ndcb-fs-ignore/compare/@ndcb/fs-ignore@0.1.0...@ndcb/fs-ignore@0.2.0) (2020-08-26)
+
+
+### Bug Fixes
+
+* update `FileReader` and `DirectoryReader` type references to synchronous versions ([fb2a746](https://github.com/NDCB/generator/tree/master/packages/ndcb-fs-ignore/commit/fb2a746e267154ebf1d8a4f35360a9fc539e96bd))
+* **fs-ignore:** fix test implementation ([3dba06d](https://github.com/NDCB/generator/tree/master/packages/ndcb-fs-ignore/commit/3dba06ddfb2141553c8f2227135cf699323bea71))
+
+
+### Features
+
+* **config:** implement loading of site configuration with validation and coercing ([9919161](https://github.com/NDCB/generator/tree/master/packages/ndcb-fs-ignore/commit/9919161decf957b19651ce868144ed334a4dd995))
+* **config:** update implementation to use `IO`, `Option` and `Either` monad ([f38245f](https://github.com/NDCB/generator/tree/master/packages/ndcb-fs-ignore/commit/f38245f5d5ab90199aed282d284072f8c623d3bb))
+* **fs:** revise implementation of file system ([24a1ee2](https://github.com/NDCB/generator/tree/master/packages/ndcb-fs-ignore/commit/24a1ee20215dc3c02061ebf9472e1515d276b935))
+* **fs:** update `@ndcb/fs` to new IO function signatures ([631ba53](https://github.com/NDCB/generator/tree/master/packages/ndcb-fs-ignore/commit/631ba532d763b0e6f8f53dc0bfb4458113d9827a))
+* **fs-ignore:** implement applications of exclusion rules to individual entries and traversals ([e1278df](https://github.com/NDCB/generator/tree/master/packages/ndcb-fs-ignore/commit/e1278dfdc9da65b2ee5429495069af9c6bc87e2a))
+* **fs-ignore:** overhaul `@ndcb/fs-ignore` implementation using `IO` and `Either` types ([98b5aaf](https://github.com/NDCB/generator/tree/master/packages/ndcb-fs-ignore/commit/98b5aafa593efbd7895fec2269ba86f7b53a0dc8))
+* **fs-ignore:** rework implementation ([890d024](https://github.com/NDCB/generator/tree/master/packages/ndcb-fs-ignore/commit/890d024a0b3d3078ddda5680ea45915e2c506674))
+
+
+### BREAKING CHANGES
+
+* **fs:** `FileSystem` and `RootedFileSystem` interfaces have changed to reflect the changes
+made in `@ndcb/fs-util` and `@ndcb/fs-ignore`.
+* **config:** Function signatures were altered.
+* **fs-ignore:** Function signature changes.
+* **fs-ignore:** remove `extensionsExclusionRule`, `leadingUnderscoreExclusionRule`,
+`segmentsExclusionRule`
+
+
+
+
+
 # 0.1.0 (2020-06-25)
 
 
