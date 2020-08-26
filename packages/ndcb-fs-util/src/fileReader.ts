@@ -23,7 +23,7 @@ export const readFile: FileReader = (file) => () =>
 
 export type TextFileReader = (file: File) => IO<Either<FileIOError, string>>;
 
-export const readTextFile = (
+export const textFileReader = (
   readFile: FileReader,
   encoding: BufferEncoding,
 ): TextFileReader => (file) => () =>

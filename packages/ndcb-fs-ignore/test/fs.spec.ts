@@ -1,5 +1,5 @@
 import { mockFileSystem } from "@ndcb/mock-fs";
-import { readTextFile, fileName, entryToString } from "@ndcb/fs-util";
+import { textFileReader, fileName, entryToString } from "@ndcb/fs-util";
 
 import { exclusionRuleFromDirectory } from "../src/fs";
 import { eitherIsLeft, eitherValue, right } from "@ndcb/util";
@@ -13,9 +13,9 @@ describe("exclusionRuleFromDirectory", () => {
   } of require("./fixtures/exclusionRuleFromDirectory")) {
     describe(`scenario #${++scenario}`, () => {
       const { readDirectory, readFile } = mockFileSystem(fs);
-      const textFileReader = readTextFile(readFile, "utf8");
+      const readTextFile = textFileReader(readFile, "utf8");
       const exclusion = exclusionRuleFromDirectory(
-        textFileReader,
+        readTextFile,
         readDirectory,
       )((file) => () => right(rulesFilenames.includes(fileName(file))));
       for (const { directory, considered, ignored } of cases) {

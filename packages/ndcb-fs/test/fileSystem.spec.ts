@@ -4,7 +4,7 @@ import {
   normalizedFile,
   File,
   normalizedRelativePath,
-  readTextFile,
+  textFileReader,
   Entry,
   fileName,
 } from "@ndcb/fs-util";
@@ -42,7 +42,7 @@ describe("FileSystem", () => {
       directoryExists,
       fileExists,
     } = mockFileSystem(fs);
-    const textFileReader = readTextFile(readFile, "utf8");
+    const readTextFile = textFileReader(readFile, "utf8");
     const system = compositeFileSystem(
       map<string, FileSystem>(roots, (root) =>
         excludedRootedFileSystem(
@@ -53,7 +53,7 @@ describe("FileSystem", () => {
             fileExists,
           })(normalizedDirectory(root)),
           exclusionRuleFromDirectory(
-            textFileReader,
+            readTextFile,
             readDirectory,
           )((file) => () =>
             right((exclusionRulesFileNames ?? []).includes(fileName(file))),

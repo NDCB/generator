@@ -63,7 +63,7 @@ export type DirectoryReader = (
  *
  * @param encoding The character encoding of file names read in directories.
  */
-export const readDirectory = (encoding: BufferEncoding): DirectoryReader => (
+export const directoryReader = (encoding: BufferEncoding): DirectoryReader => (
   directory,
 ) => () =>
   mapEither(
@@ -81,7 +81,7 @@ export const readDirectory = (encoding: BufferEncoding): DirectoryReader => (
       ),
   );
 
-export const readDirectoryFiles = (readDirectory: DirectoryReader) => (
+export const directoryFilesReader = (readDirectory: DirectoryReader) => (
   directory: Directory,
 ): IO<Either<DirectoryIOError, Iterable<File>>> => () =>
   mapRight(readDirectory(directory)(), (entries) =>

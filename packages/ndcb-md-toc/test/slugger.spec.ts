@@ -7,7 +7,7 @@ import {
   fileFromDirectory,
   normalizedRelativePath,
   readFile,
-  readTextFile,
+  textFileReader,
 } from "@ndcb/fs-util";
 import { arrayTree } from "@ndcb/util/lib/tree";
 import { eitherIsLeft, eitherValue } from "@ndcb/util/lib/either";
@@ -22,9 +22,9 @@ const { parse } = unified()
 describe("slugifyTableOfContents", () => {
   const fixturesDirectory = normalizedDirectory(`${__dirname}/fixtures`);
   const fileInFixtures = fileFromDirectory(fixturesDirectory);
-  const textFileReader = readTextFile(readFile, "utf-8");
+  const readTextFile = textFileReader(readFile, "utf-8");
   const readContents = (path: string) =>
-    textFileReader(fileInFixtures(normalizedRelativePath(path)));
+    readTextFile(fileInFixtures(normalizedRelativePath(path)));
   for (const {
     file,
     description,
