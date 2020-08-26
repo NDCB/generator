@@ -1334,6 +1334,19 @@
     call-me-maybe "^1.0.1"
     glob-to-regexp "^0.3.0"
 
+"@ndcb/fs-util@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@ndcb/fs-util/-/fs-util-0.1.0.tgz#5cc8b689cc0e34bf362093dd4d7675948c5b8bbc"
+  integrity sha512-czhIr53edwE5570d1GHODU4zW2OsLr+K0ihuLm7gUqpEH+wb31x2Y7TkcyIaXMs3ZpFLwiq8mKnexAmfYjeXlw==
+  dependencies:
+    "@ndcb/util" "^0.8.0"
+    fs-extra "^9.0.1"
+
+"@ndcb/util@^0.8.0":
+  version "0.8.0"
+  resolved "https://registry.yarnpkg.com/@ndcb/util/-/util-0.8.0.tgz#0fbcd1434b215729114a8393631127c9c223e2cc"
+  integrity sha512-WPfdYrxganPEAIldSTUC8g3qERu3s8iqeB5Kb1nMPsZHD88mSVUdpaLu7KTcRdD55aisM8Vlgy4p2/0+ZUat2Q==
+
 "@nodelib/fs.stat@^1.1.2":
   version "1.1.3"
   resolved "https://registry.yarnpkg.com/@nodelib/fs.stat/-/fs.stat-1.1.3.tgz#2b5a3ab3f918cca48a8c754c08168e3f03eba61b"
@@ -1574,6 +1587,11 @@
   version "0.0.29"
   resolved "https://registry.yarnpkg.com/@types/json5/-/json5-0.0.29.tgz#ee28707ae94e11d2b827bcbe5270bcea7f3e71ee"
   integrity sha1-7ihweulOEdK4J7y+UnC86n8+ce4=
+
+"@types/mime-types@^2.1.0":
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/@types/mime-types/-/mime-types-2.1.0.tgz#9ca52cda363f699c69466c2a6ccdaad913ea7a73"
+  integrity sha1-nKUs2jY/aZxpRmwqbM2q2RPqenM=
 
 "@types/minimatch@*":
   version "3.0.3"

@@ -4,6 +4,7 @@ import { Either, monad } from "@ndcb/util/lib/either";
 import { coerceCLIArguments, coerceConfiguration } from "./coerce";
 import { readConfiguration } from "./read";
 import { parseConfiguration } from "./parse";
+import { Configuration } from "./schemas";
 
 export const fetchConfiguration = ({
   config,
@@ -11,7 +12,7 @@ export const fetchConfiguration = ({
 }: {
   config?: string;
   encoding?: string;
-}): IO<Either<Error, unknown>> => () =>
+}): IO<Either<Error, Configuration>> => () =>
   monad(coerceCLIArguments({ config, encoding }))
     .chainRight(({ config, encoding }) => readConfiguration(config, encoding)())
     .chainRight(({ file, contents }) => parseConfiguration(file, contents))

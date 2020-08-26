@@ -8,9 +8,12 @@ import {
   cliArgumentsSchema,
   configurationSchema,
   validate,
+  Configuration,
 } from "./schemas";
 
-export const coerceBufferEncoding = validate(bufferEncodingSchema);
+export const coerceBufferEncoding = validate(bufferEncodingSchema) as (
+  element?: unknown,
+) => Either<Joi.ValidationError, BufferEncoding>;
 
 export const coerceCLIArguments = validate(cliArgumentsSchema) as ({
   config,
@@ -20,4 +23,6 @@ export const coerceCLIArguments = validate(cliArgumentsSchema) as ({
   encoding?: string;
 }) => Either<Joi.ValidationError, { config: File; encoding: BufferEncoding }>;
 
-export const coerceConfiguration = validate(configurationSchema);
+export const coerceConfiguration = validate(configurationSchema) as (
+  element?: unknown,
+) => Either<Joi.ValidationError, Configuration>;

@@ -25,4 +25,4 @@ program
 
 const { config, encoding } = program;
 
-serve({ config, encoding });
+serve({ config, encoding })();

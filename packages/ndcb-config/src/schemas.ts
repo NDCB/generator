@@ -54,6 +54,25 @@ export const mutuallyDisjointSourceDirectoriesSchema = Joi.array()
     return value;
   });
 
+export interface Configuration {
+  readonly common: {
+    readonly sources: Directory[];
+    readonly pathEncoding: BufferEncoding;
+  };
+  readonly serve: {
+    readonly main: {
+      readonly hostname: string;
+      readonly port: number;
+    };
+    readonly browserSync: {
+      readonly port: number;
+    };
+  };
+  readonly build: {
+    readonly output: Directory;
+  };
+}
+
 export const commonConfigurationSchema = Joi.object({
   sources: mutuallyDisjointSourceDirectoriesSchema.required(),
   pathEncoding: bufferEncodingSchema.default("utf8"),
