@@ -16,6 +16,7 @@
   "scripts": {
     "bootstrap": "lerna bootstrap",
     "build": "lerna exec --stream -- tsc",
+    "build:dev": "lerna exec --stream -- tsc --incremental",
     "docs": "lerna exec --stream -- typedoc",
     "clean:all": "yarn run clean:dependencies && yarn run clean:coverage && yarn run clean:build",
     "clean:dependencies": "lerna clean --yes",
