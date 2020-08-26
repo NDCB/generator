@@ -1,11 +1,12 @@
 import { IncomingMessage, ServerResponse, RequestListener } from "http";
+import { parse } from "url";
 
 import { Logger } from "@ndcb/logger";
 
 import { Processor, processorAsTimedProcessor } from "./processor";
 
-const requestPathname = (url?: string) =>
-  (url ?? "").replace(/^(\/)|(\/)$/g, "");
+const requestPathname = (url = "") =>
+  (parse(url).pathname ?? "").replace(/^(\/)|(\/)$/g, "");
 
 export const siteFilesServerRequestListener = (
   requestedPathnameProcessor: Processor,
