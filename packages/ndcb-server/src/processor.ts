@@ -28,14 +28,14 @@ export type TimedProcessor = (
 export const processorAsTimedProcessor = <T>(
   processor: Processor,
 ): TimedProcessor => (pathname: string) => () => {
-  const startTime = process.hrtime();
+  const startTime = process.hrtime(); // [s, ns]
   const processed = processor(pathname)();
-  const endTime = process.hrtime();
+  const deltaTime = process.hrtime(startTime); // [s, ns]
+  const MS_PER_S = 1_000;
+  const MS_PER_NS = 1 / 1_000_000;
   return {
     ...processed,
-    elapsedTime:
-      1_000 * (endTime[0] - startTime[0]) +
-      (endTime[1] - startTime[1]) / 1_000_000,
+    elapsedTime: deltaTime[0] * MS_PER_S + deltaTime[1] * MS_PER_NS, // ms
   };
 };
 
