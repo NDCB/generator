@@ -13,7 +13,10 @@
   "dependencies": {
     "@ndcb/config": "^0.1.0",
     "@ndcb/logger": "^0.1.0",
+    "@ndcb/fs": "^0.6.0",
     "@ndcb/fs-util": "^0.2.0",
+    "@ndcb/fs-cache": "^0.0.0",
+    "@ndcb/fs-text": "^0.0.0",
     "@ndcb/util": "^0.8.0",
     "mime-types": "^2.1.27",
     "browser-sync": "^2.26.12"

@@ -11,11 +11,12 @@ import { orderedPairs, filter, find } from "@ndcb/util/lib/iterable";
 import { Either, left, right } from "@ndcb/util/lib/either";
 import { isSome, optionValue } from "@ndcb/util/lib/option";
 
-export const fileSchema = Joi.string().custom(normalizedFile);
+export const fileSchema = Joi.string().trim().custom(normalizedFile);
 
-export const directorySchema = Joi.string().custom(normalizedDirectory);
+export const directorySchema = Joi.string().trim().custom(normalizedDirectory);
 
 export const bufferEncodingSchema = Joi.string()
+  .trim()
   .equal(
     "ascii",
     "utf8",
@@ -58,6 +59,16 @@ export interface Configuration {
   readonly common: {
     readonly sources: Directory[];
     readonly pathEncoding: BufferEncoding;
+    readonly exclusionRulesFileNames: string[];
+    readonly cache: {
+      readonly fileReaderCacheSize: number;
+      readonly textFileReaderCacheSize: number;
+      readonly directoryReaderCacheSize: number;
+    };
+    readonly log: {
+      readonly filesRead: boolean;
+      readonly directoriesRead: boolean;
+    };
   };
   readonly serve: {
     readonly main: {
@@ -77,6 +88,18 @@ export interface Configuration {
 export const commonConfigurationSchema = Joi.object({
   sources: mutuallyDisjointSourceDirectoriesSchema.required(),
   pathEncoding: bufferEncodingSchema.default("utf8"),
+  exclusionRulesFileNames: Joi.array()
+    .items(Joi.string().min(1).trim())
+    .default([".gitignore", ".siteignore"]),
+  cache: Joi.object({
+    fileReaderCacheSize: Joi.number().positive().not(0).default(50),
+    textFileReaderCacheSize: Joi.number().positive().not(0).default(50),
+    directoryReaderCacheSize: Joi.number().positive().not(0).default(10_000),
+  }).default(),
+  log: Joi.object({
+    filesRead: Joi.boolean().default(false),
+    directoriesRead: Joi.boolean().default(false),
+  }).default(),
 }).default();
 
 export const buildConfigurationSchema = Joi.object({

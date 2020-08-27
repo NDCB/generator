@@ -1,9 +1,20 @@
 import { lookup } from "mime-types";
 
 import { Configuration } from "@ndcb/config";
+import {
+  Extension,
+  extension,
+  extensionToString,
+  File,
+  isFile,
+  fileToString,
+} from "@ndcb/fs-util";
+import { FileSystem } from "@ndcb/fs";
+import { eitherIsRight, eitherValue } from "@ndcb/util/lib/either";
 import { IO } from "@ndcb/util/lib/io";
-import { Option, join, none } from "@ndcb/util/lib/option";
-import { Extension, extensionToString } from "@ndcb/fs-util";
+import { Option, join, some } from "@ndcb/util/lib/option";
+
+import { fileSystem } from "./fs";
 
 const contentType = (extension: Option<Extension>): string =>
   lookup(join(extensionToString, () => ".txt")(extension)) as string;
@@ -39,17 +50,30 @@ export const processorAsTimedProcessor = <T>(
   };
 };
 
-const placeholderProcessor = (configuration: Configuration): Processor => (
-  pathname,
-) => () => ({
-  statusCode: 200,
-  contents: `Pathname: ${pathname}\nConfiguration: ${JSON.stringify(
-    configuration,
-    null,
-    "  ",
-  )}`,
-  encoding: "utf8",
-  contentType: contentType(none()),
-});
+const placeholderProcessor = (configuration: Configuration): Processor => {
+  const fs = fileSystem(configuration);
+  const files = function* (system: FileSystem): Iterable<Error | File> {
+    for (const readFiles of system.files()) {
+      const filesRead = readFiles();
+      if (eitherIsRight(filesRead)) yield* eitherValue(filesRead);
+      else yield eitherValue(filesRead);
+    }
+  };
+  return (pathname) => () => {
+    return {
+      statusCode: 200,
+      contents: `<body>Pathname: "${pathname}"\nConfiguration: <pre>${JSON.stringify(
+        configuration,
+        null,
+        "  ",
+      )}</pre>\nFiles: <pre>${[...files(fs)]
+        .filter(isFile)
+        .map(fileToString)
+        .join(",\n")}</pre></body>`,
+      encoding: "utf8",
+      contentType: contentType(some(extension(".html"))),
+    };
+  };
+};
 
 export const siteFilesProcessor = placeholderProcessor;
