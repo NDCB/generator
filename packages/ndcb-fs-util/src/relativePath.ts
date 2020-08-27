@@ -3,8 +3,6 @@ import { dirname, join, normalize, sep } from "path";
 import { hashString } from "@ndcb/util/lib/hash";
 import { isString, isNotNull } from "@ndcb/util/lib/type";
 
-const RELATIVE_PATH = Symbol();
-
 /**
  * A relative path between entries in the file system.
  *
@@ -13,7 +11,7 @@ const RELATIVE_PATH = Symbol();
  */
 export interface RelativePath {
   readonly value: string;
-  readonly [RELATIVE_PATH]: true;
+  readonly tag: "RELATIVE_PATH"; // For discriminated union
 }
 
 /**
@@ -26,11 +24,13 @@ export interface RelativePath {
  */
 export const relativePath = (value: string): RelativePath => ({
   value,
-  [RELATIVE_PATH]: true,
+  tag: "RELATIVE_PATH",
 });
 
 export const isRelativePath = (element: unknown): element is RelativePath =>
-  typeof element === "object" && isNotNull(element) && element[RELATIVE_PATH];
+  typeof element === "object" &&
+  isNotNull(element) &&
+  element["tag"] === "RELATIVE_PATH";
 
 export const relativePathToString = (path: RelativePath): string => path.value;
 

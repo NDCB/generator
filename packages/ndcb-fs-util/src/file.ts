@@ -21,8 +21,6 @@ import {
   PathIOError,
 } from "./absolutePath";
 
-const FILE: unique symbol = Symbol();
-
 /**
  * A file representation in the file system.
  *
@@ -30,15 +28,17 @@ const FILE: unique symbol = Symbol();
  */
 export interface File {
   readonly path: AbsolutePath;
-  readonly [FILE]: true;
+  readonly tag: "FILE"; // For discriminated union
 }
 
 export const isFile = (element: unknown): element is File =>
-  typeof element === "object" && isNotNull(element) && element[FILE];
+  typeof element === "object" &&
+  isNotNull(element) &&
+  element["tag"] === "FILE";
 
 export const file = (path: AbsolutePath): File => ({
   path,
-  [FILE]: true,
+  tag: "FILE",
 });
 
 export const normalizedFile = (path: string): File =>

@@ -8,8 +8,6 @@ import { IO } from "@ndcb/util/lib/io";
 import { hashString } from "@ndcb/util/lib/hash";
 import { isNotNull } from "@ndcb/util/lib/type";
 
-const ABSOLUTE_PATH = Symbol(); // For discriminated union
-
 /**
  * An absolute path to an entry in the file system.
  *
@@ -18,16 +16,18 @@ const ABSOLUTE_PATH = Symbol(); // For discriminated union
  */
 export interface AbsolutePath {
   readonly value: string;
-  readonly [ABSOLUTE_PATH]: true;
+  readonly tag: "ABSOLUTE_PATH"; // For discriminated union
 }
 
 export const absolutePath = (value: string): AbsolutePath => ({
   value,
-  [ABSOLUTE_PATH]: true,
+  tag: "ABSOLUTE_PATH",
 });
 
 export const isAbsolutePath = (element: unknown): element is AbsolutePath =>
-  typeof element === "object" && isNotNull(element) && element[ABSOLUTE_PATH];
+  typeof element === "object" &&
+  isNotNull(element) &&
+  element["tag"] === "ABSOLUTE_PATH";
 
 export const absolutePathToString = (path: AbsolutePath): string => path.value;
 

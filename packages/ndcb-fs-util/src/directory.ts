@@ -26,8 +26,6 @@ import { file, File } from "./file";
 import { RelativePath } from "./relativePath";
 import { resolvedAbsolutePath } from "./path";
 
-const DIRECTORY: unique symbol = Symbol();
-
 /**
  * A directory representation in the file system.
  *
@@ -35,16 +33,18 @@ const DIRECTORY: unique symbol = Symbol();
  */
 export interface Directory {
   readonly path: AbsolutePath;
-  readonly [DIRECTORY]: true;
+  readonly tag: "DIRECTORY"; // For discriminated union
 }
-
-export const isDirectory = (element: unknown): element is Directory =>
-  typeof element === "object" && isNotNull(element) && element[DIRECTORY];
 
 export const directory = (path: AbsolutePath): Directory => ({
   path,
-  [DIRECTORY]: true,
+  tag: "DIRECTORY",
 });
+
+export const isDirectory = (element: unknown): element is Directory =>
+  typeof element === "object" &&
+  isNotNull(element) &&
+  element["tag"] === "DIRECTORY";
 
 export const normalizedDirectory = (path: string): Directory =>
   directory(normalizedAbsolutePath(path));

@@ -1,24 +1,27 @@
 import * as Either from "./either";
 
-const SOME: unique symbol = Symbol(); // For discriminated union
+export type Some<T> = {
+  readonly value: T;
+  readonly tag: "SOME"; // For discriminated union
+};
 
-export type Some<T> = { readonly [SOME]: true; readonly value: T };
+export const some = <T>(value: T): Some<T> => ({ value, tag: "SOME" });
 
-export const some = <T>(value: T): Some<T> => ({ [SOME]: true, value });
+export type None = {
+  readonly tag: "NONE"; // For discriminated union
+};
 
-const NONE: unique symbol = Symbol(); // For discriminated union
-
-export type None = { readonly [NONE]: true };
-
-const noneSingleton: None = { [NONE]: true };
+const noneSingleton: None = { tag: "NONE" };
 
 export const none = (): None => noneSingleton;
 
 export type Option<T> = Some<T> | None; // Discriminated union
 
-export const isSome = <T>(option: Option<T>): option is Some<T> => option[SOME];
+export const isSome = <T>(option: Option<T>): option is Some<T> =>
+  option.tag === "SOME";
 
-export const isNone = <T>(option: Option<T>): option is None => option[NONE];
+export const isNone = <T>(option: Option<T>): option is None =>
+  option.tag === "NONE";
 
 export const optionValue = <T>(option: Some<T>): T => option.value;
 

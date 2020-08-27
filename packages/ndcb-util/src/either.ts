@@ -1,14 +1,16 @@
-const RIGHT: unique symbol = Symbol(); // For discriminated union
+export type Right<T> = {
+  readonly value: T;
+  readonly tag: "RIGHT"; // For discriminated union
+};
 
-export type Right<T> = { readonly [RIGHT]: true; readonly value: T };
+export const right = <T>(value: T): Right<T> => ({ value, tag: "RIGHT" });
 
-export const right = <T>(value: T): Right<T> => ({ [RIGHT]: true, value });
+export type Left<T> = {
+  readonly value: T;
+  readonly tag: "LEFT";
+};
 
-const LEFT: unique symbol = Symbol(); // For discriminated union
-
-export type Left<T> = { readonly [LEFT]: true; readonly value: T };
-
-export const left = <T>(value: T): Left<T> => ({ [LEFT]: true, value });
+export const left = <T>(value: T): Left<T> => ({ value, tag: "LEFT" });
 
 export type Either<L, R> = Left<L> | Right<R>; // Discriminated union
 
@@ -19,10 +21,10 @@ export function eitherValue<L, R>(either: Either<L, R>): L | R {
 }
 
 export const eitherIsRight = <L, R>(either: Either<L, R>): either is Right<R> =>
-  either[RIGHT];
+  either.tag === "RIGHT";
 
 export const eitherIsLeft = <L, R>(either: Either<L, R>): either is Left<L> =>
-  either[LEFT];
+  either.tag === "LEFT";
 
 export type EitherPattern<L, R, T> = {
   readonly left: (value: L) => T;
