@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.2.0](https://github.com/NDCB/generator/tree/master/packages/ndcb-cli/compare/@ndcb/cli@0.1.0...@ndcb/cli@0.2.0) (2020-08-27)
+
+
+### Features
+
+* **server:** implement base server listener ([1ccbf63](https://github.com/NDCB/generator/tree/master/packages/ndcb-cli/commit/1ccbf63c743165509d7469567cc22e0d06bffdf6))
+
+
+
+
+
 # 0.1.0 (2020-08-26)
 
 

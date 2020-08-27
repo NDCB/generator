@@ -3,6 +3,24 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.2.0](https://github.com/NDCB/generator/tree/master/packages/ndcb-server/compare/@ndcb/server@0.1.0...@ndcb/server@0.2.0) (2020-08-27)
+
+
+### Bug Fixes
+
+* **server:** parse URLs for their pathnames ([b07c06d](https://github.com/NDCB/generator/tree/master/packages/ndcb-server/commit/b07c06dc960c920f934fc613a0235b52a7df4164))
+
+
+### Features
+
+* **server:** add BrowserSync support ([e5bffe2](https://github.com/NDCB/generator/tree/master/packages/ndcb-server/commit/e5bffe2056a269afd4a152acbf43c647c4c389f4))
+* **server:** implement base server listener ([1ccbf63](https://github.com/NDCB/generator/tree/master/packages/ndcb-server/commit/1ccbf63c743165509d7469567cc22e0d06bffdf6))
+* **server:** implement construction of file system from configuration ([06964e4](https://github.com/NDCB/generator/tree/master/packages/ndcb-server/commit/06964e4a63114297eed7cb7b31a62be19ab8b492))
+
+
+
+
+
 # 0.1.0 (2020-08-26)
 
 

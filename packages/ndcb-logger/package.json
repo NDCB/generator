@@ -1,6 +1,6 @@
 {
   "name": "@ndcb/logger",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Logging utility",
   "bin": {
     "generator": "./lib/index.js"
@@ -14,7 +14,7 @@
     "lib"
   ],
   "dependencies": {
-    "@ndcb/util": "^0.9.0",
+    "@ndcb/util": "^0.9.1",
     "consola": "^2.15.0"
   },
   "publishConfig": {

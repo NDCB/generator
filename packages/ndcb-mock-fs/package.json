@@ -1,6 +1,6 @@
 {
   "name": "@ndcb/mock-fs",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "File system mocking utility",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -11,8 +11,8 @@
     "lib"
   ],
   "dependencies": {
-    "@ndcb/fs-util": "^0.2.0",
-    "@ndcb/util": "^0.9.0"
+    "@ndcb/fs-util": "^0.3.0",
+    "@ndcb/util": "^0.9.1"
   },
   "publishConfig": {
     "access": "public"

@@ -1,6 +1,6 @@
 {
   "name": "@ndcb/cli",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Website CLI",
   "bin": {
     "generator": "./lib/index.js"
@@ -14,8 +14,8 @@
     "lib"
   ],
   "dependencies": {
-    "@ndcb/builder": "^0.1.0",
-    "@ndcb/server": "^0.1.0",
+    "@ndcb/builder": "^0.1.1",
+    "@ndcb/server": "^0.2.0",
     "commander": "^5.1.0"
   },
   "publishConfig": {

@@ -1,6 +1,6 @@
 {
   "name": "@ndcb/fs-ignore",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "File system exclusion predicates",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -11,12 +11,12 @@
     "lib"
   ],
   "dependencies": {
-    "@ndcb/fs-util": "^0.2.0",
-    "@ndcb/util": "^0.9.0",
+    "@ndcb/fs-util": "^0.3.0",
+    "@ndcb/util": "^0.9.1",
     "ignore": "^5.1.8"
   },
   "devDependencies": {
-    "@ndcb/mock-fs": "^0.1.0"
+    "@ndcb/mock-fs": "^0.1.1"
   },
   "publishConfig": {
     "access": "public"

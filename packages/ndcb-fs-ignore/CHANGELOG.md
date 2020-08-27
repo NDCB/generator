@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.3.0](https://github.com/NDCB/generator/tree/master/packages/ndcb-fs-ignore/compare/@ndcb/fs-ignore@0.2.0...@ndcb/fs-ignore@0.3.0) (2020-08-27)
+
+
+### Code Refactoring
+
+* **fs-util:** rename `readTextFile` and `readDirectory` ([de5cd7c](https://github.com/NDCB/generator/tree/master/packages/ndcb-fs-ignore/commit/de5cd7ce1217fe0e2a52c536f09b674df7a6dede))
+
+
+### BREAKING CHANGES
+
+* **fs-util:** `readTextFile` was renamed to `textFileReader`; `readDirectory` was renamed to
+`directoryReader`.
+
+
+
+
+
 # [0.2.0](https://github.com/NDCB/generator/tree/master/packages/ndcb-fs-ignore/compare/@ndcb/fs-ignore@0.1.0...@ndcb/fs-ignore@0.2.0) (2020-08-26)
 
 

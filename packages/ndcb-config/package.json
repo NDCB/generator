@@ -1,6 +1,6 @@
 {
   "name": "@ndcb/config",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Website configuration",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -11,9 +11,9 @@
     "lib"
   ],
   "dependencies": {
-    "@ndcb/data": "^0.1.0",
-    "@ndcb/fs-util": "^0.2.0",
-    "@ndcb/util": "^0.9.0",
+    "@ndcb/data": "^0.1.1",
+    "@ndcb/fs-util": "^0.3.0",
+    "@ndcb/util": "^0.9.1",
     "joi": "^17.2.1"
   },
   "publishConfig": {
