@@ -7,9 +7,6 @@ import {
   Entry,
   normalizedFile,
   normalizedDirectory,
-  absolutePathToString,
-  filePath,
-  directoryPath,
   DirectoryReader,
   PathIOError,
   entryIsFile,
@@ -18,8 +15,12 @@ import {
   DirectoryIOError,
   directoryToString,
   fileToString,
+  fileEquals,
+  directoryEquals,
+  hashFile,
+  hashDirectory,
 } from "@ndcb/fs-util";
-import { HashMap, stringHashMap } from "@ndcb/util/lib/hashMap";
+import { HashMap, hashMap } from "@ndcb/util/lib/hashMap";
 import { map, filter } from "@ndcb/util/lib/iterable";
 import { right, Either } from "@ndcb/util/lib/either";
 import { mapNone, bimap } from "@ndcb/util/lib/option";
@@ -87,40 +88,40 @@ const mockEntries = function* (
   yield* traverse(structure, "");
 };
 
+const fileHashMap = <T>(entries: Iterable<[File, T]>): HashMap<File, T> =>
+  hashMap(entries, hashFile, fileEquals);
+
+const directoryHashMap = <T>(
+  entries: Iterable<[Directory, T]>,
+): HashMap<Directory, T> => hashMap(entries, hashDirectory, directoryEquals);
+
 const transformMockStructure = (
   structure: MockDirectory,
 ): {
-  files: HashMap<string, File>;
-  fileContents: HashMap<string, string>;
-  directories: HashMap<string, Directory>;
-  directoryEntries: HashMap<string, Entry[]>;
+  files: HashMap<File, File>;
+  fileContents: HashMap<File, string>;
+  directories: HashMap<Directory, Directory>;
+  directoryEntries: HashMap<Directory, Entry[]>;
 } => {
   const entries = [...mockEntries(structure)];
-  const mockIsFile = (mock): mock is [File, string] => entryIsFile(mock[0]);
-  const mockIsDirectory = (mock): mock is [Directory, Entry[]] =>
-    entryIsDirectory(mock[0]);
+  const mockIsFile = (mock: [Entry, unknown]): mock is [File, string] =>
+    entryIsFile(mock[0]);
+  const mockIsDirectory = (
+    mock: [Entry, unknown],
+  ): mock is [Directory, Entry[]] => entryIsDirectory(mock[0]);
   return {
-    files: stringHashMap(
-      map(filter(entries, mockIsFile), (mock) => [
-        absolutePathToString(filePath(mock[0])),
-        mock[0],
-      ]),
+    files: fileHashMap(
+      map(filter(entries, mockIsFile), (mock) => [mock[0], mock[0]]),
     ),
-    fileContents: stringHashMap(
-      map(filter(entries, mockIsFile), ([file, contents]) => [
-        absolutePathToString(filePath(file)),
-        contents,
-      ]),
+    fileContents: fileHashMap(
+      map(filter(entries, mockIsFile), ([file, contents]) => [file, contents]),
     ),
-    directories: stringHashMap(
-      map(filter(entries, mockIsDirectory), (mock) => [
-        absolutePathToString(directoryPath(mock[0])),
-        mock[0],
-      ]),
+    directories: directoryHashMap(
+      map(filter(entries, mockIsDirectory), (mock) => [mock[0], mock[0]]),
     ),
-    directoryEntries: stringHashMap(
+    directoryEntries: directoryHashMap(
       map(filter(entries, mockIsDirectory), ([directory, entries]) => [
-        absolutePathToString(directoryPath(directory)),
+        directory,
         entries,
       ]),
     ),
@@ -142,10 +143,8 @@ export const mockFileSystem = (
     directoryEntries,
   } = transformMockStructure(structure);
   return {
-    fileExists: (file) => () =>
-      right(files.has(absolutePathToString(filePath(file)))),
-    directoryExists: (directory) => () =>
-      right(directories.has(absolutePathToString(directoryPath(directory)))),
+    fileExists: (file) => () => right(files.has(file)),
+    directoryExists: (directory) => () => right(directories.has(directory)),
     readFile: (file) => () =>
       bimap<string, Buffer, FileIOError>(
         (contents) => Buffer.from(contents),
@@ -155,7 +154,7 @@ export const mockFileSystem = (
           name: "MOCK(ENOENT)",
           message: `Failed to read mocked file "${fileToString(file)}"`,
         }),
-      )(fileContents.get(absolutePathToString(filePath(file)))),
+      )(fileContents.get(file)),
     readDirectory: (directory: Directory) => () =>
       mapNone<Entry[], DirectoryIOError>(() => ({
         code: "ENOENT",
@@ -164,6 +163,6 @@ export const mockFileSystem = (
         message: `Failed to read mocked directory "${directoryToString(
           directory,
         )}"`,
-      }))(directoryEntries.get(absolutePathToString(directoryPath(directory)))),
+      }))(directoryEntries.get(directory)),
   };
 };

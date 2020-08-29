@@ -21,6 +21,7 @@ import {
   normalizedAbsolutePath,
   pathStatus,
   PathIOError,
+  hashAbsolutePath,
 } from "./absolutePath";
 import { file, File } from "./file";
 import { RelativePath } from "./relativePath";
@@ -57,6 +58,9 @@ export const directoryToString = (directory: Directory): string =>
 
 export const directoryEquals = (d1: Directory, d2: Directory): boolean =>
   absolutePathEquals(directoryPath(d1), directoryPath(d2));
+
+export const hashDirectory = (directory: Directory): number =>
+  hashAbsolutePath(directoryPath(directory));
 
 export const directoryExists = (
   directory: Directory,

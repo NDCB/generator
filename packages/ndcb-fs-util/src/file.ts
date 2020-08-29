@@ -19,6 +19,7 @@ import {
   pathStatus,
   normalizedAbsolutePath,
   PathIOError,
+  hashAbsolutePath,
 } from "./absolutePath";
 
 /**
@@ -51,6 +52,9 @@ export const fileToString = (file: File): string =>
 
 export const fileEquals = (f1: File, f2: File): boolean =>
   absolutePathEquals(filePath(f1), filePath(f2));
+
+export const hashFile = (file: File): number =>
+  hashAbsolutePath(filePath(file));
 
 export const fileExists = (file: File): IO<Either<PathIOError, boolean>> => {
   const path = filePath(file);
