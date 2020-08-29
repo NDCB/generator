@@ -24,6 +24,7 @@ import {
   rootedFileSystem,
   excludedRootedFileSystem,
 } from "../src/rootedFileSystem";
+import { none, some } from "@ndcb/util/lib/option";
 
 describe("FileSystem", () => {
   for (const {
@@ -35,6 +36,7 @@ describe("FileSystem", () => {
     directoryExistsCases,
     readFileCases,
     readDirectoryCases,
+    pathnameCases,
   } of require("./fixtures/fileSystem")) {
     const {
       readFile,
@@ -152,7 +154,10 @@ describe("FileSystem", () => {
         if (isIterable(expected)) {
           const expectedEntries = [
             ...map(
-              expected as Iterable<{ path: string; type: string }>,
+              expected as Iterable<{
+                path: string;
+                type: string;
+              }>,
               ({ path, type }) => {
                 if (type === "file") return normalizedFile(path);
                 else if (type === "directory") return normalizedDirectory(path);
@@ -184,6 +189,30 @@ describe("FileSystem", () => {
                 system.readDirectory(normalizedRelativePath(path))(),
               ),
             ).toBe(true);
+          });
+      }
+    });
+    describe("#pathname", () => {
+      for (const {
+        index,
+        element: { path, type, expected },
+      } of enumerate<{
+        path: string;
+        type: "file" | "directory";
+        expected: string | null;
+      }>(pathnameCases, 1)) {
+        const entry = (type === "file" ? normalizedFile : normalizedDirectory)(
+          path,
+        );
+        if (!expected)
+          test(`case #${index}`, () => {
+            expect(system.pathname(entry)).toStrictEqual(none());
+          });
+        else
+          test(`case #${index}`, () => {
+            expect(system.pathname(entry)).toStrictEqual(
+              some(normalizedRelativePath(expected)),
+            );
           });
       }
     });

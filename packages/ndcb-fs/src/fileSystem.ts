@@ -1,5 +1,12 @@
 import { File, RelativePath, Entry, relativePathToString } from "@ndcb/fs-util";
-import { bimap } from "@ndcb/util/lib/option";
+import {
+  bimap,
+  Option,
+  isSome,
+  optionValue,
+  Some,
+  map as mapOption,
+} from "@ndcb/util/lib/option";
 import {
   flatMap,
   some,
@@ -20,6 +27,7 @@ import {
 } from "@ndcb/util/lib/either";
 
 export interface FileSystem {
+  readonly pathname: (entry: Entry) => Option<RelativePath>;
   readonly files: () => Iterable<IO<Either<Error, Iterable<File>>>>;
   readonly fileExists: (path: RelativePath) => IO<Either<Error, boolean>>;
   readonly directoryExists: (path: RelativePath) => IO<Either<Error, boolean>>;
@@ -74,6 +82,13 @@ export const compositeFileSystem = (
   ): ioTests is Array<{ system: FileSystem; ioTest: Right<T> }> =>
     every(ioTests, ({ ioTest }) => eitherIsRight(ioTest));
   return {
+    pathname: (entry) =>
+      mapOption(optionValue)(
+        find<Option<RelativePath>, Some<RelativePath>>(
+          map(systems, (system) => system.pathname(entry)),
+          isSome,
+        ),
+      ),
     files: () => flatMap(systems, (system) => system.files()),
     fileExists: (path) => () => {
       const fileExistsTests = ioTests(systems, path, (system, path) =>
@@ -101,7 +116,10 @@ export const compositeFileSystem = (
           : left(fileExistsError(path)),
       )
         .mapRight((fileExistsTests) =>
-          find(fileExistsTests, ({ ioTest }) => eitherValue(ioTest)),
+          find<{
+            system: FileSystem;
+            ioTest: Right<boolean>;
+          }>(fileExistsTests, ({ ioTest }) => eitherValue(ioTest)),
         )
         .chainRight(
           bimap(

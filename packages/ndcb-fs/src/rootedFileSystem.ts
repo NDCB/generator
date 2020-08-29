@@ -18,10 +18,13 @@ import {
   relativePathToString,
   downwardFiles,
   DirectoryWalker,
+  directoryHasDescendent,
+  entryRelativePath,
 } from "@ndcb/fs-util";
 import { filter, mapRight, Either, IO, monad, right, left } from "@ndcb/util";
 
 import { FileSystem } from "./fileSystem";
+import { some, none } from "@ndcb/util/lib/option";
 
 export interface RootedFileSystem extends FileSystem {
   readonly root: Directory;
@@ -44,23 +47,33 @@ export const rootedFileSystem = ({
   readFile: FileReader;
   readDirectory: DirectoryReader;
 }) => (root: Directory): RootedFileSystem => {
-  const file = fileFromDirectory(root);
-  const directory = directoryFromDirectory(root);
+  const pathnameToFile = fileFromDirectory(root);
+  const pathnameToDirectory = directoryFromDirectory(root);
   const walker = downwardEntries(readDirectory);
   const files = downwardFiles(walker);
+  const includes = (entry: Entry): boolean =>
+    directoryHasDescendent(root, entry);
   return {
+    pathname: (entry) =>
+      includes(entry) ? some(entryRelativePath(root, entry)) : none(),
     root,
-    file,
-    directory,
+    file: pathnameToFile,
+    directory: pathnameToDirectory,
     fileReader: readFile,
     directoryReader: readDirectory,
     upwardDirectories: upwardDirectoriesUntil(root),
     walker,
     files: () => files(root),
-    fileExists: (path) => fileExists(file(path)),
-    directoryExists: (path) => directoryExists(directory(path)),
-    readFile: (path) => readFile(file(path)),
-    readDirectory: (path) => readDirectory(directory(path)),
+    fileExists: (path) => () => {
+      const file = pathnameToFile(path);
+      return includes(file) ? fileExists(file)() : right(false);
+    },
+    directoryExists: (path) => () => {
+      const directory = pathnameToDirectory(path);
+      return includes(directory) ? directoryExists(directory)() : right(false);
+    },
+    readFile: (path) => readFile(pathnameToFile(path)),
+    readDirectory: (path) => readDirectory(pathnameToDirectory(path)),
   };
 };
 
