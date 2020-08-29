@@ -15,16 +15,19 @@ import {
   downwardEntries,
   upwardDirectoriesUntil,
   RelativePath,
-  relativePathToString,
   downwardFiles,
   DirectoryWalker,
   directoryHasDescendent,
   entryRelativePath,
+  directoryToString,
+  fileToString,
 } from "@ndcb/fs-util";
-import { filter, mapRight, Either, IO, monad, right, left } from "@ndcb/util";
+import { filter } from "@ndcb/util/lib/iterable";
+import { IO } from "@ndcb/util/lib/io";
+import { mapRight, Either, monad, right, left } from "@ndcb/util/lib/either";
+import { some, none } from "@ndcb/util/lib/option";
 
 import { FileSystem } from "./fileSystem";
-import { some, none } from "@ndcb/util/lib/option";
 
 export interface RootedFileSystem extends FileSystem {
   readonly root: Directory;
@@ -77,74 +80,69 @@ export const rootedFileSystem = ({
   };
 };
 
-const fileNotFoundError = (path: RelativePath): Error =>
-  new Error(`File not found at "${relativePathToString(path)}"`);
+const fileNotFoundError = (file: File): Error =>
+  new Error(`File not found at "${fileToString(file)}"`);
+
+const directoryNotFoundError = (directory: Directory): Error =>
+  new Error(`Directory not found at "${directoryToString(directory)}"`);
 
 export const excludedRootedFileSystem = (
   system: RootedFileSystem,
   exclusionRuleRetriever: DirectoryExclusionRuleRetriever,
-): RootedFileSystem => ({
-  ...system,
-  files: () =>
-    downwardFiles(
-      downwardNotIgnoredEntries(system.directoryReader, exclusionRuleRetriever),
-    )(system.root),
-  fileExists: (path) => () => {
-    const file = system.file(path);
-    return monad(system.fileExists(path)())
-      .chainRight((exists) =>
-        !exists
-          ? right(() => true)
-          : deepEntryExclusionRule(system.upwardDirectories)(
-              exclusionRuleRetriever,
-            )(file)(),
-      )
-      .mapRight((excludes) => !excludes(file))
-      .toEither();
-  },
-  directoryExists: (path) => () => {
-    const directory = system.directory(path);
-    return monad(system.directoryExists(path)())
-      .chainRight((exists) =>
-        !exists
-          ? right(() => true)
-          : deepEntryExclusionRule(system.upwardDirectories)(
-              exclusionRuleRetriever,
-            )(directory)(),
-      )
-      .mapRight((excludes) => !excludes(directory))
-      .toEither();
-  },
-  readFile: (path) => () =>
-    monad(system.readFile(path)())
-      .mapRight((contents) => ({
-        contents,
-        excludes: deepEntryExclusionRule(system.upwardDirectories)(
+): RootedFileSystem => {
+  const exclusionRuleAt = deepEntryExclusionRule(system.upwardDirectories)(
+    exclusionRuleRetriever,
+  );
+  return {
+    ...system,
+    files: () =>
+      downwardFiles(
+        downwardNotIgnoredEntries(
+          system.directoryReader,
           exclusionRuleRetriever,
-        )(system.file(path))(),
-      }))
-      .chainRight(({ contents, excludes }) =>
-        mapRight(excludes, (excludes) => ({
-          contents,
-          excluded: excludes(system.file(path)),
-        })),
-      )
-      .chainRight(({ contents, excluded }) =>
-        excluded ? left(fileNotFoundError(path)) : right(contents),
-      )
-      .toEither(),
-  readDirectory: (path) => () =>
-    monad(system.readDirectory(path)())
-      .mapRight((entries) => ({
-        entries,
-        excludes: deepEntryExclusionRule(system.upwardDirectories)(
-          exclusionRuleRetriever,
-        )(system.directory(path))(),
-      }))
-      .chainRight(({ entries, excludes }) =>
-        mapRight(excludes, (excludes) =>
-          filter(entries, exclusionRuleAsFilter(excludes)),
         ),
-      )
-      .toEither(),
-});
+      )(system.root),
+    fileExists: (path) => () => {
+      const file = system.file(path);
+      return monad(system.fileExists(path)())
+        .chainRight((exists) =>
+          !exists ? right(() => true) : exclusionRuleAt(file)(),
+        )
+        .mapRight((excludes) => !excludes(file))
+        .toEither();
+    },
+    directoryExists: (path) => () => {
+      const directory = system.directory(path);
+      return monad(system.directoryExists(path)())
+        .chainRight((exists) =>
+          !exists ? right(() => true) : exclusionRuleAt(directory)(),
+        )
+        .mapRight((excludes) => !excludes(directory))
+        .toEither();
+    },
+    readFile: (path) => () => {
+      const file = system.file(path);
+      return monad(exclusionRuleAt(file)())
+        .chainRight((excludes) =>
+          excludes(file) ? left(fileNotFoundError(file)) : right(file),
+        )
+        .chainRight(() => system.readFile(path)())
+        .toEither();
+    },
+    readDirectory: (path) => () => {
+      const directory = system.directory(path);
+      return monad(exclusionRuleAt(directory)())
+        .chainRight((excludes) =>
+          excludes(directory)
+            ? left(directoryNotFoundError(directory))
+            : right(excludes),
+        )
+        .chainRight((excludes) =>
+          mapRight(system.readDirectory(path)(), (entries) =>
+            filter(entries, exclusionRuleAsFilter(excludes)),
+          ),
+        )
+        .toEither();
+    },
+  };
+};
