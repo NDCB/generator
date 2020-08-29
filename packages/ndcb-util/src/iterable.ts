@@ -44,10 +44,20 @@ export const rest = function* <T>(iterable: Iterable<T>): Iterable<T> {
   }
 };
 
-export const find = <T>(
+export function find<T, K>(
+  iterable: Iterable<T>,
+  assertion: (element: T | K) => element is K,
+): Option.Option<K>;
+export function find<T>(
   iterable: Iterable<T>,
   predicate: (element: T) => boolean,
-): Option.Option<T> => first(filter(iterable, predicate));
+): Option.Option<T>;
+export function find<T>(
+  iterable: Iterable<T>,
+  predicate: (element: T) => boolean,
+): Option.Option<T> {
+  return first(filter(iterable, predicate));
+}
 
 export const reverse = <T>(iterable: Iterable<T>): Iterable<T> =>
   [...iterable].reverse();
