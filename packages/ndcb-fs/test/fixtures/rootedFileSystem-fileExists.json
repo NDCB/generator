@@ -9,7 +9,8 @@
             "index.html": "",
             "posts.html": ""
           }
-        }
+        },
+        "outside-root.md": ""
       }
     },
     "root": "/root",
@@ -48,6 +49,10 @@
       },
       {
         "path": "inexistent/index.html",
+        "expected": false
+      },
+      {
+        "path": "../outside-root.md",
         "expected": false
       }
     ]

@@ -10,7 +10,8 @@
             "posts.html": "",
             "subdirectory": {}
           }
-        }
+        },
+        "outside-root": {}
       }
     },
     "root": "/root",
@@ -33,6 +34,10 @@
       },
       {
         "path": "inexistent",
+        "expected": false
+      },
+      {
+        "path": "../outside-root",
         "expected": false
       }
     ]
