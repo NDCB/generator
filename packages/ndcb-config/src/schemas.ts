@@ -65,6 +65,7 @@ export interface Configuration {
       readonly filesRead: boolean;
       readonly directoriesRead: boolean;
     };
+    readonly [key: string]: unknown;
   };
   readonly serve: {
     readonly main: {
@@ -75,14 +76,19 @@ export interface Configuration {
       readonly hostname: string;
       readonly port: number;
     };
+    readonly [key: string]: unknown;
   };
   readonly build: {
     readonly output: Directory;
+    readonly [key: string]: unknown;
   };
+  readonly [key: string]: unknown;
 }
 
 export const commonConfigurationSchema = Joi.object({
-  sources: mutuallyDisjointSourceDirectoriesSchema.required(),
+  sources: mutuallyDisjointSourceDirectoriesSchema.default([
+    normalizedDirectory("./public"),
+  ]),
   pathEncoding: bufferEncodingSchema.default("utf8"),
   exclusionRulesFileNames: Joi.array()
     .items(Joi.string().min(1).trim())
@@ -96,11 +102,15 @@ export const commonConfigurationSchema = Joi.object({
     filesRead: Joi.boolean().default(false),
     directoriesRead: Joi.boolean().default(false),
   }).default(),
-}).default();
+})
+  .unknown(true)
+  .default();
 
 export const buildConfigurationSchema = Joi.object({
   output: directorySchema.default(normalizedDirectory("./build")),
-});
+})
+  .unknown(true)
+  .default();
 
 export const serveConfigurationSchema = Joi.object({
   main: Joi.object({
@@ -117,13 +127,17 @@ export const serveConfigurationSchema = Joi.object({
         then: Joi.disallow(Joi.ref("...main.port")),
       }),
   }).default(),
-});
+})
+  .unknown(true)
+  .default();
 
 export const configurationSchema = Joi.object({
-  common: commonConfigurationSchema.default(),
-  build: buildConfigurationSchema.default(),
-  serve: serveConfigurationSchema.default(),
-}).default();
+  common: commonConfigurationSchema,
+  build: buildConfigurationSchema,
+  serve: serveConfigurationSchema,
+})
+  .unknown(true)
+  .default();
 
 export const validate = (schema: Joi.Schema) => (
   element?: unknown,

@@ -13,11 +13,7 @@ program
   .description(
     "Start development servers using the specified configuration file",
   )
-  .option(
-    "-c, --config <file>",
-    "website configuration file",
-    "./siteconfig.yml",
-  )
+  .option("-c, --config <file>", "website configuration file")
   .parse(process.argv);
 
 const { config } = program;
