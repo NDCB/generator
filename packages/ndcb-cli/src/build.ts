@@ -16,13 +16,8 @@ program
     "website configuration file",
     "./siteconfig.yml",
   )
-  .option(
-    "-e, --encoding <charset>",
-    "website configuration file encoding",
-    "utf8",
-  )
   .parse(process.argv);
 
-const { config, encoding } = program;
+const { config } = program;
 
-build({ config, encoding });
+build(config)();

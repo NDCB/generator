@@ -1334,11 +1334,6 @@
     call-me-maybe "^1.0.1"
     glob-to-regexp "^0.3.0"
 
-"@ndcb/util@^0.8.0":
-  version "0.8.0"
-  resolved "https://registry.yarnpkg.com/@ndcb/util/-/util-0.8.0.tgz#0fbcd1434b215729114a8393631127c9c223e2cc"
-  integrity sha512-WPfdYrxganPEAIldSTUC8g3qERu3s8iqeB5Kb1nMPsZHD88mSVUdpaLu7KTcRdD55aisM8Vlgy4p2/0+ZUat2Q==
-
 "@nodelib/fs.stat@^1.1.2":
   version "1.1.3"
   resolved "https://registry.yarnpkg.com/@nodelib/fs.stat/-/fs.stat-1.1.3.tgz#2b5a3ab3f918cca48a8c754c08168e3f03eba61b"

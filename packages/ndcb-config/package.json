@@ -12,6 +12,7 @@
   ],
   "dependencies": {
     "@ndcb/data": "^0.1.1",
+    "@ndcb/fs-text": "^0.1.0",
     "@ndcb/fs-util": "^0.3.0",
     "@ndcb/util": "^0.9.1",
     "joi": "^17.2.1"

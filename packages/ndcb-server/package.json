@@ -17,7 +17,7 @@
     "@ndcb/fs-text": "^0.1.0",
     "@ndcb/fs-util": "^0.3.0",
     "@ndcb/logger": "^0.1.1",
-    "@ndcb/util": "^0.8.0",
+    "@ndcb/util": "^0.9.1",
     "browser-sync": "^2.26.12",
     "mime-types": "^2.1.27"
   },

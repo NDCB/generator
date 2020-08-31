@@ -55,13 +55,7 @@ const browserSyncServer = (
 
 const LOGGER: Logger = scoppedLogger("server");
 
-export const serve = ({
-  config,
-  encoding,
-}: {
-  config?: string;
-  encoding?: string;
-}): IO<void> => () =>
+export const serve = (config?: string): IO<void> => () =>
   matchEitherPattern<Error, Configuration, void>({
     right: (configuration) => {
       try {
@@ -84,4 +78,4 @@ export const serve = ({
       LOGGER.fatal(`Failed to fetch configuration file`)();
       LOGGER.error(error.message)();
     },
-  })(fetchConfiguration({ config, encoding })());
+  })(fetchConfiguration(config)());

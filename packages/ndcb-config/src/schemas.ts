@@ -31,11 +31,6 @@ export const bufferEncodingSchema = Joi.string()
   )
   .default("utf8");
 
-export const cliArgumentsSchema = Joi.object({
-  config: fileSchema,
-  encoding: bufferEncodingSchema,
-});
-
 export const mutuallyDisjointSourceDirectoriesSchema = Joi.array()
   .items(directorySchema)
   .min(1)
