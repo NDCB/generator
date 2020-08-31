@@ -42,9 +42,10 @@ export const mutuallyDisjointSourceDirectoriesSchema = Joi.array()
     if (isSome(meetingSourceDirectories)) {
       const [d1, d2] = optionValue(meetingSourceDirectories);
       throw new Error(
-        `source directories must be mutually disjoint, and "${directoryToString(
-          d1,
-        )}" is not disjoint from "${directoryToString(d2)}"`,
+        `Source directories must be mutually disjoint.
+Directory "${directoryToString(d1)}" is not disjoint from "${directoryToString(
+          d2,
+        )}"`,
       );
     }
     return value;

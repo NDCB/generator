@@ -2,14 +2,29 @@ import { Server, createServer } from "http";
 import { join } from "path";
 import * as browserSync from "browser-sync";
 
-import { fetchConfiguration, Configuration } from "@ndcb/config";
+import { configurationFetcher, Configuration } from "@ndcb/config";
+import {
+  textFileDataReader,
+  compositeTextDataParserToFileContentsParser,
+  compositeTextDataParser,
+  jsonParser,
+  json5Parser,
+  yamlParser,
+  tomlParser,
+} from "@ndcb/data";
 import { scoppedLogger, Logger } from "@ndcb/logger";
 import { IO } from "@ndcb/util/lib/io";
 import { matchEitherPattern } from "@ndcb/util/lib/either";
-import { directoryPath, absolutePathToString } from "@ndcb/fs-util";
+import {
+  directoryPath,
+  absolutePathToString,
+  readFile,
+  fileExtension,
+} from "@ndcb/fs-util";
 
 import { siteFilesServerRequestListener } from "./listener";
 import { siteFilesProcessor } from "./processor";
+import { textFileReader } from "@ndcb/fs-text";
 
 const siteFilesServer = (configuration: Configuration): Server =>
   createServer(
@@ -74,8 +89,25 @@ export const serve = (config?: string): IO<void> => () =>
         LOGGER.error(error.message)();
       }
     },
-    left: (error) => {
-      LOGGER.fatal(`Failed to fetch configuration file`)();
-      LOGGER.error(error.message)();
+    left: ({ message }) => {
+      LOGGER.fatal(
+        `Failed to fetch a valid configuration from file at "${config}".
+${message}`,
+      )();
     },
-  })(fetchConfiguration(config)());
+  })(
+    configurationFetcher(
+      textFileDataReader(
+        textFileReader(readFile),
+        compositeTextDataParserToFileContentsParser(
+          compositeTextDataParser([
+            jsonParser,
+            json5Parser,
+            yamlParser,
+            tomlParser,
+          ]),
+          fileExtension,
+        ),
+      ),
+    )(config)(),
+  );

@@ -1,10 +1,14 @@
 import { ValidationError } from "joi";
 
-import { compositeTextDataParser, TextFileDataParsingError } from "@ndcb/data";
+import {
+  TextFileDataReader,
+  UnhandledFileFormatError,
+  UnhandledDataFormatError,
+  DataParsingError,
+} from "@ndcb/data";
 import { IO } from "@ndcb/util/lib/io";
-import { Either, monad, mapRight } from "@ndcb/util/lib/either";
-import { textFileReader } from "@ndcb/fs-text";
-import { readFile, FileIOError, File } from "@ndcb/fs-util";
+import { Either, monad } from "@ndcb/util/lib/either";
+import { FileIOError, File } from "@ndcb/fs-util";
 
 import {
   Configuration,
@@ -21,27 +25,19 @@ const coerceConfiguration = validate(configurationSchema) as (
   element?: unknown,
 ) => Either<ValidationError, Configuration>;
 
-const configurationParser = compositeTextDataParser();
-
-const readTextFile = textFileReader(readFile);
-
-export const fetchConfiguration = (
+export const configurationFetcher = (readTextFileData: TextFileDataReader) => (
   configurationPath?: string,
 ): IO<
   Either<
-    ValidationError | FileIOError | TextFileDataParsingError,
+    | UnhandledFileFormatError
+    | FileIOError
+    | UnhandledDataFormatError
+    | DataParsingError
+    | ValidationError,
     Configuration
   >
 > => () =>
-  monad(coerceConfigurationFile({ config: configurationPath }))
-    .chainRight((configurationFile) =>
-      mapRight(readTextFile(configurationFile)(), (contents) => ({
-        configurationFile,
-        contents,
-      })),
-    )
-    .chainRight(({ configurationFile, contents }) =>
-      configurationParser(configurationFile, contents),
-    )
+  monad(coerceConfigurationFile(configurationPath))
+    .chainRight((file) => readTextFileData(file)())
     .chainRight((data) => coerceConfiguration(data))
     .toEither();
