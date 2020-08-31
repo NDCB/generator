@@ -22,7 +22,7 @@ import { parse as parseJson5 } from "json5";
 import { parse as parseYaml } from "yaml";
 import { parse as parseToml } from "toml";
 
-export type TextDataParser = (contents: string) => Either<unknown, unknown>;
+export type TextDataParser = (contents: string) => Either<Error, unknown>;
 
 export interface TextFileDataParser {
   readonly handles: (extension: Option<Extension>) => boolean;
@@ -30,7 +30,7 @@ export interface TextFileDataParser {
 }
 
 const parserForExtensions = (
-  handledExtensions: Extension[],
+  handledExtensions: readonly Extension[],
   parse: (contents: string) => unknown,
 ): TextFileDataParser => ({
   handles: (extension) =>
@@ -38,10 +38,14 @@ const parserForExtensions = (
     some(handledExtensions, (handledExtension) =>
       extensionEquals(optionValue(extension), handledExtension),
     ),
-  parse: (contents) => eitherFromThrowable(() => parse(contents)),
+  parse: (contents) =>
+    eitherFromThrowable(() => parse(contents)) as Either<Error, unknown>,
 });
 
-const parserForExtensionTokens = (extensionTokens: Iterable<string>, parse) =>
+const parserForExtensionTokens = (
+  extensionTokens: Iterable<string>,
+  parse: (contents: string) => unknown,
+): TextFileDataParser =>
   parserForExtensions([...map(extensionTokens, extension)], parse);
 
 export const jsonParser: TextFileDataParser = parserForExtensionTokens(
@@ -64,34 +68,40 @@ export const tomlParser: TextFileDataParser = parserForExtensionTokens(
   parseToml,
 );
 
-const getCorrespondingTextDataParser = (
+const findCorrespondingTextDataParser = (
   parsers: Iterable<TextFileDataParser>,
   extension: Option<Extension>,
-) =>
+): Either<Error, TextFileDataParser> =>
   mapNone<TextFileDataParser, Error>(() => ({
-    name: "Unhandled text data file extension",
+    name: "UnhandledTextDataFileExtension",
     message: `No parser registered for text data file with extension: "${join(
       extensionToString,
       () => "none",
-    )(extension)}"`,
+    )(extension)}".`,
     extension,
   }))(find(parsers, (parser) => parser.handles(extension)));
 
+export interface TextFileDataParsingError extends Error {
+  readonly name: "TextFileDataParsingError";
+}
+
 export const compositeTextDataParser = (
-  parsers: TextFileDataParser[] = [
+  parsers: readonly TextFileDataParser[] = [
     jsonParser,
     json5Parser,
     yamlParser,
     tomlParser,
   ],
-) => (file: File, contents: string): Either<Error, unknown> =>
-  monad(getCorrespondingTextDataParser(parsers, fileExtension(file)))
+) => (
+  file: File,
+  contents: string,
+): Either<TextFileDataParsingError, unknown> =>
+  monad(findCorrespondingTextDataParser(parsers, fileExtension(file)))
     .chainRight((parser) => parser.parse(contents))
-    .mapLeft((error) => ({
-      name: "Text data parsing error",
-      message: `Failed to parse text data from file ${fileToString(
+    .mapLeft<TextFileDataParsingError>((error) => ({
+      name: "TextFileDataParsingError",
+      message: `Failed to parse data from the contents of file ${fileToString(
         file,
-      )} with error: "${JSON.stringify(error)}"`,
-      file,
+      )}.\n${error.message}`,
     }))
     .toEither();
