@@ -1,3 +1,5 @@
+import { every } from "./iterable";
+
 export type Right<T> = {
   readonly value: T;
   readonly tag: "RIGHT"; // For discriminated union
@@ -14,7 +16,7 @@ export const left = <T>(value: T): Left<T> => ({ value, tag: "LEFT" });
 
 export type Either<L, R> = Left<L> | Right<R>; // Discriminated union
 
-export function eitherValue<L, R>(right: Left<L>): L;
+export function eitherValue<L, R>(left: Left<L>): L;
 export function eitherValue<L, R>(right: Right<R>): R;
 export function eitherValue<L, R>(either: Either<L, R>): L | R {
   return either.value;
@@ -107,3 +109,8 @@ export const monad = <L, R>(either: Either<L, R>): EitherMonad<L, R> => ({
       })(either),
     ),
 });
+
+export const iterableIsAllRight = <L, R>(
+  iterable: Iterable<Either<L, R>>,
+): iterable is Iterable<Right<R>> =>
+  every(iterable, (element) => eitherIsRight(element));
