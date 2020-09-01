@@ -29,9 +29,8 @@ const parseGitignoreToExclusionRule = (
   directory: Directory,
   ignoresPathname: (pathname: string) => boolean,
 ): ExclusionRule => (entry: Entry): boolean =>
-  directoryHasDescendent(directory, entry)
-    ? ignoresPathname(relativePathToString(entryRelativePath(directory, entry)))
-    : false;
+  directoryHasDescendent(directory, entry) &&
+  ignoresPathname(relativePathToString(entryRelativePath(directory, entry)));
 
 export const gitignoreExclusionRule = (readTextFile: TextFileReader) => (
   rules: File,
