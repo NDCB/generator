@@ -95,14 +95,14 @@ const directoryHashMap = <T>(
   entries: Iterable<[Directory, T]>,
 ): HashMap<Directory, T> => hashMap(entries, hashDirectory, directoryEquals);
 
+interface TransformedMockStructure {
+  readonly fileContents: HashMap<File, string>;
+  readonly directoryEntries: HashMap<Directory, Entry[]>;
+}
+
 const transformMockStructure = (
   structure: MockDirectory,
-): {
-  files: HashMap<File, File>;
-  fileContents: HashMap<File, string>;
-  directories: HashMap<Directory, Directory>;
-  directoryEntries: HashMap<Directory, Entry[]>;
-} => {
+): TransformedMockStructure => {
   const entries = [...mockEntries(structure)];
   const mockIsFile = (mock: [Entry, unknown]): mock is [File, string] =>
     entryIsFile(mock[0]);
@@ -110,14 +110,8 @@ const transformMockStructure = (
     mock: [Entry, unknown],
   ): mock is [Directory, Entry[]] => entryIsDirectory(mock[0]);
   return {
-    files: fileHashMap(
-      map(filter(entries, mockIsFile), (mock) => [mock[0], mock[0]]),
-    ),
     fileContents: fileHashMap(
       map(filter(entries, mockIsFile), ([file, contents]) => [file, contents]),
-    ),
-    directories: directoryHashMap(
-      map(filter(entries, mockIsDirectory), (mock) => [mock[0], mock[0]]),
     ),
     directoryEntries: directoryHashMap(
       map(filter(entries, mockIsDirectory), ([directory, entries]) => [
@@ -128,23 +122,19 @@ const transformMockStructure = (
   };
 };
 
-export const mockFileSystem = (
-  structure: MockDirectory,
-): {
+export interface MockFileSystem {
   fileExists: (file: File) => IO<Either<PathIOError, boolean>>;
   directoryExists: (directory: Directory) => IO<Either<PathIOError, boolean>>;
   readFile: FileReader;
   readDirectory: DirectoryReader;
-} => {
-  const {
-    files,
-    fileContents,
-    directories,
-    directoryEntries,
-  } = transformMockStructure(structure);
+}
+
+export const mockFileSystem = (structure: MockDirectory): MockFileSystem => {
+  const { fileContents, directoryEntries } = transformMockStructure(structure);
   return {
-    fileExists: (file) => () => right(files.has(file)),
-    directoryExists: (directory) => () => right(directories.has(directory)),
+    fileExists: (file) => () => right(fileContents.has(file)),
+    directoryExists: (directory) => () =>
+      right(directoryEntries.has(directory)),
     readFile: (file) => () =>
       bimap<string, Buffer, FileIOError>(
         (contents) => Buffer.from(contents),
