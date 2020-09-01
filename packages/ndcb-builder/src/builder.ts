@@ -5,4 +5,5 @@ const LOGGER = scoppedLogger("builder");
 
 export const build = (config?: string): IO<void> => () => {
   LOGGER.error("Not implemented yet")();
+  LOGGER.info(`Config: ${config}`)();
 };

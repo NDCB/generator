@@ -88,8 +88,8 @@ export const fileSystem = (configuration: Configuration): FileSystem => {
     configuration,
   );
   const { sources: roots, exclusionRulesFileNames } = configuration.common;
-  return compositeFileSystem(
-    map<Directory, FileSystem>(roots, (root) =>
+  return compositeFileSystem([
+    ...map<Directory, FileSystem>(roots, (root) =>
       excludedRootedFileSystem(
         rootedFileSystem({
           readFile,
@@ -105,5 +105,5 @@ export const fileSystem = (configuration: Configuration): FileSystem => {
         ),
       ),
     ),
-  );
+  ]);
 };
