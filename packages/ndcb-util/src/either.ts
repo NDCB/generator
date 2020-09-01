@@ -114,3 +114,10 @@ export const iterableIsAllRight = <L, R>(
   iterable: Iterable<Either<L, R>>,
 ): iterable is Iterable<Right<R>> =>
   every(iterable, (element) => eitherIsRight(element));
+
+export const sequence = <L, R>(
+  eithers: readonly Either<L, R>[],
+): Either<L, readonly R[]> =>
+  eithers.some(eitherIsLeft)
+    ? left(eitherValue(eithers.find(eitherIsLeft) as Left<L>))
+    : right(eithers.map((either) => eitherValue(either as Right<R>)) as R[]);
