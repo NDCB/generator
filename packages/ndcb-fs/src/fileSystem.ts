@@ -7,23 +7,15 @@ import {
   Some,
   map as mapOption,
 } from "@ndcb/util/lib/option";
-import {
-  flatMap,
-  some,
-  find,
-  map,
-  every,
-  filter,
-} from "@ndcb/util/lib/iterable";
+import { flatMap, some, find, map, filter } from "@ndcb/util/lib/iterable";
 import { IO } from "@ndcb/util/lib/io";
 import {
   Either,
-  eitherIsRight,
-  Right,
-  eitherValue,
+  monad,
+  sequence,
+  mapRight,
   right,
   left,
-  monad,
 } from "@ndcb/util/lib/either";
 
 export interface FileSystem {
@@ -37,130 +29,85 @@ export interface FileSystem {
   ) => IO<Either<Error, Iterable<Entry>>>;
 }
 
-// istanbul ignore next: constructor for unexpected error
-const fileExistsError = (path: RelativePath): Error =>
-  new Error(
-    `Failed to determine the existence of the file at "${relativePathToString(
-      path,
-    )}"`,
-  );
-
 const fileNotFoundError = (path: RelativePath): Error =>
   new Error(`File not found at "${relativePathToString(path)}"`);
-
-// istanbul ignore next: constructor for unexpected error
-const directoryExistsError = (path: RelativePath): Error =>
-  new Error(
-    `Failed to determine the existence of the directory at "${relativePathToString(
-      path,
-    )}"`,
-  );
-
-// istanbul ignore next: constructor for unexpected error
-const directoryReadError = (path: RelativePath): Error =>
-  new Error(`Failed to read the directory at "${relativePathToString(path)}"`);
 
 const directoryNotFoundError = (path: RelativePath): Error =>
   new Error(`Directory not found at "${relativePathToString(path)}"`);
 
 export const compositeFileSystem = (
-  systems: Iterable<FileSystem>,
-): FileSystem => {
-  systems = [...systems];
-  const ioTests = <T>(
-    systems: Iterable<FileSystem>,
-    path: RelativePath,
-    ioTest: (system: FileSystem, path: RelativePath) => IO<Either<Error, T>>,
-  ): IO<Array<{ system: FileSystem; ioTest: Either<Error, T> }>> => () => [
-    ...map(systems, (system) => ({
-      system,
-      ioTest: ioTest(system, path)(),
-    })),
-  ];
-  const ioTestsAllRight = <T>(
-    ioTests: Array<{ system: FileSystem; ioTest: Either<Error, T> }>,
-  ): ioTests is Array<{ system: FileSystem; ioTest: Right<T> }> =>
-    every(ioTests, ({ ioTest }) => eitherIsRight(ioTest));
-  return {
-    pathname: (entry) =>
-      mapOption(optionValue)(
-        find<Option<RelativePath>, Some<RelativePath>>(
-          map(systems, (system) => system.pathname(entry)),
-          isSome,
-        ),
+  systems: readonly FileSystem[],
+): FileSystem => ({
+  pathname: (entry) =>
+    mapOption(optionValue)(
+      find<Option<RelativePath>, Some<RelativePath>>(
+        map(systems, (system) => system.pathname(entry)),
+        isSome,
       ),
-    files: () => flatMap(systems, (system) => system.files()),
-    fileExists: (path) => () => {
-      const fileExistsTests = ioTests(systems, path, (system, path) =>
-        system.fileExists(path),
-      )();
-      return ioTestsAllRight(fileExistsTests)
-        ? right(some(fileExistsTests, ({ ioTest }) => eitherValue(ioTest)))
-        : left(fileExistsError(path));
-    },
-    directoryExists: (path) => () => {
-      const directoryExistsTests = ioTests(systems, path, (system, path) =>
-        system.directoryExists(path),
-      )();
-      return ioTestsAllRight(directoryExistsTests)
-        ? right(some(directoryExistsTests, ({ ioTest }) => eitherValue(ioTest)))
-        : left(directoryExistsError(path));
-    },
-    readFile: (path) => () => {
-      const fileExistsTests = ioTests(systems, path, (system, path) =>
-        system.fileExists(path),
-      )();
-      return monad(
-        ioTestsAllRight(fileExistsTests)
-          ? right(fileExistsTests)
-          : left(fileExistsError(path)),
+    ),
+  files: () => flatMap(systems, (system) => system.files()),
+  fileExists: (path) => () =>
+    monad(sequence([...map(systems, (system) => system.fileExists(path)())]))
+      .mapRight((tests) => some(tests, (exists) => exists))
+      .toEither(),
+  directoryExists: (path) => () =>
+    monad(
+      sequence([...map(systems, (system) => system.directoryExists(path)())]),
+    )
+      .mapRight((tests) => some(tests, (exists) => exists))
+      .toEither(),
+  readFile: (path) => () =>
+    monad(
+      sequence([
+        ...map(systems, (system) =>
+          mapRight(system.fileExists(path)(), (fileExists) => ({
+            system,
+            fileExists,
+          })),
+        ),
+      ]),
+    )
+      .mapRight((systems) =>
+        find<{ system: FileSystem; fileExists: boolean }>(
+          systems,
+          ({ fileExists }) => fileExists,
+        ),
       )
-        .mapRight((fileExistsTests) =>
-          find<{
-            system: FileSystem;
-            ioTest: Right<boolean>;
-          }>(fileExistsTests, ({ ioTest }) => eitherValue(ioTest)),
-        )
-        .chainRight(
-          bimap(
-            ({ system }) => system,
-            () => fileNotFoundError(path),
-          ),
-        )
-        .chainRight((system) => system.readFile(path)())
-        .toEither();
-    },
-    readDirectory: (path) => () => {
-      const directoryExistsTests = ioTests(systems, path, (system, path) =>
-        system.directoryExists(path),
-      )();
-      return monad(
-        ioTestsAllRight(directoryExistsTests)
-          ? right(directoryExistsTests)
-          : left(directoryExistsError(path)),
+      .chainRight(
+        bimap(
+          ({ system }) => system,
+          () => fileNotFoundError(path),
+        ),
       )
-        .mapRight((directoryExistsTests) =>
-          filter(directoryExistsTests, ({ ioTest }) => eitherValue(ioTest)),
-        )
-        .mapRight((systemsContainingQueriedDirectory) =>
-          map(systemsContainingQueriedDirectory, ({ system }) => system),
-        )
-        .mapRight((systems) =>
-          ioTests(systems, path, (system, path) =>
-            system.readDirectory(path),
-          )(),
-        )
-        .chainRight((systems) =>
-          systems.length > 0
-            ? right(systems)
-            : left(directoryNotFoundError(path)),
-        )
-        .chainRight((systems) =>
-          ioTestsAllRight(systems)
-            ? right(flatMap(systems, ({ ioTest }) => eitherValue(ioTest)))
-            : left(directoryReadError(path)),
-        )
-        .toEither();
-    },
-  };
-};
+      .chainRight((system) => system.readFile(path)())
+      .toEither(),
+  readDirectory: (path) => () =>
+    monad(
+      sequence([
+        ...map(systems, (system) =>
+          mapRight(system.directoryExists(path)(), (directoryExists) => ({
+            system,
+            directoryExists,
+          })),
+        ),
+      ]),
+    )
+      .mapRight((systems) => [
+        ...map(
+          filter(systems, ({ directoryExists }) => directoryExists),
+          ({ system }) => system,
+        ),
+      ])
+      .chainRight((systems) =>
+        systems.length > 0
+          ? right(systems)
+          : left(directoryNotFoundError(path)),
+      )
+      .chainRight((systems) =>
+        sequence([...map(systems, (system) => system.readDirectory(path)())]),
+      )
+      .mapRight((entries) =>
+        flatMap(entries, (directoryEntries) => directoryEntries),
+      )
+      .toEither(),
+});

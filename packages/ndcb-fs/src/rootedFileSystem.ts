@@ -102,24 +102,35 @@ export const excludedRootedFileSystem = (
           exclusionRuleRetriever,
         ),
       )(system.root),
-    fileExists: (path) => () => {
-      const file = system.file(path);
-      return monad(system.fileExists(path)())
-        .chainRight((exists) =>
-          !exists ? right(() => true) : exclusionRuleAt(file)(),
+    fileExists: (path) => () =>
+      monad(
+        mapRight(system.fileExists(path)(), (exists) => ({
+          file: system.file(path),
+          exists,
+        })),
+      )
+        .chainRight(({ exists, file }) =>
+          exists
+            ? mapRight(exclusionRuleAt(file)(), (excludes) => !excludes(file))
+            : right(false),
         )
-        .mapRight((excludes) => !excludes(file))
-        .toEither();
-    },
-    directoryExists: (path) => () => {
-      const directory = system.directory(path);
-      return monad(system.directoryExists(path)())
-        .chainRight((exists) =>
-          !exists ? right(() => true) : exclusionRuleAt(directory)(),
+        .toEither(),
+    directoryExists: (path) => () =>
+      monad(
+        mapRight(system.directoryExists(path)(), (exists) => ({
+          exists,
+          directory: system.directory(path),
+        })),
+      )
+        .chainRight(({ exists, directory }) =>
+          exists
+            ? mapRight(
+                exclusionRuleAt(directory)(),
+                (excludes) => !excludes(directory),
+              )
+            : right(false),
         )
-        .mapRight((excludes) => !excludes(directory))
-        .toEither();
-    },
+        .toEither(),
     readFile: (path) => () => {
       const file = system.file(path);
       return monad(exclusionRuleAt(file)())

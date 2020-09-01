@@ -45,8 +45,8 @@ describe("FileSystem", () => {
       fileExists,
     } = mockFileSystem(fs);
     const readTextFile = textFileReader(readFile, "utf8");
-    const system = compositeFileSystem(
-      map<string, FileSystem>(roots, (root) =>
+    const system = compositeFileSystem([
+      ...map<string, FileSystem>(roots, (root) =>
         excludedRootedFileSystem(
           rootedFileSystem({
             readFile,
@@ -62,7 +62,7 @@ describe("FileSystem", () => {
           ),
         ),
       ),
-    );
+    ]);
     describe("#files", () => {
       const expected = [
         ...map<string, File>(expectedFiles, (path) => normalizedFile(path)),
