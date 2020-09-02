@@ -1,5 +1,5 @@
 import { find, some } from "./iterable";
-import { Option, join, map } from "./option";
+import { Option, map, joinNone } from "./option";
 import { hashString } from "./hash";
 
 export interface HashMap<K, V> {
@@ -17,14 +17,11 @@ export const hashMap = <K, V>(
   for (const [key, value] of entries) {
     const hashCode = hash(key);
     if (!buckets[hashCode]) buckets[hashCode] = [];
-    join<[K, V], [K, V]>(
-      (bucket) => bucket,
-      () => {
-        const bucket: [K, V] = [key, value];
-        buckets[hashCode].push(bucket);
-        return bucket;
-      },
-    )(
+    joinNone<[K, V]>(() => {
+      const bucket: [K, V] = [key, value];
+      buckets[hashCode].push(bucket);
+      return bucket;
+    })(
       find<[K, V]>(buckets[hashCode], (bucket) => equals(key, bucket[0])),
     )[1] = value;
   }

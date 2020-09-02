@@ -1,0 +1,95 @@
+[
+  {
+    "fs": {
+      "/": {
+        "fr-CA": {
+          "index.md": ""
+        },
+        "404.md": "",
+        "index.md": "",
+        "main.scss": ""
+      }
+    },
+    "mapping": [
+      [".md", ".html"],
+      [".scss", ".css"]
+    ],
+    "tests": [
+      {
+        "query": "",
+        "expected": "index.md",
+        "description": "handles empty pathname as query"
+      },
+      {
+        "query": "index",
+        "expected": "index.md",
+        "description": "handles filename query without extension"
+      },
+      {
+        "query": "index.md",
+        "expected": "index.md",
+        "description": "handles full filename query"
+      },
+      {
+        "query": "index.html",
+        "expected": "index.md",
+        "description": "handles full filename query with output extension"
+      },
+      {
+        "query": "fr-CA",
+        "expected": "fr-CA/index.md",
+        "description": "handles directory query"
+      },
+      {
+        "query": "fr-CA/index",
+        "expected": "fr-CA/index.md",
+        "description": "handles directory query filename without extension"
+      },
+      {
+        "query": "fr-CA/index.md",
+        "expected": "fr-CA/index.md",
+        "description": "handles directory query with full filename"
+      },
+      {
+        "query": "fr-CA/index.html",
+        "expected": "fr-CA/index.md",
+        "description": "handles full filename query with output extension"
+      },
+      {
+        "query": "main.css",
+        "expected": "main.scss"
+      },
+      {
+        "query": "main.scss",
+        "expected": "main.scss"
+      },
+      {
+        "query": "404",
+        "expected": "404.md"
+      },
+      {
+        "query": "404.md",
+        "expected": "404.md"
+      },
+      {
+        "query": "404.html",
+        "expected": "404.md"
+      },
+      {
+        "query": "inexistent.md",
+        "expected": null,
+        "description": "returns `none` if no corresponding source pathname is found"
+      },
+      {
+        "query": "fr-CA/inexistent.md",
+        "expected": null,
+        "description": "returns `none` if no corresponding source pathname is found"
+      },
+      {
+        "query": "inexistent/inexistent.md",
+        "expected": null,
+        "description": "returns `none` if no corresponding source pathname is found"
+      }
+    ]
+  }
+]

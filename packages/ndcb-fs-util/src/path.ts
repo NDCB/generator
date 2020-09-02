@@ -103,10 +103,8 @@ const baseWithExtension = (
 export const relativePathWithExtension = (
   path: RelativePath,
   extension: Option<Extension>,
-): RelativePath => {
-  const b = base(relativePathToString(path));
-  return relativePath(baseWithExtension(b, extension));
-};
+): RelativePath =>
+  relativePath(baseWithExtension(base(relativePathToString(path)), extension));
 
 /**
  * Constructs relative paths corresponding to the given one with its extension

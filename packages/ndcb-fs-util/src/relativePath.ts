@@ -94,7 +94,7 @@ export function joinRelativePath(
 }
 
 export const relativePathIsEmpty = (path: RelativePath): boolean =>
-  relativePathToString(path).length === 0;
+  ["", "."].includes(relativePathToString(path));
 
 export const relativePathSegments = function* (
   path: RelativePath,

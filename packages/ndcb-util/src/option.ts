@@ -44,3 +44,17 @@ export const mapNone = <T, S>(map: () => S) => (
 export const join = <T, S>(mapSome: (value: T) => S, mapNone: () => S) => (
   option: Option<T>,
 ): S => (isSome(option) ? mapSome(optionValue(option)) : mapNone());
+
+export const joinNone = <T>(mapNone: () => T) => (option: Option<T>): T =>
+  isSome(option) ? optionValue(option) : mapNone();
+
+export const hashOption = <T>(hash: (element: T) => number) => (
+  option: Option<T>,
+): number => join(hash, () => 0)(option);
+
+export const optionEquals = <T>(equals: (e1: T, e2: T) => boolean) => (
+  o1: Option<T>,
+  o2: Option<T>,
+): boolean =>
+  (isNone(o1) && isNone(o2)) ||
+  (isSome(o1) && isSome(o2) && equals(optionValue(o1), optionValue(o2)));

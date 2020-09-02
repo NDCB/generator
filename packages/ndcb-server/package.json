@@ -23,7 +23,8 @@
     "mime-types": "^2.1.27"
   },
   "devDependencies": {
-    "@types/mime-types": "^2.1.0"
+    "@types/mime-types": "^2.1.0",
+    "@ndcb/mock-fs": "^0.1.1"
   },
   "publishConfig": {
     "access": "public"
