@@ -10,18 +10,19 @@ import {
   pathHasExtension,
   upwardRelativePaths,
 } from "@ndcb/fs-util";
+import { Either, mapRight } from "@ndcb/util/lib/either";
+import { map, flatMap } from "@ndcb/util/lib/iterable";
+import { find } from "@ndcb/util/lib/eitherIterable";
+import { IO } from "@ndcb/util/lib/io";
+import { HashMap } from "@ndcb/util/lib/hashMap";
 import {
-  IO,
-  Either,
-  HashMap,
-  map,
-  mapRight,
-  eitherIsLeft,
-  eitherValue,
-  right,
-  flatMap,
-} from "@ndcb/util";
-import { Option, some, none, joinNone, isSome } from "@ndcb/util/lib/option";
+  Option,
+  some,
+  none,
+  joinNone,
+  isSome,
+  map as mapSome,
+} from "@ndcb/util/lib/option";
 
 export type Pathname = RelativePath;
 
@@ -53,31 +54,35 @@ export const possibleSourcePathnames = (
 export const sourcePathname = (
   possibleSourcePathnames: (query: Pathname) => Iterable<Pathname>,
   sourceExists: (pathname: Pathname) => IO<Either<Error, boolean>>,
-) => (query: Pathname): IO<Either<Error, Option<Pathname>>> => () => {
-  for (const existingSourceTest of map(
-    possibleSourcePathnames(query),
-    (source) =>
-      mapRight(sourceExists(source)(), (exists) => ({ source, exists })),
-  )) {
-    if (eitherIsLeft(existingSourceTest)) return existingSourceTest;
-    const { exists, source } = eitherValue(existingSourceTest);
-    if (exists) return right(some(source));
-  }
-  return right(none());
-};
+) => (query: Pathname): IO<Either<Error, Option<Pathname>>> => () =>
+  mapRight(
+    find(
+      map(possibleSourcePathnames(query), (source) =>
+        mapRight(sourceExists(source)(), (exists) => ({ source, exists })),
+      ),
+      ({ exists }) => exists,
+    ),
+    mapSome<
+      {
+        source: RelativePath;
+        exists: boolean;
+      },
+      RelativePath
+    >(({ source }) => source),
+  );
 
 export const sourcePathname404 = (
   sourcePathname: (query: Pathname) => IO<Either<Error, Option<Pathname>>>,
-) => (query: Pathname): IO<Either<Error, Option<Pathname>>> => () => {
-  for (const source of map(upwardRelativePaths(query), (source) =>
-    sourcePathname(joinRelativePath(source, "404.html"))(),
-  )) {
-    if (eitherIsLeft(source)) return source;
-    const pathname = eitherValue(source);
-    if (isSome(pathname)) return right(pathname);
-  }
-  return right(none());
-};
+) => (query: Pathname): IO<Either<Error, Option<Pathname>>> => () =>
+  mapRight(
+    find(
+      map(upwardRelativePaths(query), (source) =>
+        sourcePathname(joinRelativePath(source, "404.html"))(),
+      ),
+      isSome,
+    ),
+    joinNone<Option<Pathname>>(() => none()),
+  );
 
 export const destinationExtension = (
   destinationExtensionMap: HashMap<Option<Extension>, Option<Extension>>,

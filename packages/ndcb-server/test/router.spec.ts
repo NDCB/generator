@@ -5,6 +5,7 @@ import {
   Pathname,
   sourcePathname,
   possibleSourcePathnames,
+  sourcePathname404,
 } from "../src/router";
 import {
   file,
@@ -27,10 +28,13 @@ import {
 
 describe("sourcePathname", () => {
   for (const {
-    fs,
-    mapping,
-    tests,
-  } of require("./fixtures/sourcePathname.json")) {
+    element: { fs, mapping, tests },
+    index: suiteIndex,
+  } of enumerate<{ fs; mapping; tests }>(
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    require("./fixtures/sourcePathname.json"),
+    1,
+  )) {
     const { fileExists } = mockFileSystem(fs);
     const sourceExists = (pathname: Pathname) =>
       fileExists(
@@ -52,15 +56,70 @@ describe("sourcePathname", () => {
       sourceExists,
     );
     for (const {
-      index,
+      index: testIndex,
       element: { query, expected, description },
     } of enumerate<{
       query: string;
       expected: string | null;
       description: string | undefined;
     }>(tests, 1)) {
-      test(`case #${index}${description ? `: ${description}` : ""}`, () => {
+      test(`case #${suiteIndex}:${testIndex}${
+        description ? `: ${description}` : ""
+      }`, () => {
         const queryResult = source(normalizedRelativePath(query))();
+        if (eitherIsLeft(queryResult))
+          throw new Error(`Unexpectedly failed to find query result.`);
+        const result = eitherValue(queryResult);
+        expect(result).toStrictEqual(
+          expected === null ? none() : some(normalizedRelativePath(expected)),
+        );
+      });
+    }
+  }
+});
+
+describe("sourcePathname404", () => {
+  for (const {
+    element: { fs, mapping, tests },
+    index: suiteIndex,
+  } of enumerate<{ fs; mapping; tests }>(
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    require("./fixtures/sourcePathname404.json"),
+    1,
+  )) {
+    const { fileExists } = mockFileSystem(fs);
+    const sourceExists = (pathname: Pathname) =>
+      fileExists(
+        file(resolvedAbsolutePath(normalizedAbsolutePath("/"), pathname)),
+      );
+    const sourceExtensionsMap = inversedHashMap<
+      Option<Extension>,
+      Option<Extension>
+    >(
+      map(mapping as [string, string][], ([e1, e2]) => [
+        e1 ? some(extension(e1)) : none(),
+        e2 ? some(extension(e2)) : none(),
+      ]),
+      hashOption(hashExtension),
+      optionEquals(extensionEquals),
+    );
+    const source = sourcePathname(
+      possibleSourcePathnames(sourceExtensionsMap),
+      sourceExists,
+    );
+    const source404 = sourcePathname404(source);
+    for (const {
+      index: testIndex,
+      element: { query, expected, description },
+    } of enumerate<{
+      query: string;
+      expected: string | null;
+      description: string | undefined;
+    }>(tests, 1)) {
+      test(`case #${suiteIndex}:${testIndex}${
+        description ? `: ${description}` : ""
+      }`, () => {
+        const queryResult = source404(normalizedRelativePath(query))();
         if (eitherIsLeft(queryResult))
           throw new Error(`Unexpectedly failed to find query result.`);
         const result = eitherValue(queryResult);

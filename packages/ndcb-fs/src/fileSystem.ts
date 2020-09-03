@@ -9,14 +9,8 @@ import {
 } from "@ndcb/util/lib/option";
 import { flatMap, some, find, map, filter } from "@ndcb/util/lib/iterable";
 import { IO } from "@ndcb/util/lib/io";
-import {
-  Either,
-  monad,
-  sequence,
-  mapRight,
-  right,
-  left,
-} from "@ndcb/util/lib/either";
+import { Either, monad, mapRight, right, left } from "@ndcb/util/lib/either";
+import { sequence } from "@ndcb/util/lib/eitherIterable";
 
 export interface FileSystem {
   readonly pathname: (entry: Entry) => Option<RelativePath>;

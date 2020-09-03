@@ -10,7 +10,8 @@ import {
 } from "@ndcb/fs-util";
 import { filter, map } from "@ndcb/util/lib/iterable";
 import { IO } from "@ndcb/util/lib/io";
-import { Either, monad, mapRight, sequence } from "@ndcb/util/lib/either";
+import { Either, monad, mapRight } from "@ndcb/util/lib/either";
+import { sequence } from "@ndcb/util/lib/eitherIterable";
 
 import {
   ExclusionRule,

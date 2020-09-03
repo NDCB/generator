@@ -19,7 +19,6 @@ import {
   Either,
   monad,
   Right,
-  iterableIsAllRight,
   right,
   left,
   eitherIsLeft,
@@ -34,6 +33,7 @@ import {
   map,
   iterableToString,
 } from "@ndcb/util/lib/iterable";
+import { iterableIsAllRight } from "@ndcb/util/lib/eitherIterable";
 import {
   directoryPath,
   absolutePathToString,
