@@ -18,32 +18,22 @@ import {
   matchEitherPattern,
   Either,
   monad,
-  Right,
   right,
-  left,
-  eitherIsLeft,
-  eitherValue,
-  Left,
   eitherFromThrowable,
   mapLeft,
 } from "@ndcb/util/lib/either";
-import {
-  forEach,
-  filter,
-  map,
-  iterableToString,
-} from "@ndcb/util/lib/iterable";
-import { iterableIsAllRight } from "@ndcb/util/lib/eitherIterable";
+import { forEach, filter, map } from "@ndcb/util/lib/iterable";
+import { sequence } from "@ndcb/util/lib/eitherIterable";
 import {
   directoryPath,
   absolutePathToString,
   readFile,
   fileExtension,
 } from "@ndcb/fs-util";
+import { textFileReader } from "@ndcb/fs-text";
 
 import { siteFilesServerRequestListener } from "./listener";
 import { siteFilesProcessor } from "./processor";
-import { textFileReader } from "@ndcb/fs-text";
 
 interface Server {
   readonly start: IO<Either<ServerStartError, void>>;
@@ -134,66 +124,37 @@ ${message}`,
 
 const initializeServers = (
   configuration: Configuration,
-): Either<ServerInitializationError, Server[]> => {
-  const serverInitializationResults: Either<
-    ServerInitializationError,
-    Server
-  >[] = [
+): Either<ServerInitializationError, readonly Server[]> =>
+  sequence([
     initializeMainServer(configuration),
     initializeBrowserSyncServer(configuration),
-  ];
-  return iterableIsAllRight(serverInitializationResults)
-    ? right([
-        ...map<Right<Server>, Server>(
-          serverInitializationResults as Iterable<Right<Server>>,
-          eitherValue,
-        ),
-      ])
-    : left({
-        name: "ServerInitializationError",
-        message: `Failed to initialize servers.
-${iterableToString(
-  map(
-    filter<
-      Either<ServerInitializationError, Server>,
-      Left<ServerInitializationError>
-    >(serverInitializationResults, eitherIsLeft),
-    (left) => eitherValue(left).message,
-  ),
-  (asString) => asString,
-  "\n",
-)}`,
-      });
-};
+  ]);
 
 const startServers = (
   servers: readonly Server[],
-): IO<Either<ServerStartError, true>> => () => {
-  const serverStartResults = [...map(servers, (server) => server.start())];
-  return iterableIsAllRight(serverStartResults)
-    ? right(true)
-    : left({
-        name: "ServerStartError",
-        message: `Failed to start servers.
-${iterableToString(
-  map(
-    filter<Either<ServerStartError, void>, Left<ServerStartError>>(
-      serverStartResults,
-      eitherIsLeft,
-    ),
-    (left) => eitherValue(left).message,
-  ),
-  (asString) => asString,
-  "\n",
-)}`,
-      });
-};
+): IO<Either<ServerStartError, readonly void[]>> => () =>
+  sequence([...map(servers, (server) => server.start())]);
 
 const stopActiveServers = (servers: readonly Server[]): IO<void> => () =>
   forEach(
     filter(servers, (server) => server.isActive()),
     (server) => server.stop(),
   );
+
+const fetchConfiguration = configurationFetcher(
+  textFileDataReader(
+    textFileReader(readFile),
+    compositeTextDataParserToFileContentsParser(
+      compositeTextDataParser([
+        jsonParser,
+        json5Parser,
+        yamlParser,
+        tomlParser,
+      ]),
+      fileExtension,
+    ),
+  ),
+);
 
 const LOGGER: Logger = scoppedLogger("server");
 
@@ -202,7 +163,7 @@ export const serve = (config?: string): IO<void> => () =>
     right: (configuration) =>
       matchEitherPattern<
         ServerInitializationError | ServerStartError,
-        true,
+        unknown,
         void
       >({
         right: () => LOGGER.info("Press CTRL+C to stop the server(s)")(),
@@ -225,19 +186,4 @@ ${message}`)(),
 ${message}`,
       )();
     },
-  })(
-    configurationFetcher(
-      textFileDataReader(
-        textFileReader(readFile),
-        compositeTextDataParserToFileContentsParser(
-          compositeTextDataParser([
-            jsonParser,
-            json5Parser,
-            yamlParser,
-            tomlParser,
-          ]),
-          fileExtension,
-        ),
-      ),
-    )(config)(),
-  );
+  })(fetchConfiguration(config)());

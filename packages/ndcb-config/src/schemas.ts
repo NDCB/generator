@@ -53,9 +53,9 @@ Directory "${directoryToString(d1)}" is not disjoint from "${directoryToString(
 
 export interface Configuration {
   readonly common: {
-    readonly sources: Directory[];
+    readonly sources: readonly Directory[];
     readonly pathEncoding: BufferEncoding;
-    readonly exclusionRulesFileNames: string[];
+    readonly exclusionRulesFileNames: readonly string[];
     readonly cache: {
       readonly fileReaderCacheSize: number;
       readonly textFileReaderCacheSize: number;
