@@ -18,7 +18,7 @@
     "yaml": "1.10.0"
   },
   "devDependencies": {
-    "@types/json5": "0.0.29"
+    "@types/json5": "0.0.30"
   },
   "publishConfig": {
     "access": "public"

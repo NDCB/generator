@@ -38,18 +38,19 @@ export const possibleHtmlSourcePathnames = function* (
 export const possibleSourcePathnames = (
   sourceExtensionsMap: HashMap<Option<Extension>, readonly Option<Extension>[]>,
 ) => (query: Pathname): Iterable<Pathname> =>
-  flatMap(possibleHtmlSourcePathnames(query), function* (
-    possibleSourcePathname,
-  ) {
-    yield possibleSourcePathname;
-    if (!relativePathIsEmpty(possibleSourcePathname))
-      yield* relativePathWithExtensions(
-        possibleSourcePathname,
-        joinNone<Iterable<Option<Extension>>>(() => [])(
-          sourceExtensionsMap.get(pathExtension(possibleSourcePathname)),
-        ),
-      );
-  });
+  flatMap(
+    possibleHtmlSourcePathnames(query),
+    function* (possibleSourcePathname) {
+      yield possibleSourcePathname;
+      if (!relativePathIsEmpty(possibleSourcePathname))
+        yield* relativePathWithExtensions(
+          possibleSourcePathname,
+          joinNone<Iterable<Option<Extension>>>(() => [])(
+            sourceExtensionsMap.get(pathExtension(possibleSourcePathname)),
+          ),
+        );
+    },
+  );
 
 export const sourcePathname = (
   possibleSourcePathnames: (query: Pathname) => Iterable<Pathname>,

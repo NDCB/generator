@@ -14,8 +14,8 @@ export const left = <T>(value: T): Left<T> => ({ value, tag: "LEFT" });
 
 export type Either<L, R> = Left<L> | Right<R>; // Discriminated union
 
-export function eitherValue<L, R>(left: Left<L>): L;
-export function eitherValue<L, R>(right: Right<R>): R;
+export function eitherValue<L>(left: Left<L>): L;
+export function eitherValue<R>(right: Right<R>): R;
 export function eitherValue<L, R>(either: Either<L, R>): L | R {
   return either.value;
 }

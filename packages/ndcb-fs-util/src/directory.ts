@@ -62,9 +62,11 @@ export const directoryEquals = (d1: Directory, d2: Directory): boolean =>
 export const hashDirectory = (directory: Directory): number =>
   hashAbsolutePath(directoryPath(directory));
 
-export const directoryExists = (
+export type DirectoryExistenceTester = (
   directory: Directory,
-): IO<Either<PathIOError, boolean>> => {
+) => IO<Either<PathIOError, boolean>>;
+
+export const directoryExists: DirectoryExistenceTester = (directory) => {
   const path = directoryPath(directory);
   return () => {
     if (!pathExists(path)()) return right(false);

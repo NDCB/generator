@@ -16,7 +16,7 @@ import { mdastTableOfContentsTree, TableOfContentsNode } from "../src/toc";
 import { slugifyTableOfContents } from "../src/slugger";
 
 const { parse } = unified()
-  .use(markdown, { commonmark: true })
+  .use(markdown, { commonmark: true } as Record<string, unknown>)
   .use(frontmatter);
 
 describe("slugifyTableOfContents", () => {

@@ -14,7 +14,7 @@ import { eitherIsLeft, eitherValue } from "@ndcb/util/lib/either";
 import { mdastTableOfContentsTree } from "../src/toc";
 
 const { parse } = unified()
-  .use(markdown, { commonmark: true })
+  .use(markdown, { commonmark: true } as Record<string, unknown>)
   .use(frontmatter);
 
 describe("mdastTableOfContentsTree", () => {

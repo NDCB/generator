@@ -56,7 +56,11 @@ export const fileEquals = (f1: File, f2: File): boolean =>
 export const hashFile = (file: File): number =>
   hashAbsolutePath(filePath(file));
 
-export const fileExists = (file: File): IO<Either<PathIOError, boolean>> => {
+export type FileExistenceTester = (
+  file: File,
+) => IO<Either<PathIOError, boolean>>;
+
+export const fileExists: FileExistenceTester = (file) => {
   const path = filePath(file);
   return () => {
     if (!pathExists(path)()) return right(false);

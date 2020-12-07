@@ -19,7 +19,7 @@
     "@ndcb/fs-util": "^0.3.0",
     "@ndcb/logger": "^0.1.1",
     "@ndcb/util": "^0.9.1",
-    "browser-sync": "^2.26.12",
+    "browser-sync": "^2.26.13",
     "mime-types": "^2.1.27"
   },
   "devDependencies": {

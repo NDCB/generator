@@ -36,7 +36,7 @@ export type TimedProcessor = (
   }
 >;
 
-export const processorAsTimedProcessor = <T>(
+export const processorAsTimedProcessor = (
   processor: Processor,
 ): TimedProcessor => (pathname: string) => () => {
   const startTime = process.hrtime(); // [s, ns]

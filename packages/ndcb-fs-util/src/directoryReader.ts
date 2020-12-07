@@ -113,15 +113,16 @@ export const downwardEntries = (
     while (stack.length > 0) {
       const directory = stack.pop() as Directory;
       yield () =>
-        mapRight(readDirectory(directory)(), function* (
-          entries,
-        ): Iterable<Entry> {
-          yield directory;
-          for (const entry of entries) {
-            yield entry;
-            if (entryIsDirectory(entry)) stack.push(entry);
-          }
-        });
+        mapRight(
+          readDirectory(directory)(),
+          function* (entries): Iterable<Entry> {
+            yield directory;
+            for (const entry of entries) {
+              yield entry;
+              if (entryIsDirectory(entry)) stack.push(entry);
+            }
+          },
+        );
     }
   };
 

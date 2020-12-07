@@ -16,7 +16,7 @@
     "lru-cache": "^6.0.0"
   },
   "devDependencies": {
-    "@types/lru-cache": "^4.1.0"
+    "@types/lru-cache": "^5.1.0"
   },
   "publishConfig": {
     "access": "public"

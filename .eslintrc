@@ -12,5 +12,10 @@
     "plugin:import/warnings",
     "plugin:import/typescript"
   ],
-  "ignorePatterns": ["lib"]
+  "ignorePatterns": ["lib"],
+  "rules": {
+    "@typescript-eslint/no-var-requires": 0,
+    "jest/valid-title": 0,
+    "jest/no-conditional-expect": 0
+  }
 }
