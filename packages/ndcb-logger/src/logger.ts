@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const consola = require("consola");
 
 import { IO } from "@ndcb/util";

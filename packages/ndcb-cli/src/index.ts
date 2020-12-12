@@ -4,10 +4,7 @@ import { Command } from "commander";
 const program = new Command();
 
 program
-  .version(
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    require("./../package.json").version,
-  )
+  .version(require("./../package.json").version)
   .description("Serve or build site")
   .command(
     "serve [config]",

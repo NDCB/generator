@@ -31,7 +31,6 @@ describe("sourcePathname", () => {
     element: { fs, mapping, tests },
     index: suiteIndex,
   } of enumerate<{ fs; mapping; tests }>(
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     require("./fixtures/sourcePathname.json"),
     1,
   )) {
@@ -83,7 +82,6 @@ describe("sourcePathname404", () => {
     element: { fs, mapping, tests },
     index: suiteIndex,
   } of enumerate<{ fs; mapping; tests }>(
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     require("./fixtures/sourcePathname404.json"),
     1,
   )) {

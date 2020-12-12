@@ -6,10 +6,7 @@ import { serve } from "@ndcb/server";
 const program = new Command();
 
 program
-  .version(
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    require("./../package.json").version,
-  )
+  .version(require("./../package.json").version)
   .description(
     "Start development servers using the specified configuration file",
   )
