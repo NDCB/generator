@@ -267,6 +267,24 @@
         "type": "directory",
         "expected": null
       }
+    ],
+    "fileCases": [
+      {
+        "pathname": "fr-CA/index.html",
+        "expected": "/content/fr-CA/index.html"
+      },
+      {
+        "pathname": "main.css",
+        "expected": "/layout/main.css"
+      },
+      {
+        "pathname": ".gitignore",
+        "expected": null
+      },
+      {
+        "pathname": "inexistent.html",
+        "expected": null
+      }
     ]
   }
 ]

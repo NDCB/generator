@@ -24,7 +24,7 @@ import {
   rootedFileSystem,
   excludedRootedFileSystem,
 } from "../src/rootedFileSystem";
-import { none, some } from "@ndcb/util/lib/option";
+import { isNone, none, optionValue, some, Some } from "@ndcb/util/lib/option";
 
 describe("FileSystem", () => {
   for (const {
@@ -37,6 +37,7 @@ describe("FileSystem", () => {
     readFileCases,
     readDirectoryCases,
     pathnameCases,
+    fileCases,
   } of require("./fixtures/fileSystem")) {
     const {
       readFile,
@@ -212,6 +213,38 @@ describe("FileSystem", () => {
           test(`case #${index}`, () => {
             expect(system.pathname(entry)).toStrictEqual(
               some(normalizedRelativePath(expected)),
+            );
+          });
+      }
+    });
+    describe("#file", () => {
+      for (const {
+        index,
+        element: { pathname, expected },
+      } of enumerate<{
+        pathname: string;
+        expected: string | null;
+      }>(fileCases, 1)) {
+        if (!expected)
+          test(`case #${index}`, () => {
+            const file = system.file(normalizedRelativePath(pathname))();
+            if (eitherIsLeft(file))
+              throw new Error(
+                `Unexpectedly failed to determine the existence of file at "${pathname}"`,
+              );
+            expect(eitherValue(file)).toStrictEqual(none());
+          });
+        else
+          test(`case #${index}`, () => {
+            const file = system.file(normalizedRelativePath(pathname))();
+            if (eitherIsLeft(file))
+              throw new Error(
+                `Unexpectedly failed to determine the existence of file at "${pathname}"`,
+              );
+            const fileOption = eitherValue(file);
+            expect(isNone(fileOption)).toBe(false);
+            expect(optionValue(fileOption as Some<File>)).toStrictEqual(
+              normalizedFile(expected),
             );
           });
       }

@@ -20,7 +20,6 @@ describe("rootedFileSystem", () => {
       index,
       element: { fs, root, expected },
     } of enumerate<{ fs: MockDirectory; root: string; expected: string[] }>(
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       require("./fixtures/rootedFileSystem-files"),
       1,
     )) {

@@ -25,15 +25,15 @@ import {
 import { filter } from "@ndcb/util/lib/iterable";
 import { IO } from "@ndcb/util/lib/io";
 import { mapRight, Either, monad, right, left } from "@ndcb/util/lib/either";
-import { some, none } from "@ndcb/util/lib/option";
+import { some, none, isSome } from "@ndcb/util/lib/option";
 
 import { FileSystem } from "./fileSystem";
 
 export interface RootedFileSystem extends FileSystem {
   readonly root: Directory;
   readonly walker: DirectoryWalker;
-  readonly file: (path: RelativePath) => File;
-  readonly directory: (path: RelativePath) => Directory;
+  readonly fileFromRoot: (path: RelativePath) => File;
+  readonly directoryFromRoot: (path: RelativePath) => Directory;
   readonly fileReader: FileReader;
   readonly directoryReader: DirectoryReader;
   readonly upwardDirectories: (entry: Entry) => Iterable<Directory>;
@@ -54,27 +54,37 @@ export const rootedFileSystem = ({
   const pathnameToDirectory = directoryFromDirectory(root);
   const walker = downwardEntries(readDirectory);
   const files = downwardFiles(walker);
-  const includes = (entry: Entry): boolean =>
+  const systemIncludes = (entry: Entry): boolean =>
     directoryHasDescendent(root, entry);
+  const fileExistsInSystem = (path) => () => {
+    const file = pathnameToFile(path);
+    return systemIncludes(file) ? fileExists(file)() : right(false);
+  };
+  const directoryExistsInSystem = (path) => () => {
+    const directory = pathnameToDirectory(path);
+    return systemIncludes(directory)
+      ? directoryExists(directory)()
+      : right(false);
+  };
+  const fileFromRoot = pathnameToFile;
+  const directoryFromRoot = pathnameToDirectory;
   return {
-    pathname: (entry) =>
-      includes(entry) ? some(entryRelativePath(root, entry)) : none(),
     root,
-    file: pathnameToFile,
-    directory: pathnameToDirectory,
+    pathname: (entry) =>
+      systemIncludes(entry) ? some(entryRelativePath(root, entry)) : none(),
+    file: (pathname) => () =>
+      mapRight(fileExistsInSystem(pathname)(), (exists) =>
+        exists ? some(fileFromRoot(pathname)) : none(),
+      ),
+    fileFromRoot,
+    directoryFromRoot,
     fileReader: readFile,
     directoryReader: readDirectory,
     upwardDirectories: upwardDirectoriesUntil(root),
     walker,
     files: () => files(root),
-    fileExists: (path) => () => {
-      const file = pathnameToFile(path);
-      return includes(file) ? fileExists(file)() : right(false);
-    },
-    directoryExists: (path) => () => {
-      const directory = pathnameToDirectory(path);
-      return includes(directory) ? directoryExists(directory)() : right(false);
-    },
+    fileExists: fileExistsInSystem,
+    directoryExists: directoryExistsInSystem,
     readFile: (path) => readFile(pathnameToFile(path)),
     readDirectory: (path) => readDirectory(pathnameToDirectory(path)),
   };
@@ -95,6 +105,18 @@ export const excludedRootedFileSystem = (
   );
   return {
     ...system,
+    file: (pathname) => () => {
+      const file = system.fileFromRoot(pathname);
+      return monad(system.file(pathname)())
+        .chainRight((fileQuery) =>
+          isSome(fileQuery)
+            ? mapRight(exclusionRuleAt(file)(), (excludes) =>
+                excludes(file) ? none() : fileQuery,
+              )
+            : right(none()),
+        )
+        .toEither();
+    },
     files: () =>
       downwardFiles(
         downwardNotIgnoredEntries(
@@ -105,7 +127,7 @@ export const excludedRootedFileSystem = (
     fileExists: (path) => () =>
       monad(
         mapRight(system.fileExists(path)(), (exists) => ({
-          file: system.file(path),
+          file: system.fileFromRoot(path),
           exists,
         })),
       )
@@ -119,7 +141,7 @@ export const excludedRootedFileSystem = (
       monad(
         mapRight(system.directoryExists(path)(), (exists) => ({
           exists,
-          directory: system.directory(path),
+          directory: system.directoryFromRoot(path),
         })),
       )
         .chainRight(({ exists, directory }) =>
@@ -132,7 +154,7 @@ export const excludedRootedFileSystem = (
         )
         .toEither(),
     readFile: (path) => () => {
-      const file = system.file(path);
+      const file = system.fileFromRoot(path);
       return monad(exclusionRuleAt(file)())
         .chainRight((excludes) =>
           excludes(file) ? left(fileNotFoundError(file)) : right(file),
@@ -141,7 +163,7 @@ export const excludedRootedFileSystem = (
         .toEither();
     },
     readDirectory: (path) => () => {
-      const directory = system.directory(path);
+      const directory = system.directoryFromRoot(path);
       return monad(exclusionRuleAt(directory)())
         .chainRight((excludes) =>
           excludes(directory)

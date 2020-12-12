@@ -6,6 +6,8 @@ import {
   optionValue,
   Some,
   map as mapOption,
+  join,
+  none,
 } from "@ndcb/util/lib/option";
 import { flatMap, some, find, map, filter } from "@ndcb/util/lib/iterable";
 import { IO } from "@ndcb/util/lib/io";
@@ -14,6 +16,7 @@ import { sequence } from "@ndcb/util/lib/eitherIterable";
 
 export interface FileSystem {
   readonly pathname: (entry: Entry) => Option<RelativePath>;
+  readonly file: (pathname: RelativePath) => IO<Either<Error, Option<File>>>;
   readonly files: () => Iterable<IO<Either<Error, Iterable<File>>>>;
   readonly fileExists: (path: RelativePath) => IO<Either<Error, boolean>>;
   readonly directoryExists: (path: RelativePath) => IO<Either<Error, boolean>>;
@@ -39,6 +42,15 @@ export const compositeFileSystem = (
         isSome,
       ),
     ),
+  file: (pathname) => () =>
+    monad(sequence([...map(systems, (system) => system.file(pathname)())]))
+      .mapRight<Option<File>>((files) =>
+        join<Option<File>, Option<File>>(
+          (file) => file,
+          () => none(),
+        )(find(files, isSome)),
+      )
+      .toEither(),
   files: () => flatMap(systems, (system) => system.files()),
   fileExists: (path) => () =>
     monad(sequence([...map(systems, (system) => system.fileExists(path)())]))
