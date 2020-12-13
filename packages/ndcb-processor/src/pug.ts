@@ -1,0 +1,41 @@
+import * as LRU from "lru-cache";
+import * as pug from "pug";
+
+import { absolutePathToString, File, filePath } from "@ndcb/fs-util";
+import {
+  Either,
+  eitherFromThrowable,
+  eitherIsLeft,
+  eitherValue,
+  right,
+} from "@ndcb/util/lib/either";
+import { IO } from "@ndcb/util/lib/io";
+
+export type Locals = Record<string, unknown>;
+
+export type PugTransformer = (locals: Locals) => Either<Error, Buffer>;
+
+export const pugProcessor = (
+  template: File,
+): IO<Either<Error, PugTransformer>> => () =>
+  eitherFromThrowable<PugTransformer, Error>(() => {
+    const fn = pug.compileFile(absolutePathToString(filePath(template)));
+    return (locals: Locals) =>
+      eitherFromThrowable(() => Buffer.from(fn(locals)));
+  });
+
+export const pugBuildProcessor = (
+  cacheSize = 15,
+): ((template: File) => IO<Either<Error, PugTransformer>>) => {
+  const cache = new LRU<string, PugTransformer>({
+    max: cacheSize,
+  });
+  return (template: File) => () => {
+    const key = absolutePathToString(filePath(template));
+    if (cache.has(key)) return right(cache.get(key) as PugTransformer);
+    const fn = pugProcessor(template)();
+    if (eitherIsLeft(fn)) return fn;
+    cache.set(key, eitherValue(fn));
+    return fn;
+  };
+};
