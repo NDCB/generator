@@ -45,9 +45,9 @@ export const matchEitherPattern = <L, R, T>(
     );
 };
 
-export const eitherFromThrowable = <T>(
+export const eitherFromThrowable = <T, E = unknown>(
   throwable: () => T,
-): Either<unknown, T> => {
+): Either<E, T> => {
   try {
     return right(throwable());
   } catch (error) {

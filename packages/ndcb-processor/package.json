@@ -1,0 +1,27 @@
+{
+  "name": "@ndcb/processor",
+  "version": "0.0.0",
+  "description": "Website file processor",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "repository": "https://github.com/NDCB/generator/tree/master/packages/ndcb-processor",
+  "author": "Marc-Antoine Ouimet",
+  "license": "MIT",
+  "files": [
+    "lib"
+  ],
+  "dependencies": {
+    "@ndcb/fs": "^0.7.0",
+    "@ndcb/fs-util": "^0.3.0",
+    "@ndcb/util": "^0.9.1",
+    "sass": "^1.26.11",
+    "pug": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/sass": "^1.16.0",
+    "@types/pug": "^2.0.4"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
