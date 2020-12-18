@@ -14,9 +14,16 @@
     "@ndcb/fs": "^0.7.0",
     "@ndcb/fs-util": "^0.3.0",
     "@ndcb/util": "^0.9.1",
-    "sass": "^1.26.11",
+    "sass": "^1.30.0",
     "pug": "^3.0.0",
-    "lru-cache": "^6.0.0"
+    "lru-cache": "^6.0.0",
+    "remark-frontmatter": "^3.0.0",
+    "remark-parse": "^9.0.0",
+    "remark-math": "^3.0.1",
+    "remark-rehype": "^7.0.0",
+    "rehype-mathjax": "^3.0.0",
+    "rehype-stringify": "^8.0.0",
+    "unified": "^9.2.0"
   },
   "devDependencies": {
     "@types/sass": "^1.16.0",
