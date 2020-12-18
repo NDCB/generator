@@ -4,3 +4,4 @@ import { IO } from "@ndcb/util/lib/io";
 
 export type Processor = (file: File) => IO<Either<Error, Buffer>>;
 
+export type Locals = Record<string, unknown>;

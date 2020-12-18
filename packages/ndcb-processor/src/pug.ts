@@ -11,17 +11,17 @@ import {
 } from "@ndcb/util/lib/either";
 import { IO } from "@ndcb/util/lib/io";
 
-export type Locals = Record<string, unknown>;
+import { Locals } from "./processor";
+import { compositeTransformer, Transformer } from "./html";
 
-export type PugTransformer = (locals: Locals) => Either<Error, Buffer>;
+export type PugTransformer = (locals: Locals) => Either<Error, string>;
 
 export const pugProcessor = (
   template: File,
 ): IO<Either<Error, PugTransformer>> => () =>
   eitherFromThrowable<PugTransformer, Error>(() => {
     const fn = pug.compileFile(absolutePathToString(filePath(template)));
-    return (locals: Locals) =>
-      eitherFromThrowable(() => Buffer.from(fn(locals)));
+    return (locals: Locals) => eitherFromThrowable(() => fn(locals));
   });
 
 export const pugBuildProcessor = (
@@ -39,3 +39,12 @@ export const pugBuildProcessor = (
     return fn;
   };
 };
+
+export const compositePugTemplatingTransformer = (contentsKey = "yield") => (
+  transformers: readonly PugTransformer[],
+): Transformer =>
+  compositeTransformer(
+    transformers.map((transformer) => (contents, locals) =>
+      transformer({ ...locals, [contentsKey]: contents }),
+    ),
+  );
