@@ -15,7 +15,8 @@
   ],
   "dependencies": {
     "@ndcb/util": "^0.9.1",
-    "consola": "^2.15.0"
+    "consola": "^2.15.0",
+    "chalk": "^4.1.0"
   },
   "publishConfig": {
     "access": "public"

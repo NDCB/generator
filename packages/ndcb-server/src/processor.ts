@@ -32,21 +32,19 @@ export type TimedProcessor = (
   pathname: string,
 ) => IO<
   ProcessorResult & {
-    readonly elapsedTime: number; // ms
+    readonly elapsedTime: bigint; // ns
   }
 >;
 
 export const processorAsTimedProcessor = (
   processor: Processor,
 ): TimedProcessor => (pathname: string) => () => {
-  const startTime = process.hrtime(); // [s, ns]
+  const startTime = process.hrtime.bigint();
   const processed = processor(pathname)();
-  const deltaTime = process.hrtime(startTime); // [s, ns]
-  const MS_PER_S = 1_000;
-  const MS_PER_NS = 1 / 1_000_000;
+  const endTime = process.hrtime.bigint();
   return {
     ...processed,
-    elapsedTime: deltaTime[0] * MS_PER_S + deltaTime[1] * MS_PER_NS, // ms
+    elapsedTime: endTime - startTime,
   };
 };
 
