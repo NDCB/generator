@@ -1,9 +1,10 @@
 import { renderSync } from "sass";
 
-import { File, filePath, pathToString } from "@ndcb/fs-util";
+import { extension, File, filePath, pathToString } from "@ndcb/fs-util";
 import { eitherFromThrowable } from "@ndcb/util/lib/either";
 
-import { Processor } from "./processor";
+import { FileProcessor, Processor } from "./processor";
+import { some } from "@ndcb/util/lib/option";
 
 export const sassProcessor: Processor = (file: File) => () =>
   eitherFromThrowable(
@@ -13,3 +14,16 @@ export const sassProcessor: Processor = (file: File) => () =>
         outputStyle: "compressed",
       }).css,
   );
+
+export const sassFileProcessors = (processor: Processor): FileProcessor[] => [
+  {
+    processor,
+    sourceExtension: some(extension(".sass")),
+    destinationExtension: some(extension(".css")),
+  },
+  {
+    processor,
+    sourceExtension: some(extension(".scss")),
+    destinationExtension: some(extension(".css")),
+  },
+];

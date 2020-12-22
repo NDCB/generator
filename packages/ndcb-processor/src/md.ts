@@ -7,6 +7,10 @@ import htmlMathjax = require("rehype-mathjax");
 import htmlStringify = require("rehype-stringify");
 
 import { Either, eitherFromThrowable } from "@ndcb/util/lib/either";
+import { extension } from "@ndcb/fs-util";
+import { some } from "@ndcb/util/lib/option";
+
+import { FileProcessor, Processor } from "./processor";
 
 export const markdownProcessor = (): ((
   contents: string,
@@ -23,3 +27,18 @@ export const markdownProcessor = (): ((
       () => processor.processSync(contents).contents as string,
     );
 };
+
+export const markdownFileProcessors = (
+  processor: Processor,
+): FileProcessor[] => [
+  {
+    processor,
+    sourceExtension: some(extension(".md")),
+    destinationExtension: some(extension(".html")),
+  },
+  {
+    processor,
+    sourceExtension: some(extension(".markdown")),
+    destinationExtension: some(extension(".html")),
+  },
+];
