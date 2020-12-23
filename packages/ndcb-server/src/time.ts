@@ -26,7 +26,7 @@ export const timedEither = <T>(
 const TIME_UNITS = ["ns", "μs", "ms", "s"];
 
 export const formatElapsedTime = (elapsed: bigint): string => {
-  const level = Math.floor(`${elapsed}`.length / 3);
+  const level = Math.floor((`${elapsed}`.length - 1) / 3);
   const exponent = level > TIME_UNITS.length ? TIME_UNITS.length - 1 : level;
   return `${elapsed / 10n ** (3n * BigInt(exponent))} ${TIME_UNITS[exponent]}`;
 };
