@@ -2,9 +2,11 @@ import { lookup } from "mime-types";
 
 import { Configuration } from "@ndcb/config";
 import { Extension, extension, extensionToString } from "@ndcb/fs-util";
-import { Either, mapRight, right } from "@ndcb/util/lib/either";
+import { Either, right } from "@ndcb/util/lib/either";
 import { IO } from "@ndcb/util/lib/io";
 import { Option, join, some } from "@ndcb/util/lib/option";
+
+import { Timed, timedEither } from "./time";
 
 const contentType = (extension: Option<Extension>): string =>
   lookup(join(extensionToString, () => ".txt")(extension)) as string;
@@ -19,27 +21,6 @@ export type ServerProcessorResult = {
 export type ServerProcessor = (
   pathname: string,
 ) => IO<Either<Error, ServerProcessorResult>>;
-
-export type Timed<T> = T & {
-  readonly elapsedTime: bigint; // ns
-};
-
-export const timed = <T>(action: () => T): IO<Timed<T>> => () => {
-  const startTime = process.hrtime.bigint();
-  const processed = action();
-  const endTime = process.hrtime.bigint();
-  return { ...processed, elapsedTime: endTime - startTime };
-};
-
-export const timedEither = <T>(
-  action: () => Either<Error, T>,
-): IO<Either<Error, Timed<T>>> => () => {
-  const result = timed(action)();
-  return mapRight(result, (data) => ({
-    ...data,
-    elapsedTime: result.elapsedTime,
-  }));
-};
 
 export type TimedProcessor = (
   pathname: string,
