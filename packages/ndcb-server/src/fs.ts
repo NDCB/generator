@@ -87,22 +87,22 @@ export const fileSystem = (configuration: Configuration): FileSystem => {
   const { readFile, readTextFile, readDirectory } = fileSystemReaders(
     configuration,
   );
+  const rootedSystemBuilder = rootedFileSystem({
+    readFile,
+    readDirectory,
+    directoryExists,
+    fileExists,
+  });
   const { sources: roots, exclusionRulesFileNames } = configuration.common;
+  const exclusionRuleRetriever = exclusionRuleFromDirectory(
+    readTextFile,
+    readDirectory,
+  )((file) => () => right(exclusionRulesFileNames.includes(fileName(file))));
   return compositeFileSystem([
-    ...map<Directory, FileSystem>(roots, (root) =>
+    ...map(roots, (root) =>
       excludedRootedFileSystem(
-        rootedFileSystem({
-          readFile,
-          readDirectory,
-          directoryExists,
-          fileExists,
-        })(root),
-        exclusionRuleFromDirectory(
-          readTextFile,
-          readDirectory,
-        )((file) => () =>
-          right(exclusionRulesFileNames.includes(fileName(file))),
-        ),
+        rootedSystemBuilder(root),
+        exclusionRuleRetriever,
       ),
     ),
   ]);

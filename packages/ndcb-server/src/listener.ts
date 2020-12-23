@@ -3,9 +3,14 @@ import { parse } from "url";
 
 import { ColorCode, colorize, Logger } from "@ndcb/logger";
 import { join } from "@ndcb/util/lib/option";
-import { find } from "@ndcb/util";
+import { find, matchEitherPattern } from "@ndcb/util";
 
-import { Processor, processorAsTimedProcessor } from "./processor";
+import {
+  ServerProcessor,
+  processorAsTimedProcessor,
+  ServerProcessorResult,
+  Timed,
+} from "./processor";
 
 const requestPathname = (url = "") =>
   (parse(url).pathname ?? "").replace(/^(\/)|(\/)$/g, "");
@@ -19,7 +24,7 @@ export const formatElapsedTime = (elapsed: bigint): string => {
   }`;
 };
 
-const colorizeElapsedTime = (
+const tieredColorizeElapsedTime = (
   colorThresholds: Iterable<{ upper: bigint; color: ColorCode }>,
 ): ((elapsed: bigint) => string) => {
   const thresholds = [...colorThresholds]
@@ -32,37 +37,53 @@ const colorizeElapsedTime = (
     )(find(thresholds, ({ upper }) => elapsed <= upper));
 };
 
+const millisecondsToNanoseconds = (milliseconds: number): bigint =>
+  BigInt(milliseconds) * 1_000_000n;
+
+const colorizeElapsedTime = tieredColorizeElapsedTime([
+  {
+    upper: millisecondsToNanoseconds(50),
+    color: "green",
+  },
+  {
+    upper: millisecondsToNanoseconds(100),
+    color: "yellow",
+  },
+  {
+    upper: millisecondsToNanoseconds(200),
+    color: "red",
+  },
+]);
+
 export const siteFilesServerRequestListener = (
-  requestedPathnameProcessor: Processor,
+  fileServerProcessor: ServerProcessor,
   logger: Logger,
-): RequestListener => (
-  request: IncomingMessage,
-  response: ServerResponse,
-): void => {
-  const pathname = requestPathname(request.url);
-  logger.info(`Processing "${pathname}"`)();
-  try {
-    const {
-      statusCode,
-      contents,
-      encoding,
-      contentType,
-      elapsedTime,
-    } = processorAsTimedProcessor(requestedPathnameProcessor)(pathname)();
-    response
-      .writeHead(statusCode, {
-        "Content-Length": Buffer.byteLength(contents, encoding),
-        "Content-Type": contentType,
-      })
-      .end(contents, () =>
-        logger.trace(
-          `Finished processing "${pathname}" in ${elapsedTime} ms`,
-        )(),
-      );
-  } catch (error) {
-    response.end(() => {
-      logger.error(`Unexpectedly failed to process "${pathname}"`)();
-      logger.info(error.message)();
-    });
-  }
+): RequestListener => {
+  const processor = processorAsTimedProcessor(fileServerProcessor);
+  return (request: IncomingMessage, response: ServerResponse): void => {
+    const pathname = requestPathname(request.url);
+    logger.info(`Processing "${pathname}"`)();
+    matchEitherPattern<Error, Timed<ServerProcessorResult>, void>({
+      right: ({ statusCode, contents, encoding, contentType, elapsedTime }) => {
+        response
+          .writeHead(statusCode, {
+            "Content-Length": Buffer.byteLength(contents, encoding),
+            "Content-Type": contentType,
+          })
+          .end(contents, () =>
+            logger.trace(
+              `Finished processing "${pathname}" in ${colorizeElapsedTime(
+                elapsedTime,
+              )}`,
+            )(),
+          );
+      },
+      left: (error) => {
+        response.end(() => {
+          logger.error(`Unexpectedly failed to process "${pathname}"`)();
+          logger.info(error.message)();
+        });
+      },
+    })(processor(pathname)());
+  };
 };

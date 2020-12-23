@@ -33,7 +33,7 @@ import {
 import { textFileReader } from "@ndcb/fs-text";
 
 import { siteFilesServerRequestListener } from "./listener";
-import { siteFilesProcessor } from "./processor";
+import { serverProcessor } from "./processor";
 
 interface Server {
   readonly start: IO<Either<ServerStartError, void>>;
@@ -55,8 +55,8 @@ const initializeMainServer = (
   const { port, hostname } = configuration.serve.main;
   const server = createServer(
     siteFilesServerRequestListener(
-      siteFilesProcessor(configuration),
-      scoppedLogger("files-server"),
+      serverProcessor(configuration),
+      scoppedLogger("main-server"),
     ),
   );
   return right({
