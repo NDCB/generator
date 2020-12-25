@@ -1,18 +1,21 @@
 import { renderSync } from "sass";
 
 import { extension, File, filePath, pathToString } from "@ndcb/fs-util";
-import { eitherFromThrowable } from "@ndcb/util/lib/either";
+import { eitherFromThrowable, mapRight } from "@ndcb/util/lib/either";
 
 import { FileProcessor, Processor } from "./processor";
 import { some } from "@ndcb/util/lib/option";
 
 export const sassProcessor: Processor = (file: File) => () =>
-  eitherFromThrowable(
-    () =>
-      renderSync({
-        file: pathToString(filePath(file)),
-        outputStyle: "compressed",
-      }).css,
+  mapRight(
+    eitherFromThrowable(
+      () =>
+        renderSync({
+          file: pathToString(filePath(file)),
+          outputStyle: "compressed",
+        }).css,
+    ),
+    (contents) => ({ contents, encoding: "utf8" }),
   );
 
 export const sassFileProcessors = (processor: Processor): FileProcessor[] => [

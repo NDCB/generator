@@ -26,16 +26,6 @@ import {
 
 export type Pathname = RelativePath;
 
-export interface Router {
-  readonly sourcePathname: (
-    query: Pathname,
-  ) => IO<Either<Error, Option<RelativePath>>>;
-  readonly sourcePathname404: (
-    query: Pathname,
-  ) => IO<Either<Error, Option<RelativePath>>>;
-  readonly destinationPathname: (source: Pathname) => Pathname;
-}
-
 export const possibleHtmlSourcePathnames = function* (
   query: Pathname,
 ): Iterable<Pathname> {
@@ -112,13 +102,23 @@ export const destinationPathname = (
     destinationExtension(pathExtension(source)),
   );
 
+export interface PathnameRouter {
+  readonly sourcePathname: (
+    query: Pathname,
+  ) => IO<Either<Error, Option<RelativePath>>>;
+  readonly sourcePathname404: (
+    query: Pathname,
+  ) => IO<Either<Error, Option<RelativePath>>>;
+  readonly destinationPathname: (source: Pathname) => Pathname;
+}
+
 export const router = (
   extensionsMap: {
     source: HashMap<Option<Extension>, Option<Extension>[]>;
     destination: HashMap<Option<Extension>, Option<Extension>>;
   },
   fileExists: (path: RelativePath) => IO<Either<Error, boolean>>,
-): Router => {
+): PathnameRouter => {
   const source = sourcePathname(
     possibleSourcePathnames(extensionsMap.source),
     fileExists,

@@ -2,10 +2,10 @@ import { IncomingMessage, ServerResponse, RequestListener } from "http";
 import { parse } from "url";
 
 import { Logger } from "@ndcb/logger";
-import { matchEitherPattern } from "@ndcb/util";
+import { matchEitherPattern, Timed } from "@ndcb/util";
 
 import { ServerProcessorResult, TimedServerProcessor } from "./processor";
-import { colorizeElapsedTime, Timed } from "./time";
+import { colorizeElapsedTime } from "./time";
 import { relativePath } from "@ndcb/fs-util";
 
 const requestPathname = (url = "") =>

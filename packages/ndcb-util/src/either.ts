@@ -7,7 +7,7 @@ export const right = <T>(value: T): Right<T> => ({ value, tag: "RIGHT" });
 
 export type Left<T> = {
   readonly value: T;
-  readonly tag: "LEFT";
+  readonly tag: "LEFT"; // For discriminated union
 };
 
 export const left = <T>(value: T): Left<T> => ({ value, tag: "LEFT" });

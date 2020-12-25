@@ -1,27 +1,6 @@
 import { colorize } from "@ndcb/logger";
-import { Either, find, IO, mapRight } from "@ndcb/util";
+import { find } from "@ndcb/util";
 import { join } from "@ndcb/util/lib/option";
-
-export type Timed<T> = T & {
-  readonly elapsedTime: bigint; // ns
-};
-
-export const timed = <T>(action: () => T): IO<Timed<T>> => () => {
-  const startTime = process.hrtime.bigint();
-  const processed = action();
-  const endTime = process.hrtime.bigint();
-  return { ...processed, elapsedTime: endTime - startTime };
-};
-
-export const timedEither = <T>(
-  action: () => Either<Error, T>,
-): IO<Either<Error, Timed<T>>> => () => {
-  const result = timed(action)();
-  return mapRight(result, (data) => ({
-    ...data,
-    elapsedTime: result.elapsedTime,
-  }));
-};
 
 const TIME_UNITS = ["ns", "μs", "ms", "s"];
 

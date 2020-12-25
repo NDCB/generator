@@ -1,24 +1,18 @@
 import {
   Extension,
   extensionEquals,
-  extensionToString,
   File,
   fileExtension,
   hashExtension,
 } from "@ndcb/fs-util/lib";
 import { find, hashMap, HashMap, inversedHashMap } from "@ndcb/util";
-import { Either, left } from "@ndcb/util/lib/either";
+import { Either } from "@ndcb/util/lib/either";
 import { IO } from "@ndcb/util/lib/io";
-import {
-  hashOption,
-  isSome,
-  join,
-  Option,
-  optionEquals,
-  optionValue,
-} from "@ndcb/util/lib/option";
+import { hashOption, join, Option, optionEquals } from "@ndcb/util/lib/option";
 
-export type Processor = (file: File) => IO<Either<Error, Buffer>>;
+export type Processor = (
+  file: File,
+) => IO<Either<Error, { contents: Buffer; encoding: BufferEncoding }>>;
 
 export type Locals = Record<string, unknown>;
 
@@ -50,19 +44,16 @@ export const fileProcessorExtensionMaps = (
 
 export const compositeFileProcessor = (
   processors: readonly FileProcessor[],
+  fallbackProcessor: Processor,
 ): Processor => (file: File) => () => {
   const extension = fileExtension(file);
   const fileExtensionEquals = optionEquals(extensionEquals);
-  return join<FileProcessor, Either<Error, Buffer>>(
+  return join<
+    FileProcessor,
+    Either<Error, { contents: Buffer; encoding: BufferEncoding }>
+  >(
     (processor) => processor.processor(file)(),
-    () =>
-      left(
-        new Error(
-          `Unhandled source file extension "${
-            isSome(extension) ? extensionToString(optionValue(extension)) : ""
-          }"`,
-        ),
-      ),
+    () => fallbackProcessor(file)(),
   )(
     find(processors, (processor) =>
       fileExtensionEquals(extension, processor.sourceExtension),

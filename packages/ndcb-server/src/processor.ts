@@ -11,9 +11,9 @@ import {
 import { Either, mapRight, monad, right } from "@ndcb/util/lib/either";
 import { IO } from "@ndcb/util/lib/io";
 import { Option, map, join, some, none } from "@ndcb/util/lib/option";
+import { timedEither, Timed } from "@ndcb/util";
 
-import { Pathname, Router } from "./router";
-import { Timed, timedEither } from "./time";
+import { Pathname, PathnameRouter } from "./router";
 
 const contentType = (extension: Option<Extension>): string =>
   lookup(join(extensionToString, () => ".txt")(extension)) as string;
@@ -51,8 +51,8 @@ export type FileRouter = (
   >
 >;
 
-export const routedFile = (
-  router: Router,
+export const fileRouter = (
+  router: PathnameRouter,
   correspondingFile: (query: Pathname) => IO<Either<Error, Option<File>>>,
 ): FileRouter => (query: Pathname) => () =>
   monad(router.sourcePathname(query)())
