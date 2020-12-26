@@ -105,10 +105,10 @@ export const destinationPathname = (
 export interface PathnameRouter {
   readonly sourcePathname: (
     query: Pathname,
-  ) => IO<Either<Error, Option<RelativePath>>>;
+  ) => IO<Either<Error, Option<Pathname>>>;
   readonly sourcePathname404: (
     query: Pathname,
-  ) => IO<Either<Error, Option<RelativePath>>>;
+  ) => IO<Either<Error, Option<Pathname>>>;
   readonly destinationPathname: (source: Pathname) => Pathname;
 }
 
