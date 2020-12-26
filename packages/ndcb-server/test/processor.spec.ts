@@ -9,11 +9,13 @@ import { Pathname, PathnameRouter } from "../src/router";
 
 describe("fileRouter", () => {
   for (const {
-    element: { router, correspondingFile, cases },
+    element: { routerSupplier, correspondingFileSupplier, cases },
     index,
   } of enumerate<{
-    router: PathnameRouter;
-    correspondingFile: (query: Pathname) => IO<Either<Error, Option<File>>>;
+    routerSupplier: () => PathnameRouter;
+    correspondingFileSupplier: () => (
+      query: Pathname,
+    ) => IO<Either<Error, Option<File>>>;
     cases: Array<{
       query: Pathname;
       expected: Either<
@@ -23,7 +25,10 @@ describe("fileRouter", () => {
       description?: string;
     }>;
   }>(require("./fixtures/fileRouter"), 1)) {
-    const routedFile = fileRouter(router, correspondingFile);
+    const routedFile = fileRouter(
+      routerSupplier(),
+      correspondingFileSupplier(),
+    );
     for (const { query, expected, description } of cases) {
       test(description ?? `test #${index}`, () => {
         expect(routedFile(query)()).toStrictEqual(expected);
