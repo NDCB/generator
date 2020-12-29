@@ -3,13 +3,17 @@ import { parse } from "url";
 
 import { Logger } from "@ndcb/logger";
 import { matchEitherPattern, Timed } from "@ndcb/util";
+import { relativePath } from "@ndcb/fs-util";
 
 import { ServerProcessorResult, TimedServerProcessor } from "./processor";
 import { colorizeElapsedTime } from "./time";
-import { relativePath } from "@ndcb/fs-util";
+import { Pathname, pathnameToString } from "./router";
 
-const requestPathname = (url = "") =>
-  (parse(url).pathname ?? "").replace(/^(\/)|(\/)$/g, "");
+const requestPathname = (url: string) =>
+  relativePath((parse(url).pathname ?? "").replace(/^(\/)|(\/)$/g, ""));
+
+const incomingMessagePathname = (request: IncomingMessage): Pathname =>
+  requestPathname(request.url ?? "");
 
 export const siteFilesServerRequestListener = (
   processor: TimedServerProcessor,
@@ -18,8 +22,8 @@ export const siteFilesServerRequestListener = (
   request: IncomingMessage,
   response: ServerResponse,
 ): void => {
-  const pathname = requestPathname(request.url);
-  logger.info(`Processing "${pathname}"`)();
+  const pathname = incomingMessagePathname(request);
+  logger.info(`Processing "${pathnameToString(pathname)}"`)();
   matchEitherPattern<Error, Timed<ServerProcessorResult>, void>({
     right: ({ statusCode, contents, encoding, contentType, elapsedTime }) => {
       response
@@ -29,17 +33,19 @@ export const siteFilesServerRequestListener = (
         })
         .end(contents, () =>
           logger.trace(
-            `Finished processing "${pathname}" in ${colorizeElapsedTime(
-              elapsedTime,
-            )}`,
+            `Finished processing "${pathnameToString(
+              pathname,
+            )}" in ${colorizeElapsedTime(elapsedTime)}`,
           )(),
         );
     },
     left: (error) => {
       response.writeHead(500).end(error.message, () => {
-        logger.error(`Unexpectedly failed to process "${pathname}"`)();
+        logger.error(
+          `Unexpectedly failed to process "${pathnameToString(pathname)}"`,
+        )();
         logger.info(error.message)();
       });
     },
-  })(processor(relativePath(pathname))());
+  })(processor(pathname)());
 };

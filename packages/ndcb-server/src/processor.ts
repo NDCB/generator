@@ -107,9 +107,7 @@ export const fileRouter = (
 
 export const processor = (
   router: FileRouter,
-  processor: (
-    file: File,
-  ) => IO<Either<Error, { contents: Buffer; encoding: BufferEncoding }>>,
+  processor: Processor,
   generator404: (query: Pathname) => IO<Either<Error, ServerProcessorResult>>,
 ): ServerProcessor => (pathname: Pathname) => () =>
   monad(router(pathname)())

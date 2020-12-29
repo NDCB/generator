@@ -9,6 +9,7 @@ import {
   relativePathWithExtensions,
   pathHasExtension,
   upwardRelativePaths,
+  relativePathToString,
 } from "@ndcb/fs-util";
 import { Either, mapRight } from "@ndcb/util/lib/either";
 import { map, flatMap } from "@ndcb/util/lib/iterable";
@@ -25,6 +26,8 @@ import {
 } from "@ndcb/util/lib/option";
 
 export type Pathname = RelativePath;
+
+export const pathnameToString = relativePathToString;
 
 export const possibleHtmlSourcePathnames = function* (
   query: Pathname,

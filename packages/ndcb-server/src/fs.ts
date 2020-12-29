@@ -17,8 +17,8 @@ import {
   directoryReader,
   fileName,
   directoryExists,
-  fileExists,
   TextFileReader,
+  FileExistenceTester,
 } from "@ndcb/fs-util";
 import {
   cachingFileReader,
@@ -49,7 +49,7 @@ const logReadDirectory = (
   return result;
 };
 
-const fileSystemReaders = (
+export const fileSystemReaders = (
   configuration: Configuration,
 ): {
   readFile: FileReader;
@@ -83,10 +83,13 @@ const fileSystemReaders = (
   return { readFile, readTextFile, readDirectory };
 };
 
-export const fileSystem = (configuration: Configuration): FileSystem => {
-  const { readFile, readTextFile, readDirectory } = fileSystemReaders(
-    configuration,
-  );
+export const fileSystem = (
+  configuration: Configuration,
+  readFile: FileReader,
+  readTextFile: TextFileReader,
+  readDirectory: DirectoryReader,
+  fileExists: FileExistenceTester,
+): FileSystem => {
   const rootedSystemBuilder = rootedFileSystem({
     readFile,
     readDirectory,
