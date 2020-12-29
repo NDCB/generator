@@ -14,18 +14,18 @@ export const tieredColorizeElapsedTime = (
   formatter: (time: bigint) => string,
 ) => (
   colorThresholds: Iterable<{
-    upper: bigint;
+    lower: bigint;
     colorize: (token: string) => string;
   }>,
 ): ((elapsed: bigint) => string) => {
-  const thresholds = [...colorThresholds].sort(({ upper: a }, { upper: b }) =>
-    a < b ? -1 : a > b ? 1 : 0,
+  const thresholds = [...colorThresholds].sort(({ lower: a }, { lower: b }) =>
+    a < b ? 1 : a > b ? -1 : 0,
   );
   return (elapsed: bigint): string =>
-    join<{ upper: bigint; colorize: (token: string) => string }, string>(
+    join<{ lower: bigint; colorize: (token: string) => string }, string>(
       ({ colorize }) => colorize(formatter(elapsed)),
       () => formatter(elapsed),
-    )(find(thresholds, ({ upper }) => elapsed <= upper));
+    )(find(thresholds, ({ lower }) => elapsed >= lower));
 };
 
 const millisecondsToNanoseconds = (milliseconds: number): bigint =>
@@ -34,15 +34,15 @@ const millisecondsToNanoseconds = (milliseconds: number): bigint =>
 export const colorizeElapsedTime = tieredColorizeElapsedTime(formatElapsedTime)(
   [
     {
-      upper: millisecondsToNanoseconds(50),
+      lower: millisecondsToNanoseconds(0),
       colorize: colorize("green"),
     },
     {
-      upper: millisecondsToNanoseconds(100),
+      lower: millisecondsToNanoseconds(100),
       colorize: colorize("yellow"),
     },
     {
-      upper: millisecondsToNanoseconds(200),
+      lower: millisecondsToNanoseconds(300),
       colorize: colorize("red"),
     },
   ],
