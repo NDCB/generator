@@ -2,9 +2,9 @@ import { renderSync } from "sass";
 
 import { extension, File, filePath, pathToString } from "@ndcb/fs-util";
 import { eitherFromThrowable, mapRight } from "@ndcb/util/lib/either";
+import { some } from "@ndcb/util/lib/option";
 
 import { FileProcessor, Processor } from "./processor";
-import { some } from "@ndcb/util/lib/option";
 
 export const sassProcessor: Processor = (file: File) => () =>
   mapRight(

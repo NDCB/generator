@@ -42,12 +42,13 @@ export const fileProcessorExtensionMaps = (
   };
 };
 
+const fileExtensionEquals = optionEquals(extensionEquals);
+
 export const compositeFileProcessor = (
   processors: readonly FileProcessor[],
   fallbackProcessor: Processor,
 ): Processor => (file: File) => () => {
   const extension = fileExtension(file);
-  const fileExtensionEquals = optionEquals(extensionEquals);
   return join<
     FileProcessor,
     Either<Error, { contents: Buffer; encoding: BufferEncoding }>

@@ -16,7 +16,7 @@ export const markdownProcessor = (): ((
   contents: string,
 ) => Either<Error, string>) => {
   const processor = unified()
-    .use(markdown, { commonmark: true } as Record<string, unknown>)
+    .use(markdown)
     .use(markdownFrontmatter)
     .use(markdownMath)
     .use(markdownToHtml)
