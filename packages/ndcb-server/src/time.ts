@@ -1,3 +1,4 @@
+import { Configuration } from "@ndcb/config";
 import { colorize } from "@ndcb/logger";
 import { find } from "@ndcb/util";
 import { join } from "@ndcb/util/lib/option";
@@ -28,22 +29,12 @@ export const tieredColorizeElapsedTime = (
     )(find(thresholds, ({ lower }) => elapsed >= lower));
 };
 
-const millisecondsToNanoseconds = (milliseconds: number): bigint =>
-  BigInt(milliseconds) * 1_000_000n;
-
-export const colorizeElapsedTime = tieredColorizeElapsedTime(formatElapsedTime)(
-  [
-    {
-      lower: millisecondsToNanoseconds(0),
-      colorize: colorize("green"),
-    },
-    {
-      lower: millisecondsToNanoseconds(100),
-      colorize: colorize("yellow"),
-    },
-    {
-      lower: millisecondsToNanoseconds(300),
-      colorize: colorize("red"),
-    },
-  ],
-);
+export const elapsedTimeFormatter = (
+  configuration: Configuration,
+): ((elapsedTime: bigint) => string) =>
+  tieredColorizeElapsedTime(formatElapsedTime)(
+    configuration.common.log.processingTime.map(({ lower, color }) => ({
+      lower,
+      colorize: colorize(color),
+    })),
+  );

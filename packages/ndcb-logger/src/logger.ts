@@ -3,6 +3,7 @@ const consola = require("consola");
 import { IO } from "@ndcb/util";
 
 export type MessageLogger = (message: string) => IO<void>;
+export type ErrorLogger = MessageLogger & ((error: Error) => IO<void>);
 
 const messageLogger = (logger: (message: string) => void): MessageLogger => (
   message: string,
@@ -10,7 +11,7 @@ const messageLogger = (logger: (message: string) => void): MessageLogger => (
 
 export interface Logger {
   readonly fatal: MessageLogger;
-  readonly error: MessageLogger;
+  readonly error: ErrorLogger;
   readonly warn: MessageLogger;
   readonly log: MessageLogger;
   readonly info: MessageLogger;
@@ -36,7 +37,7 @@ export const scoppedLogger = (scope: string): Logger => {
   } = consola.create({ scope, level: Infinity });
   return {
     fatal: messageLogger(fatal),
-    error: messageLogger(error),
+    error: (message) => () => error(message),
     warn: messageLogger(warn),
     log: messageLogger(log),
     info: messageLogger(info),

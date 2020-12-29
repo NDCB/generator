@@ -34,6 +34,8 @@ import { textFileReader } from "@ndcb/fs-text";
 
 import { siteFilesServerRequestListener } from "./listener";
 import { processorAsTimedProcessor, serverProcessor } from "./processor";
+import { Pathname, pathnameToString } from "./router";
+import { elapsedTimeFormatter } from "./time";
 
 interface Server {
   readonly start: IO<Either<ServerStartError, void>>;
@@ -52,13 +54,31 @@ interface ServerStartError extends Error {
 const initializeMainServer = (
   configuration: Configuration,
 ): Either<ServerInitializationError, Server> => {
+  const logger = scoppedLogger("main-server");
+  const formatElapsedTime = elapsedTimeFormatter(configuration);
   const { port, hostname } = configuration.serve.main;
   const server = createServer(
     siteFilesServerRequestListener(
       processorAsTimedProcessor(serverProcessor(configuration)),
-      scoppedLogger("main-server"),
+      (pathname) => logger.info(`Processing "${pathnameToString(pathname)}"`),
+      (pathname: Pathname, elapsedTime: bigint) =>
+        logger.trace(
+          `Finished processing "${pathnameToString(
+            pathname,
+          )}" in ${formatElapsedTime(elapsedTime)}`,
+        ),
+      (error: Error, pathname: Pathname) => () => {
+        logger.error({
+          name: "",
+          message: `Unexpectedly failed to process "${pathnameToString(
+            pathname,
+          )}". ${error.message}`,
+          stack: error.stack,
+        })();
+      },
     ),
   );
+
   return right({
     start: () =>
       mapLeft(

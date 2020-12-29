@@ -14,6 +14,7 @@
     "@ndcb/data": "^0.1.1",
     "@ndcb/fs-util": "^0.3.0",
     "@ndcb/util": "^0.9.1",
+    "@ndcb/logger": "^0.1.1",
     "joi": "^17.3.0"
   },
   "publishConfig": {

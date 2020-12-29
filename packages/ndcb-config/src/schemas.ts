@@ -10,6 +10,7 @@ import {
 import { orderedPairs, filter, find } from "@ndcb/util/lib/iterable";
 import { Either, left, right } from "@ndcb/util/lib/either";
 import { isSome, optionValue } from "@ndcb/util/lib/option";
+import { ColorCode } from "@ndcb/logger";
 
 export const fileSchema = Joi.string().trim().custom(normalizedFile);
 
@@ -30,6 +31,23 @@ export const bufferEncodingSchema = Joi.string()
     "hex",
   )
   .default("utf8");
+
+export const colorCodeSchema = Joi.string()
+  .trim()
+  .equal(
+    "black",
+    "red",
+    "green",
+    "yellow",
+    "blue",
+    "magenta",
+    "cyan",
+    "white",
+    "grey",
+  );
+
+const millisecondsToNanoseconds = (milliseconds: number): bigint =>
+  BigInt(milliseconds) * 1_000_000n;
 
 export const mutuallyDisjointSourceDirectoriesSchema = Joi.array()
   .items(directorySchema)
@@ -64,6 +82,7 @@ export interface Configuration {
     readonly log: {
       readonly filesRead: boolean;
       readonly directoriesRead: boolean;
+      readonly processingTime: Array<{ lower: bigint; color: ColorCode }>;
     };
     readonly [key: string]: unknown;
   };
@@ -101,6 +120,32 @@ export const commonConfigurationSchema = Joi.object({
   log: Joi.object({
     filesRead: Joi.boolean().default(false),
     directoriesRead: Joi.boolean().default(false),
+    processingTime: Joi.array()
+      .items(
+        Joi.object({
+          lower: Joi.number().min(0).custom(millisecondsToNanoseconds),
+          color: colorCodeSchema,
+        }),
+      )
+      .default(
+        [
+          {
+            lower: 0,
+            color: "green",
+          },
+          {
+            lower: 500,
+            color: "yellow",
+          },
+          {
+            lower: 1000,
+            color: "red",
+          },
+        ].map(({ lower, color }) => ({
+          lower: millisecondsToNanoseconds(lower),
+          color,
+        })),
+      ),
   }).default(),
 })
   .unknown(true)
