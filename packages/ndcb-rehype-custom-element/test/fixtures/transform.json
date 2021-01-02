@@ -1,0 +1,80 @@
+[
+  {
+    "input": "./one-element.md",
+    "elements": [
+      {
+        "tag": "theorem",
+        "pugTemplate": "./theorem.pug"
+      }
+    ],
+    "expected": "./one-element.html"
+  },
+  {
+    "input": "./many-elements.md",
+    "elements": [
+      {
+        "tag": "theorem",
+        "pugTemplate": "./theorem.pug"
+      }
+    ],
+    "expected": "./many-elements.html"
+  },
+  {
+    "input": "./one-element-with-contents.md",
+    "elements": [
+      {
+        "tag": "theorem",
+        "pugTemplate": "./theorem.pug"
+      }
+    ],
+    "expected": "./one-element-with-contents.html"
+  },
+  {
+    "input": "./one-element-with-contents-and-attributes.md",
+    "elements": [
+      {
+        "tag": "theorem",
+        "pugTemplate": "./theorem.pug"
+      }
+    ],
+    "expected": "./one-element-with-contents-and-attributes.html"
+  },
+  {
+    "input": "./root.md",
+    "elements": [
+      {
+        "tag": "proof",
+        "pugTemplate": "./proof.pug"
+      }
+    ],
+    "expected": "./root.html"
+  },
+  {
+    "input": "./nested.md",
+    "elements": [
+      {
+        "tag": "theorem",
+        "pugTemplate": "./theorem.pug"
+      },
+      {
+        "tag": "nested",
+        "pugTemplate": "./theorem.pug"
+      }
+    ],
+    "expected": "./nested.html"
+  },
+  {
+    "input": "./nested.md",
+    "elements": [
+      {
+        "tag": "nested",
+        "pugTemplate": "./theorem.pug"
+      },
+      {
+        "tag": "theorem",
+        "pugTemplate": "./theorem.pug"
+      }
+    ],
+    "expected": "./nested.html"
+  }
+]
