@@ -1,4 +1,4 @@
-import * as fromParse5 from "hast-util-from-parse5";
+import * as hastFromParse5 from "hast-util-from-parse5";
 import * as parse5 from "parse5";
 import * as hastToHtml from "hast-util-to-html";
 import * as visit from "unist-util-visit";
@@ -12,41 +12,31 @@ type HastNode = Node & {
   properties: Record<string, unknown>;
 };
 
-export type HtmlSupplier = (locals: Record<string, unknown>) => string;
+export type HtmlSupplier = (
+  innerHtml: string,
+  properties: Record<string, unknown>,
+) => string;
 
-export type HastNodeTransformer = {
+export type HtmlNodeTransformer = {
   tagName: string;
   transformer: HtmlSupplier;
 };
 
-export default ({
-  locals,
-  contentsKey,
-  transformers,
-}: Partial<{
-  locals: Record<string, unknown>;
-  contentsKey: string;
-  transformers: HastNodeTransformer[];
-  parserOptions;
-  stringifyOptions;
-}> = {}) => (tree: Node): void => {
+export interface CustomElementPluginOptions {
+  transformers: HtmlNodeTransformer[];
+}
+
+export default ({ transformers }: Partial<CustomElementPluginOptions> = {}) => (
+  tree: Node,
+): void => {
   for (const { tagName, transformer } of transformers ?? [])
     visit(tree, is.convert(tagName), (node, index, parent) => {
-      (parent as HastNode).children.splice(
-        index,
-        1,
-        fromParse5(
-          parse5.parseFragment(
-            transformer({
-              ...(locals ?? {}),
-              ...((node as HastNode).properties ?? {}),
-              [contentsKey ?? "yield"]: hastToHtml(
-                (node as HastNode).children ?? [],
-              ),
-            }),
-          ),
-        ),
+      const innerHtml = hastToHtml((node as HastNode).children ?? []);
+      const { properties } = (node as HastNode) ?? {};
+      const transformedNode = hastFromParse5(
+        parse5.parseFragment(transformer(innerHtml, properties)),
       );
+      (parent as HastNode).children[index] = transformedNode;
       return [visit.CONTINUE, index];
     });
 };

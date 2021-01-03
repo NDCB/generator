@@ -76,5 +76,15 @@
       }
     ],
     "expected": "./nested.html"
+  },
+  {
+    "input": "./inline.md",
+    "elements": [
+      {
+        "tag": "theorem",
+        "pugTemplate": "./theorem.pug"
+      }
+    ],
+    "expected": "./inline.html"
   }
 ]

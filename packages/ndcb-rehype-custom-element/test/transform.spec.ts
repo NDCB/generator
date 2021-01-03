@@ -38,7 +38,14 @@ describe("rehype-custom-element", () => {
       .use(customElements, {
         transformers: elements.map(({ tag, pugTemplate }) => ({
           tagName: tag,
-          transformer: pug.compileFile(fixturePath(pugTemplate)),
+          transformer: (() => {
+            const process = pug.compileFile(fixturePath(pugTemplate));
+            return (innerHtml, properties) =>
+              process({
+                ...properties,
+                yield: innerHtml,
+              });
+          })(),
         })),
       })
       .use(htmlStringify);
