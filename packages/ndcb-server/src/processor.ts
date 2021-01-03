@@ -3,17 +3,28 @@ import { lookup } from "mime-types";
 import { Configuration } from "@ndcb/config";
 import {
   Extension,
-  extension,
   extensionToString,
   File,
+  fileExists,
   pathExtension,
 } from "@ndcb/fs-util";
-import { Either, mapRight, monad, right } from "@ndcb/util/lib/either";
+import { Either, left, mapRight, monad, right } from "@ndcb/util/lib/either";
 import { IO } from "@ndcb/util/lib/io";
 import { Option, map, join, some, none } from "@ndcb/util/lib/option";
 import { timedEither, Timed } from "@ndcb/util";
+import {
+  compositeFileProcessor,
+  FileProcessor,
+  fileProcessorExtensionMaps,
+  markdownFileProcessors,
+  markdownProcessor,
+  Processor,
+  sassFileProcessors,
+  sassProcessor,
+} from "@ndcb/processor";
 
-import { Pathname, PathnameRouter } from "./router";
+import { Pathname, PathnameRouter, router } from "./router";
+import { fileSystemReaders, fileSystem } from "./fs";
 
 const contentType = (extension: Option<Extension>): string =>
   lookup(join(extensionToString, () => ".txt")(extension)) as string;
@@ -125,17 +136,39 @@ export const processor = (
     )
     .toEither();
 
-const placeholderProcessor = (
+export const serverProcessor = (
   configuration: Configuration,
 ): ServerProcessor => {
-  return (pathname) => () => {
-    return right({
-      statusCode: 200,
-      contents: Buffer.from(""),
-      encoding: "utf8",
-      contentType: contentType(some(extension(".html"))),
-    });
-  };
+  const { readFile, readTextFile, readDirectory } = fileSystemReaders(
+    configuration,
+  );
+  const fs = fileSystem(
+    configuration,
+    readFile,
+    readTextFile,
+    readDirectory,
+    fileExists,
+  );
+  const processors: FileProcessor[] = [
+    ...markdownFileProcessors((file) => () =>
+      monad(readFile(file)())
+        .chainRight((contents) => markdownProcessor()(contents.toString()))
+        .mapRight<{ contents: Buffer; encoding: BufferEncoding }>(
+          (contents) => ({
+            contents: Buffer.from(contents),
+            encoding: "utf8",
+          }),
+        )
+        .toEither(),
+    ),
+    ...sassFileProcessors(sassProcessor),
+  ];
+  return processor(
+    fileRouter(
+      router(fileProcessorExtensionMaps(processors), fs.fileExists),
+      fs.file,
+    ),
+    compositeFileProcessor(processors, () => () => left(new Error())),
+    () => () => left(new Error()),
+  );
 };
-
-export const serverProcessor = placeholderProcessor;
