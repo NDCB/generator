@@ -56,7 +56,7 @@
   "jest": {
     "verbose": true,
     "testEnvironment": "node",
-    "rootDir": "packages",
+    "rootDir": "./packages",
     "coverageDirectory": "./../coverage",
     "transform": {
       "^.+\\.ts?$": "ts-jest"

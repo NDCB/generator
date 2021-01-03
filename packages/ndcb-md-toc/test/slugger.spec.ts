@@ -1,6 +1,6 @@
-import unified = require("unified");
-import markdown = require("remark-parse");
-import frontmatter = require("remark-frontmatter");
+import * as unified from "unified";
+import * as markdown from "remark-parse";
+import * as frontmatter from "remark-frontmatter";
 
 import {
   normalizedDirectory,
