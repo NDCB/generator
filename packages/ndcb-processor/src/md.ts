@@ -4,12 +4,12 @@ import * as markdownFrontmatter from "remark-frontmatter";
 import * as markdownMath from "remark-math";
 import * as markdownToHtml from "remark-rehype";
 import * as htmlRaw from "rehype-raw";
-import * as htmlMathjax from "rehype-mathjax";
 import * as htmlSlug from "rehype-slug";
 import * as htmlHeadings from "rehype-autolink-headings";
 import * as htmlCode from "rehype-highlight";
 import * as htmlStringify from "rehype-stringify";
 
+import htmlMathjax from "@ndcb/rehype-mathjax";
 import htmlCustomElement, {
   CustomElementPluginOptions,
 } from "@ndcb/rehype-custom-element";
@@ -31,10 +31,7 @@ export const markdownProcessor = ({
   const processor = unified()
     .use(markdown)
     .use(markdownFrontmatter, ["yaml", "toml"])
-    .use(
-      markdownMath as unified.Plugin<[Record<string, unknown>]>,
-      mathjax ?? {},
-    )
+    .use(markdownMath)
     .use(markdownToHtml, {
       allowDangerousHtml: true,
     })
@@ -47,7 +44,9 @@ export const markdownProcessor = ({
     .use(htmlStringify);
   return (contents: string) =>
     eitherFromThrowable(
-      () => processor.processSync(contents).contents as string,
+      () =>
+        processor.processSync({ contents, data: { mathjax } })
+          .contents as string,
     );
 };
 
