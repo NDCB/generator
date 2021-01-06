@@ -1,4 +1,5 @@
 import { lookup } from "mime-types";
+import { detect } from "jschardet";
 
 import { Configuration } from "@ndcb/config";
 import {
@@ -156,7 +157,7 @@ export const serverProcessor = (
         .mapRight<{ contents: Buffer; encoding: BufferEncoding }>(
           (contents) => ({
             contents: Buffer.from(contents),
-            encoding: "utf8",
+            encoding: detect(contents).encoding as BufferEncoding,
           }),
         )
         .toEither(),
@@ -168,7 +169,12 @@ export const serverProcessor = (
       router(fileProcessorExtensionMaps(processors), fs.fileExists),
       fs.file,
     ),
-    compositeFileProcessor(processors, () => () => left(new Error())),
-    () => () => left(new Error()),
+    compositeFileProcessor(processors, (file) => () =>
+      mapRight(readFile(file)(), (contents) => ({
+        contents,
+        encoding: detect(contents).encoding as BufferEncoding,
+      })),
+    ),
+    () => () => left(new Error()), // TODO: No routed 404
   );
 };

@@ -21,7 +21,8 @@
     "@ndcb/util": "^0.9.1",
     "@ndcb/processor": "^0.0.0",
     "browser-sync": "^2.26.13",
-    "mime-types": "^2.1.27"
+    "mime-types": "^2.1.27",
+    "jschardet": "^2.2.1"
   },
   "devDependencies": {
     "@types/mime-types": "^2.1.0",
