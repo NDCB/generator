@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import "source-map-support/register";
+
 import { Command } from "commander";
 
 import { serve } from "@ndcb/server";

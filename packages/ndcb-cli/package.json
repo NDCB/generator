@@ -16,7 +16,8 @@
   "dependencies": {
     "@ndcb/builder": "^0.1.1",
     "@ndcb/server": "^0.2.0",
-    "commander": "^5.1.0"
+    "commander": "^5.1.0",
+    "source-map-support": "^0.5.19"
   },
   "publishConfig": {
     "access": "public"
