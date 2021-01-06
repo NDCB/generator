@@ -1,3 +1,5 @@
+import deepMerge from "lodash.defaultsdeep";
+
 import { JSDOM } from "jsdom";
 
 import { jsdomAdaptor } from "mathjax-full/js/adaptors/jsdomAdaptor";
@@ -10,57 +12,81 @@ import { AllPackages } from "mathjax-full/js/input/tex/AllPackages";
 import { CHTML } from "mathjax-full/js/output/chtml";
 import { SVG } from "mathjax-full/js/output/svg";
 
-import { mathjax } from "mathjax-full/js/mathjax";
+import { mathjax as MathJax } from "mathjax-full/js/mathjax";
 import { RegisterHTMLHandler } from "mathjax-full/js/handlers/html";
+import { AssistiveMmlHandler } from "mathjax-full/js/a11y/assistive-mml";
 
 import * as unified from "unified";
-import * as visit from "unist-util-visit";
-import * as hastFromDom from "hast-util-from-dom";
-import * as hastToText from "hast-util-to-text";
+import visit from "unist-util-visit";
+import hastFromDom from "hast-util-from-dom";
+import hastToText from "hast-util-to-text";
 
 // eslint-disable-next-line import/no-unresolved
 import { Node } from "unist";
 
 export type InputJaxType = "MathML" | "AsciiMath" | "TeX";
-export type OutputJaxType = "CommonHTML" | "SVG";
 
 const inputJaxBuilderSupplier = (type: InputJaxType = "TeX") => {
   switch (type) {
     case "AsciiMath":
-      return (mathjax) => new AsciiMath(mathjax?.asciimath);
+      return (mathjaxOptions) => new AsciiMath(mathjaxOptions?.asciimath);
     case "MathML":
-      return (mathjax) => new MathML(mathjax?.mml);
+      return (mathjaxOptions) => new MathML(mathjaxOptions?.mml);
     case "TeX":
-      return (mathjax) =>
+      return (mathjaxOptions) =>
         new TeX({
           packages: AllPackages,
-          ...mathjax?.tex,
+          ...mathjaxOptions?.tex,
         });
+    default:
+      throw new Error(`Unrecognized MathJax input format type "${type}".`);
   }
 };
+
+export type OutputJaxType = "CommonHTML" | "SVG";
 
 const outputJaxBuilderSupplier = (type: OutputJaxType = "CommonHTML") => {
   switch (type) {
     case "SVG":
-      return (mathjax) => new SVG(mathjax?.svg);
+      return (mathjaxOptions) => new SVG(mathjaxOptions?.svg);
     case "CommonHTML":
-      return (mathjax) => new CHTML(mathjax?.chtml);
+      return (mathjaxOptions) =>
+        new CHTML({ fontURL: "/fonts", ...mathjaxOptions?.chtml });
+    default:
+      throw new Error(`Unrecognized MathJax output format type "${type}".`);
   }
 };
 
+export interface RehypeMathJaxOptions {
+  input: InputJaxType;
+  output: OutputJaxType;
+  mathjax: unknown;
+  a11y: Partial<{
+    assistiveMml: boolean;
+  }>;
+}
+
 export const createPlugin: unified.Attacher<
-  [Partial<{ input: InputJaxType; output: OutputJaxType; appendCSS: boolean }>?]
-> = ({ input, output, appendCSS } = {}): unified.Transformer => {
+  [Partial<RehypeMathJaxOptions>?]
+> = ({ input, output, mathjax, a11y } = {}): unified.Transformer => {
+  const adaptor = jsdomAdaptor(JSDOM);
+  const handler = RegisterHTMLHandler(adaptor); // Handler is never unregistered
+  if (a11y?.assistiveMml) AssistiveMmlHandler(handler);
+
   const createInputJax = inputJaxBuilderSupplier(input);
   const createOutputJax = outputJaxBuilderSupplier(output);
-  return (tree, { data }): void => {
-    const input = createInputJax(data);
-    const output = createOutputJax(data);
 
-    const adaptor = jsdomAdaptor(JSDOM);
-    const handler = RegisterHTMLHandler(adaptor);
+  return (tree, { data }) => {
+    const options = deepMerge(
+      {},
+      (data as Record<string, unknown>)?.mathjax,
+      mathjax,
+    );
 
-    const document = mathjax.document("", {
+    const input = createInputJax(options);
+    const output = createOutputJax(options);
+
+    const document = MathJax.document("", {
       InputJax: input,
       OutputJax: output,
     });
@@ -87,7 +113,7 @@ export const createPlugin: unified.Attacher<
       return visit.SKIP;
     });
 
-    if (found && appendCSS)
+    if (found)
       (context.children as Node[]).push({
         type: "element",
         tagName: "style",
@@ -101,7 +127,5 @@ export const createPlugin: unified.Attacher<
           },
         ],
       });
-
-    mathjax.handlers.unregister(handler);
   };
 };

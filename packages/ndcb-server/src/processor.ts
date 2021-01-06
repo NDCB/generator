@@ -150,10 +150,11 @@ export const serverProcessor = (
     readDirectory,
     fileExists,
   );
+  const processMarkdown = markdownProcessor();
   const processors: FileProcessor[] = [
     ...markdownFileProcessors((file) => () =>
       monad(readFile(file)())
-        .chainRight((contents) => markdownProcessor()(contents.toString()))
+        .chainRight((contents) => processMarkdown(contents.toString(), {}))
         .mapRight<{ contents: Buffer; encoding: BufferEncoding }>(
           (contents) => ({
             contents: Buffer.from(contents),

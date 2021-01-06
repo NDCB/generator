@@ -1,4 +1,4 @@
-import customElements from "./transform";
-export default customElements;
+import { createPlugin } from "./transform";
+export default createPlugin;
 
 export * from "./transform";

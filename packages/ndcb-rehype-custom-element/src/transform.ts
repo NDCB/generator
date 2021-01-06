@@ -1,3 +1,4 @@
+import * as unified from "unified";
 import * as hastFromParse5 from "hast-util-from-parse5";
 import * as parse5 from "parse5";
 import * as hastToHtml from "hast-util-to-html";
@@ -26,9 +27,9 @@ export interface CustomElementPluginOptions {
   transformers: HtmlNodeTransformer[];
 }
 
-export default ({ transformers }: Partial<CustomElementPluginOptions> = {}) => (
-  tree: Node,
-): void => {
+export const createPlugin: unified.Attacher<
+  [Partial<CustomElementPluginOptions>?]
+> = ({ transformers } = {}): unified.Transformer => (tree) => {
   for (const { tagName, transformer } of transformers ?? [])
     visit(tree, is.convert(tagName), (node, index, parent) => {
       const innerHtml = hastToHtml((node as HastNode).children ?? []);

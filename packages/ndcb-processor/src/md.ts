@@ -19,14 +19,13 @@ import { some } from "@ndcb/util/lib/option";
 
 import { FileProcessor, Processor } from "./processor";
 
-// TODO: Add Mathjax as client script for accessibility
 export const markdownProcessor = ({
-  mathjax,
+  mathjax = { tex: { tags: "ams" } },
   customElements,
 }: Partial<{
   mathjax: Record<string, unknown>;
   customElements: CustomElementPluginOptions;
-}> = {}): ((contents: string) => Either<Error, string>) => {
+}> = {}): ((contents: string, data: unknown) => Either<Error, string>) => {
   // TODO: Reimplement https://github.com/agentofuser/rehype-section
   const processor = unified()
     .use(markdown)
@@ -39,14 +38,15 @@ export const markdownProcessor = ({
     .use(htmlSlug)
     .use(htmlHeadings)
     .use(htmlCode)
-    .use(htmlMathjax, mathjax ?? {})
-    .use(htmlCustomElement, customElements ?? {})
+    .use(htmlMathjax, {
+      mathjax,
+      a11y: { assistiveMml: true },
+    })
+    .use(htmlCustomElement, customElements)
     .use(htmlStringify);
-  return (contents: string) =>
+  return (contents, data) =>
     eitherFromThrowable(
-      () =>
-        processor.processSync({ contents, data: { mathjax } })
-          .contents as string,
+      () => processor.processSync({ contents, data }).contents as string,
     );
 };
 

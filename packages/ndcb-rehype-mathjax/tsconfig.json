@@ -3,7 +3,8 @@
   "compilerOptions": {
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "outDir": "./lib",
-    "strict": false
+    "strict": false,
+    "esModuleInterop": true
   },
   "include": ["./src/**/*"],
   "exclude": ["node_modules", "./test/**/*"]
