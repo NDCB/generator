@@ -1,4 +1,4 @@
-import deepMerge from "lodash.defaultsdeep";
+import deepMerge = require("lodash.defaultsdeep");
 
 import { JSDOM } from "jsdom";
 

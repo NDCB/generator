@@ -1,3 +1,5 @@
+import deepMerge = require("lodash.defaultsdeep");
+
 import * as unified from "unified";
 import * as hastFromParse5 from "hast-util-from-parse5";
 import * as parse5 from "parse5";
@@ -29,15 +31,26 @@ export interface CustomElementPluginOptions {
 
 export const createPlugin: unified.Attacher<
   [Partial<CustomElementPluginOptions>?]
-> = ({ transformers } = {}): unified.Transformer => (tree) => {
-  for (const { tagName, transformer } of transformers ?? [])
+> = ({ transformers } = {}): unified.Transformer => (tree, { data }) => {
+  for (const { tagName, transformer } of transformers ?? []) {
+    let elementNumber = 0;
     visit(tree, is.convert(tagName), (node, index, parent) => {
       const innerHtml = hastToHtml((node as HastNode).children ?? []);
       const { properties } = (node as HastNode) ?? {};
       const transformedNode = hastFromParse5(
-        parse5.parseFragment(transformer(innerHtml, properties)),
+        parse5.parseFragment(
+          transformer(
+            innerHtml,
+            deepMerge(
+              { [`${tagName}Number`]: ++elementNumber },
+              properties,
+              data,
+            ),
+          ),
+        ),
       );
       (parent as HastNode).children[index] = transformedNode;
       return [visit.CONTINUE, index];
     });
+  }
 };

@@ -13,7 +13,7 @@ import * as pug from "pug";
 
 import { enumerate } from "@ndcb/util";
 
-import customElements from "../src/transform";
+import { createPlugin as customElements } from "../src/transform";
 
 describe("rehype-custom-element", () => {
   const fixturePath = (fixturePathname) =>
