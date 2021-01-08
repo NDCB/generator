@@ -13,7 +13,7 @@ import * as pug from "pug";
 
 import { enumerate } from "@ndcb/util";
 
-import { createPlugin as customElements } from "../src/transform";
+import { attacher as customElements } from "../src/plugin";
 
 describe("rehype-custom-element", () => {
   const fixturePath = (fixturePathname) =>
@@ -28,7 +28,7 @@ describe("rehype-custom-element", () => {
     elements;
     description;
     expected;
-  }>(require("./fixtures/transform.json"), 1)) {
+  }>(require("./fixtures/plugin.json"), 1)) {
     const markdownProcessor = unified()
       .use(markdown)
       .use(markdownToHtml, {

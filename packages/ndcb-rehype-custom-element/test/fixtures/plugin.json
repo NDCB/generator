@@ -61,7 +61,8 @@
         "pugTemplate": "./theorem.pug"
       }
     ],
-    "expected": "./nested.html"
+    "expected": "./nested.html",
+    "description": "handles nested elements"
   },
   {
     "input": "./nested.md",
@@ -75,7 +76,8 @@
         "pugTemplate": "./theorem.pug"
       }
     ],
-    "expected": "./nested.html"
+    "expected": "./nested.html",
+    "description": "handles nested elements"
   },
   {
     "input": "./inline.md",
@@ -85,7 +87,8 @@
         "pugTemplate": "./theorem.pug"
       }
     ],
-    "expected": "./inline.html"
+    "expected": "./inline.html",
+    "description": "handles inline elements"
   },
   {
     "input": "./examples.md",
@@ -95,6 +98,29 @@
         "pugTemplate": "./example.pug"
       }
     ],
-    "expected": "./examples.html"
+    "expected": "./examples.html",
+    "description": "handles numbering of elements"
+  },
+  {
+    "input": "./self-closing.md",
+    "elements": [
+      {
+        "tag": "reference",
+        "pugTemplate": "./reference.pug"
+      }
+    ],
+    "expected": "./self-closing.html",
+    "description": "handles self-closing elements"
+  },
+  {
+    "input": "./inlined-self-closing.md",
+    "elements": [
+      {
+        "tag": "reference",
+        "pugTemplate": "./reference.pug"
+      }
+    ],
+    "expected": "./inlined-self-closing.html",
+    "description": "handles inlined self-closing elements"
   }
 ]

@@ -1,4 +1,4 @@
-import { createPlugin } from "./transform";
-export default createPlugin;
+import { attacher } from "./plugin";
+export default attacher;
 
-export * from "./transform";
+export * from "./plugin";

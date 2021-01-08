@@ -29,7 +29,7 @@ export interface CustomElementPluginOptions {
   transformers: HtmlNodeTransformer[];
 }
 
-export const createPlugin: unified.Attacher<
+export const attacher: unified.Attacher<
   [Partial<CustomElementPluginOptions>?]
 > = ({ transformers } = {}): unified.Transformer => (tree, { data }) => {
   for (const { tagName, transformer } of transformers ?? []) {
