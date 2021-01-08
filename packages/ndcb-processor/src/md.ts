@@ -1,6 +1,8 @@
 import * as unified from "unified";
 import * as markdown from "remark-parse";
 import * as markdownFrontmatter from "remark-frontmatter";
+import * as mardownNormalizeHeadings from "remark-normalize-headings";
+import * as mardownSectionize from "remark-sectionize";
 import * as markdownMath from "remark-math";
 import * as markdownToHtml from "remark-rehype";
 import * as htmlRaw from "rehype-raw";
@@ -26,10 +28,11 @@ export const markdownProcessor = ({
   mathjax: Record<string, unknown>;
   customElements: CustomElementPluginOptions;
 }> = {}): ((contents: string, data: unknown) => Either<Error, string>) => {
-  // TODO: Reimplement https://github.com/agentofuser/rehype-section
   const processor = unified()
     .use(markdown)
     .use(markdownFrontmatter, ["yaml", "toml"])
+    .use(mardownNormalizeHeadings)
+    .use(mardownSectionize)
     .use(markdownMath)
     .use(markdownToHtml, {
       allowDangerousHtml: true,
