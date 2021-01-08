@@ -110,3 +110,21 @@ export const fileSystem = (
     ),
   ]);
 };
+
+export const unsafeFileSystem = (
+  configuration: Configuration,
+  readFile: FileReader,
+  readTextFile: TextFileReader,
+  readDirectory: DirectoryReader,
+  fileExists: FileExistenceTester,
+): FileSystem => {
+  const rootedSystemBuilder = rootedFileSystem({
+    readFile,
+    readDirectory,
+    directoryExists,
+    fileExists,
+  });
+  return compositeFileSystem([
+    ...map(configuration.common.sources, rootedSystemBuilder),
+  ]);
+};

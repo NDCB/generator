@@ -7,8 +7,10 @@ import {
   eitherFromThrowable,
   eitherIsLeft,
   eitherValue,
+  mapRight,
   right,
 } from "@ndcb/util/lib/either";
+import { sequence } from "@ndcb/util/lib/eitherIterable";
 import { IO } from "@ndcb/util/lib/io";
 
 import { Locals } from "./processor";
@@ -47,4 +49,13 @@ export const compositePugTemplatingTransformer = (contentsKey = "yield") => (
     transformers.map((transformer) => (contents, locals) =>
       transformer({ ...locals, [contentsKey]: contents }),
     ),
+  );
+
+export const templatingAndLayoutTransformer = (
+  template: File,
+  layout: File,
+): IO<Either<Error, Transformer>> => () =>
+  mapRight(
+    sequence([template, layout].map((file) => pugProcessor(file)())),
+    compositePugTemplatingTransformer(),
   );

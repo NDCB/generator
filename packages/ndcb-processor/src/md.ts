@@ -16,18 +16,19 @@ import htmlCustomElement, {
   CustomElementPluginOptions,
 } from "@ndcb/rehype-custom-element";
 import { extension } from "@ndcb/fs-util";
-import { Either, eitherFromThrowable } from "@ndcb/util/lib/either";
+import { eitherFromThrowable } from "@ndcb/util/lib/either";
 import { some } from "@ndcb/util/lib/option";
 
 import { FileProcessor, Processor } from "./processor";
+import { Transformer } from "./html";
 
-export const markdownProcessor = ({
+export const markdownTransformer = ({
   mathjax = { tex: { tags: "ams" } },
   customElements,
 }: Partial<{
   mathjax: Record<string, unknown>;
   customElements: CustomElementPluginOptions;
-}> = {}): ((contents: string, data: unknown) => Either<Error, string>) => {
+}> = {}): Transformer => {
   const processor = unified()
     .use(markdown)
     .use(markdownFrontmatter, ["yaml", "toml"])

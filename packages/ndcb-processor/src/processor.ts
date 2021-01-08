@@ -1,3 +1,5 @@
+import { detect as detectEncoding } from "jschardet";
+
 import {
   Extension,
   extensionEquals,
@@ -61,3 +63,15 @@ export const compositeFileProcessor = (
     ),
   );
 };
+
+export const bufferToProcessorResult = (
+  contents: Buffer,
+): { contents: Buffer; encoding: BufferEncoding } => ({
+  contents,
+  encoding: detectEncoding(contents).encoding as BufferEncoding,
+});
+
+export const contentsToProcessorResult = (
+  contents: string,
+): { contents: Buffer; encoding: BufferEncoding } =>
+  bufferToProcessorResult(Buffer.from(contents));

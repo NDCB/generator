@@ -1,11 +1,15 @@
+import { File, TextFileReader } from "@ndcb/fs-util";
+import { IO } from "@ndcb/util";
 import {
   Either,
   eitherIsRight,
   eitherValue,
+  mapRight,
+  monad,
   right,
 } from "@ndcb/util/lib/either";
 
-import { Locals } from "./processor";
+import { Locals, Processor, contentsToProcessorResult } from "./processor";
 
 export type Transformer = (
   contents: string,
@@ -23,3 +27,29 @@ export const compositeTransformer = (
   }
   return result ?? right(contents);
 };
+
+export const templatingProcessor = (
+  readTextFile: TextFileReader,
+  dataSupplier: (file: File) => IO<Either<Error, Locals>>,
+  contentsTransformer: Transformer,
+  templatingTransformerSupplier: (
+    data: Locals,
+  ) => IO<Either<Error, Transformer>>,
+): Processor => (file) => () =>
+  monad(readTextFile(file)())
+    .chainRight((contents) =>
+      mapRight(dataSupplier(file)(), (data) => ({ contents, data })),
+    )
+    .chainRight(({ contents, data }) =>
+      mapRight(contentsTransformer(contents, data), (contents) => ({
+        contents,
+        data,
+      })),
+    )
+    .chainRight(({ contents, data }) =>
+      monad(templatingTransformerSupplier(data)())
+        .chainRight((transformer) => transformer(contents, data))
+        .toEither(),
+    )
+    .mapRight(contentsToProcessorResult)
+    .toEither();

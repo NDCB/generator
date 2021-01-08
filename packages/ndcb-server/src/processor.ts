@@ -1,5 +1,4 @@
 import { lookup } from "mime-types";
-import { detect } from "jschardet";
 
 import { Configuration } from "@ndcb/config";
 import {
@@ -18,14 +17,16 @@ import {
   FileProcessor,
   fileProcessorExtensionMaps,
   markdownFileProcessors,
-  markdownProcessor,
+  markdownTransformer,
   Processor,
   sassFileProcessors,
   sassProcessor,
+  templatingProcessor,
+  bufferToProcessorResult,
 } from "@ndcb/processor";
 
 import { Pathname, PathnameRouter, router } from "./router";
-import { fileSystemReaders, fileSystem } from "./fs";
+import { fileSystemReaders, fileSystem, unsafeFileSystem } from "./fs";
 
 const contentType = (extension: Option<Extension>): string =>
   lookup(join(extensionToString, () => ".txt")(extension)) as string;
@@ -143,38 +144,44 @@ export const serverProcessor = (
   const { readFile, readTextFile, readDirectory } = fileSystemReaders(
     configuration,
   );
-  const fs = fileSystem(
+  const safeFs = fileSystem(
     configuration,
     readFile,
     readTextFile,
     readDirectory,
     fileExists,
   );
-  const processMarkdown = markdownProcessor();
+  const unsafeFs = unsafeFileSystem(
+    configuration,
+    readFile,
+    readTextFile,
+    readDirectory,
+    fileExists,
+  );
   const processors: FileProcessor[] = [
-    ...markdownFileProcessors((file) => () =>
-      monad(readFile(file)())
-        .chainRight((contents) => processMarkdown(contents.toString(), {}))
-        .mapRight<{ contents: Buffer; encoding: BufferEncoding }>(
-          (contents) => ({
-            contents: Buffer.from(contents),
-            encoding: detect(contents).encoding as BufferEncoding,
-          }),
-        )
-        .toEither(),
+    ...markdownFileProcessors(
+      templatingProcessor(
+        readTextFile,
+        () => () => right({}), // TODO: Data supplier
+        markdownTransformer({
+          customElements: {
+            transformers: [
+              // TODO: {h1, theorem, proof, definition, example, figure, exercise, reminder, solution} transformers by reading "/components" folder using the unsafe file system
+            ],
+          },
+        }),
+        () => () => right((contents) => right(contents)), // TODO: Templating supplier using unsafe file system
+      ),
     ),
     ...sassFileProcessors(sassProcessor),
   ];
   return processor(
     fileRouter(
-      router(fileProcessorExtensionMaps(processors), fs.fileExists),
-      fs.file,
+      router(fileProcessorExtensionMaps(processors), safeFs.fileExists),
+      unsafeFs.file,
     ),
     compositeFileProcessor(processors, (file) => () =>
-      mapRight(readFile(file)(), (contents) => ({
-        contents,
-        encoding: detect(contents).encoding as BufferEncoding,
-      })),
+      mapRight(readFile(file)(), bufferToProcessorResult),
     ),
     () => () => left(new Error()), // TODO: No routed 404
   );
