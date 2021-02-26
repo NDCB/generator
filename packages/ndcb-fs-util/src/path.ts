@@ -51,7 +51,7 @@ export const pathToString: (path: Path) => string = matchPath({
 });
 
 export const pathExtension = (path: Path): Option<Extension> => {
-  const extensionName = extname(pathToString(path));
+  const extensionName = extname(pathToString(path)).toLowerCase();
   return !extensionName ? none() : some(extension(extensionName));
 };
 
