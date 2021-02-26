@@ -69,14 +69,14 @@ export interface RehypeMathJaxOptions {
 export const createPlugin: unified.Attacher<
   [Partial<RehypeMathJaxOptions>?]
 > = ({ input, output, mathjax, a11y } = {}): unified.Transformer => {
-  const adaptor = jsdomAdaptor(JSDOM);
-  const handler = RegisterHTMLHandler(adaptor); // Handler is never unregistered
-  if (a11y?.assistiveMml) AssistiveMmlHandler(handler);
-
   const createInputJax = inputJaxBuilderSupplier(input);
   const createOutputJax = outputJaxBuilderSupplier(output);
-
+  const adaptor = jsdomAdaptor(JSDOM);
   return (tree, { data }) => {
+    const handler = a11y?.assistiveMml
+      ? AssistiveMmlHandler(RegisterHTMLHandler(adaptor))
+      : RegisterHTMLHandler(adaptor);
+
     const options = deepMerge(
       {},
       (data as Record<string, unknown>)?.mathjax,
@@ -127,5 +127,7 @@ export const createPlugin: unified.Attacher<
           },
         ],
       });
+
+    MathJax.handlers.unregister(handler);
   };
 };
