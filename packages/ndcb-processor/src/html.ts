@@ -31,23 +31,14 @@ export const compositeTransformer = (
 export const templatingProcessor = (
   readTextFile: TextFileReader,
   dataSupplier: (file: File) => IO<Either<Error, Locals>>,
-  contentsTransformer: Transformer,
-  templatingTransformerSupplier: (
-    data: Locals,
-  ) => IO<Either<Error, Transformer>>,
+  transformerSupplier: (data: Locals) => IO<Either<Error, Transformer>>,
 ): Processor => (file) => () =>
   monad(readTextFile(file)())
     .chainRight((contents) =>
       mapRight(dataSupplier(file)(), (data) => ({ contents, data })),
     )
     .chainRight(({ contents, data }) =>
-      mapRight(contentsTransformer(contents, data), (contents) => ({
-        contents,
-        data,
-      })),
-    )
-    .chainRight(({ contents, data }) =>
-      monad(templatingTransformerSupplier(data)())
+      monad(transformerSupplier(data)())
         .chainRight((transformer) => transformer(contents, data))
         .toEither(),
     )
