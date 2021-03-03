@@ -58,7 +58,7 @@
     "shelljs": "^0.8.4"
   },
   "jest": {
-    "verbose": true,
+    "verbose": false,
     "testEnvironment": "node",
     "rootDir": "./packages",
     "coverageDirectory": "./../coverage",
