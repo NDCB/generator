@@ -1,20 +1,10 @@
 import { ValidationError } from "joi";
+import * as IO from "fp-ts/IO";
+import * as TaskEither from "fp-ts/TaskEither";
+import { pipe } from "fp-ts/function";
 
-import {
-  TextFileDataReader,
-  UnhandledFileFormatError,
-  UnhandledDataFormatError,
-  DataParsingError,
-} from "@ndcb/data";
-import { IO } from "@ndcb/util/lib/io";
-import { Either, monad, mapRight } from "@ndcb/util/lib/either";
-import {
-  FileIOError,
-  File,
-  fileExists,
-  PathIOError,
-  normalizedFile,
-} from "@ndcb/fs-util";
+import { TextFileDataReader } from "@ndcb/data";
+import { File, FileExistenceTester, normalizedFile } from "@ndcb/fs-util";
 
 import {
   Configuration,
@@ -25,43 +15,68 @@ import {
 
 const coerceConfigurationFile = validate(
   fileSchema.default(normalizedFile("./siteconfig.yml")),
-) as (element?: unknown) => Either<ValidationError, File>;
+) as (element?: unknown) => TaskEither.TaskEither<ValidationError, File>;
 
 const coerceConfiguration = validate(configurationSchema) as (
   element?: unknown,
-) => Either<ValidationError, Configuration>;
+) => TaskEither.TaskEither<ValidationError, Configuration>;
 
-export const configurationFetcher = (readTextFileData: TextFileDataReader) => (
+export const configurationFetcher = <
+  TextFileReadError extends Error,
+  TestFileExistenceError extends Error
+>(
+  readTextFileData: TextFileDataReader<TextFileReadError>,
+  fileExists: FileExistenceTester<TestFileExistenceError>,
+) => (
   configurationPath?: string,
-): IO<
-  Either<
-    | UnhandledFileFormatError
-    | PathIOError
-    | FileIOError
-    | UnhandledDataFormatError
-    | DataParsingError
-    | ValidationError,
+): IO.IO<
+  TaskEither.TaskEither<
+    TextFileReadError | ValidationError | TestFileExistenceError,
     Configuration
   >
 > =>
   typeof configurationPath === "string"
     ? () =>
         // Configuration path supplied
-        monad(coerceConfigurationFile(configurationPath))
-          .chainRight((file) => readTextFileData(file)())
-          .chainRight((data) => coerceConfiguration(data))
-          .toEither()
+        pipe(
+          coerceConfigurationFile(configurationPath),
+          TaskEither.chain<TextFileReadError | ValidationError, File, unknown>(
+            (file) => readTextFileData(file)(),
+          ),
+          TaskEither.chain<
+            TextFileReadError | ValidationError,
+            unknown,
+            Configuration
+          >((data) => coerceConfiguration(data)),
+        )
     : () =>
         // Use default configuration path if it exists, or default configuration
-        monad(coerceConfigurationFile())
-          .chainRight((file) =>
-            mapRight(fileExists(file)(), (exists) => ({ exists, file })),
-          )
-          .chainRight(({ exists, file }) =>
+        pipe(
+          coerceConfigurationFile(),
+          TaskEither.chain<
+            TextFileReadError | ValidationError | TestFileExistenceError,
+            File,
+            { exists: boolean; file: File }
+          >((file) =>
+            pipe(
+              fileExists(file)(),
+              TaskEither.map((exists) => ({ exists, file })),
+            ),
+          ),
+          TaskEither.chain<
+            TextFileReadError | ValidationError | TestFileExistenceError,
+            { exists: boolean; file: File },
+            Configuration
+          >(({ exists, file }) =>
             exists
-              ? monad(readTextFileData(file)())
-                  .chainRight((data) => coerceConfiguration(data))
-                  .toEither()
+              ? pipe(
+                  readTextFileData(file)(),
+                  TaskEither.chain<
+                    TextFileReadError | ValidationError,
+                    unknown,
+                    Configuration
+                  >((data) => coerceConfiguration(data)),
+                )
               : coerceConfiguration(),
-          )
-          .toEither();
+          ),
+        );

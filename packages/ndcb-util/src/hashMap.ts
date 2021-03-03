@@ -1,36 +1,51 @@
+import * as Eq from "fp-ts/Eq";
+import * as Option from "fp-ts/Option";
+import { pipe } from "fp-ts/function";
+
 import { find, some } from "./iterable";
-import { Option, map, joinNone } from "./option";
 import { hashString } from "./hash";
 
 export interface HashMap<K, V> {
   readonly has: (key: K) => boolean;
-  readonly get: (key: K) => Option<V>;
+  readonly get: (key: K) => Option.Option<V>;
 }
 
 export const hashMap = <K, V>(
   entries: Iterable<[K, V]>,
   hash: (key: K) => number,
-  equals: (key1: K, key2: K) => boolean,
+  keyEquality: Eq.Eq<K>,
 ): HashMap<K, V> => {
   const buckets: { [hash: number]: Array<[K, V]> } = {};
   // Populate buckets
   for (const [key, value] of entries) {
     const hashCode = hash(key);
     if (!buckets[hashCode]) buckets[hashCode] = [];
-    joinNone<[K, V]>(() => {
-      const bucket: [K, V] = [key, value];
-      buckets[hashCode].push(bucket);
-      return bucket;
-    })(
-      find<[K, V]>(buckets[hashCode], (bucket) => equals(key, bucket[0])),
+    pipe(
+      find<[K, V]>(buckets[hashCode], (bucket) =>
+        keyEquality.equals(key, bucket[0]),
+      ),
+      Option.fold(
+        () => {
+          const bucket: [K, V] = [key, value];
+          buckets[hashCode].push(bucket);
+          return bucket;
+        },
+        (bucket) => bucket,
+      ),
     )[1] = value;
   }
   const has = (key: K): boolean =>
-    some<[K, V]>(buckets[hash(key)] ?? [], (bucket) => equals(key, bucket[0]));
-  const bucketOptionalValue = map<[K, V], V>((bucket) => bucket[1]);
-  const get = (key: K): Option<V> =>
+    some<[K, V]>(buckets[hash(key)] ?? [], (bucket) =>
+      keyEquality.equals(key, bucket[0]),
+    );
+  const bucketOptionalValue = <K, V>(
+    bucket: Option.Option<[K, V]>,
+  ): Option.Option<V> => Option.map<[K, V], V>((bucket) => bucket[1])(bucket);
+  const get = (key: K): Option.Option<V> =>
     bucketOptionalValue(
-      find(buckets[hash(key)] ?? [], (bucket) => equals(key, bucket[0])),
+      find(buckets[hash(key)] ?? [], (bucket) =>
+        keyEquality.equals(key, bucket[0]),
+      ),
     );
   return { has, get };
 };
@@ -38,7 +53,7 @@ export const hashMap = <K, V>(
 export const inversedHashMap = <K, V>(
   entries: Iterable<[K, V]>,
   hash: (value: V) => number,
-  equals: (value1: V, value2: V) => boolean,
+  valueEquality: Eq.Eq<V>,
 ): HashMap<V, K[]> => {
   const inversedEntries = function* (): Iterable<[V, K[]]> {
     let remainingEntries: Array<[K, V]> = [...entries];
@@ -49,7 +64,7 @@ export const inversedHashMap = <K, V>(
       const entry: [V, K[]] = [masterValue, keys];
       while (remainingEntries.length > 0) {
         const [key, value] = remainingEntries.pop() as [K, V];
-        if (equals(masterValue, value)) keys.push(key);
+        if (valueEquality.equals(masterValue, value)) keys.push(key);
         else ignoredEntries.push([key, value]);
       }
       yield entry;
@@ -57,9 +72,14 @@ export const inversedHashMap = <K, V>(
       ignoredEntries = [];
     }
   };
-  return hashMap(inversedEntries(), hash, equals);
+  return hashMap(inversedEntries(), hash, valueEquality);
 };
 
 export const stringHashMap = <V>(
   entries: Iterable<[string, V]>,
-): HashMap<string, V> => hashMap(entries, hashString, (s1, s2) => s1 === s2);
+): HashMap<string, V> =>
+  hashMap(
+    entries,
+    hashString,
+    Eq.fromEquals((s1, s2) => s1 === s2),
+  );

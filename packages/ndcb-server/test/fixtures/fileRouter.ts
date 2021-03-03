@@ -1,6 +1,7 @@
-import { Either, right } from "@ndcb/util/lib/either";
-import { none, Option, some } from "@ndcb/util/lib/option";
-import { IO } from "@ndcb/util/lib/io";
+import * as IO from "fp-ts/IO";
+import * as TaskEither from "fp-ts/TaskEither";
+import * as Option from "fp-ts/Option";
+
 import {
   File,
   normalizedFile,
@@ -32,24 +33,24 @@ module.exports = [
       return {
         sourcePathname: (query) => () => {
           const key = relativePathToString(query);
-          return right(
+          return TaskEither.right(
             sourcePathnameMap.has(key)
-              ? some(
+              ? Option.some(
                   normalizedRelativePath(sourcePathnameMap.get(key) as string),
                 )
-              : none(),
+              : Option.none,
           );
         },
         sourcePathname404: (query) => () => {
           const key = relativePathToString(query);
-          return right(
+          return TaskEither.right(
             sourcePathname404Map.has(key)
-              ? some(
+              ? Option.some(
                   normalizedRelativePath(
                     sourcePathname404Map.get(key) as string,
                   ),
                 )
-              : none(),
+              : Option.none,
           );
         },
         destinationPathname: (query) => {
@@ -69,86 +70,79 @@ module.exports = [
       ]);
       return (query) => () => {
         const key = relativePathToString(query);
-        return right(
-          map.has(key) ? some(normalizedFile(map.get(key) as string)) : none(),
+        return TaskEither.right(
+          map.has(key)
+            ? Option.some(normalizedFile(map.get(key) as string))
+            : Option.none,
         );
       };
     },
     cases: [
       {
         query: relativePath(""),
-        expected: right(
-          some({
-            file: normalizedFile("/content/index.md"),
-            destination: normalizedRelativePath("index.html"),
-            statusCode: 200,
-          }),
-        ),
+        expected: Option.some({
+          file: normalizedFile("/content/index.md"),
+          destination: normalizedRelativePath("index.html"),
+          statusCode: 200,
+        }),
         description: "routes source files",
       },
       {
         query: relativePath("404"),
-        expected: right(
-          some({
-            file: normalizedFile("/content/404.md"),
-            destination: normalizedRelativePath("404.html"),
-            statusCode: 200,
-          }),
-        ),
+        expected: Option.some({
+          file: normalizedFile("/content/404.md"),
+          destination: normalizedRelativePath("404.html"),
+          statusCode: 200,
+        }),
         description: "routes 404 file accessed directly with status code 200",
       },
       {
         query: relativePath("fr-CA"),
-        expected: right(
-          some({
-            file: normalizedFile("/content/fr-CA/index.md"),
-            destination: normalizedRelativePath("fr-CA/index.html"),
-            statusCode: 200,
-          }),
-        ),
+        expected: Option.some({
+          file: normalizedFile("/content/fr-CA/index.md"),
+          destination: normalizedRelativePath("fr-CA/index.html"),
+          statusCode: 200,
+        }),
         description: "routes nested source files",
       },
       {
         query: relativePath("inexistent"),
-        expected: right(
-          some({
-            file: normalizedFile("/content/404.md"),
-            destination: normalizedRelativePath("404.html"),
-            statusCode: 404,
-          }),
-        ),
+        expected: Option.some({
+          file: normalizedFile("/content/404.md"),
+          destination: normalizedRelativePath("404.html"),
+          statusCode: 404,
+        }),
         description: "routes inexistent file to specified 404 file",
       },
       {
         query: relativePath("fr-CA/inexistent"),
-        expected: right(
-          some({
-            file: normalizedFile("/content/fr-CA/404.md"),
-            destination: normalizedRelativePath("fr-CA/404.html"),
-            statusCode: 404,
-          }),
-        ),
+        expected: Option.some({
+          file: normalizedFile("/content/fr-CA/404.md"),
+          destination: normalizedRelativePath("fr-CA/404.html"),
+          statusCode: 404,
+        }),
         description: "routes deeply inexistent file to specified 404 file",
       },
       {
         query: relativePath("not-found-by-server"),
-        expected: right(none()),
+        expected: Option.none,
         description:
           "routes files without corresponding source or 404 pathnames to none",
       },
     ],
   },
 ] as Array<{
-  routerSupplier: () => PathnameRouter;
+  routerSupplier: () => PathnameRouter<never>;
   correspondingFileSupplier: () => (
     query: Pathname,
-  ) => IO<Either<Error, Option<File>>>;
+  ) => IO.IO<TaskEither.TaskEither<never, Option.Option<File>>>;
   cases: Array<{
     query: Pathname;
-    expected: Either<
-      Error,
-      Option<{ file: File; destination: Pathname; statusCode: 200 | 404 }>
-    >;
+    expected: Option.Option<{
+      file: File;
+      destination: Pathname;
+      statusCode: 200 | 404;
+    }>;
     description?: string;
   }>;
 }>;

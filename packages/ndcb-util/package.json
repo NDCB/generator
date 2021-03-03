@@ -10,6 +10,9 @@
   "files": [
     "lib"
   ],
+  "dependencies": {
+    "fp-ts": "^2.9.5"
+  },
   "publishConfig": {
     "access": "public"
   }

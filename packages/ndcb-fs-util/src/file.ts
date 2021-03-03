@@ -1,14 +1,9 @@
-import { ensureFileSync } from "fs-extra";
+import * as fse from "fs-extra";
+import * as IO from "fp-ts/IO";
+import * as TaskEither from "fp-ts/TaskEither";
+import { pipe } from "fp-ts/function";
 
 import { isNotNull } from "@ndcb/util/lib/type";
-import { IO } from "@ndcb/util/lib/io";
-import {
-  Either,
-  right,
-  mapRight,
-  mapLeft,
-  eitherFromThrowable,
-} from "@ndcb/util/lib/either";
 
 import {
   AbsolutePath,
@@ -56,29 +51,34 @@ export const fileEquals = (f1: File, f2: File): boolean =>
 export const hashFile = (file: File): number =>
   hashAbsolutePath(filePath(file));
 
-export type FileExistenceTester = (
+export type FileExistenceTester<E extends Error> = (
   file: File,
-) => IO<Either<PathIOError, boolean>>;
+) => IO.IO<TaskEither.TaskEither<E, boolean>>;
 
-export const fileExists: FileExistenceTester = (file) => {
-  const path = filePath(file);
-  return () => {
-    if (!pathExists(path)()) return right(false);
-    return mapRight(pathStatus(path)(), (stats) => stats.isFile());
-  };
-};
+export const fileExists: FileExistenceTester<PathIOError> = (file) => () =>
+  pipe(
+    TaskEither.fromTask<never, boolean>(pathExists(filePath(file))()),
+    TaskEither.chainFirst((exists) =>
+      exists
+        ? pipe(
+            pathStatus(filePath(file))(),
+            TaskEither.map((status) => status.isFile()),
+          )
+        : TaskEither.right(false),
+    ),
+  );
 
 export interface FileIOError extends Error {
   readonly code: string;
   readonly file: File;
 }
 
-export const ensureFile = (file: File): IO<Either<FileIOError, void>> => () =>
-  mapLeft(
-    eitherFromThrowable(() =>
-      ensureFileSync(absolutePathToString(filePath(file))),
-    ) as Either<Error & { code }, void>,
-    (error) => ({ ...error, file }),
+export const ensureFile = (
+  file: File,
+): IO.IO<TaskEither.TaskEither<FileIOError, void>> => () =>
+  TaskEither.tryCatch(
+    () => fse.ensureFile(absolutePathToString(filePath(file))),
+    (error) => ({ ...(error as Error & { code: string }), file }),
   );
 
 export const fileName = (file: File): string =>

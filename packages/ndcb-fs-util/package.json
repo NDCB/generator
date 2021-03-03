@@ -12,6 +12,7 @@
   ],
   "dependencies": {
     "@ndcb/util": "^0.9.1",
+    "fp-ts": "^2.9.5",
     "fs-extra": "^9.0.1"
   },
   "devDependencies": {

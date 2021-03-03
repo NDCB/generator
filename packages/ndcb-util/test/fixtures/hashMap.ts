@@ -1,4 +1,4 @@
-import { some, none } from "../../src/option";
+import * as Option from "fp-ts/Option";
 
 module.exports = [
   {
@@ -34,19 +34,19 @@ module.exports = [
     get: [
       {
         key: -1,
-        expected: some(1),
+        expected: Option.some(1),
       },
       {
         key: 0,
-        expected: some(0),
+        expected: Option.some(0),
       },
       {
         key: 1,
-        expected: some(10),
+        expected: Option.some(10),
       },
       {
         key: -2,
-        expected: none(),
+        expected: Option.none,
       },
     ],
   },
@@ -60,7 +60,7 @@ module.exports = [
     get: [
       {
         key: 0,
-        expected: some(1),
+        expected: Option.some(1),
       },
     ],
   },

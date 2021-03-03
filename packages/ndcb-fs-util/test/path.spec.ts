@@ -1,5 +1,8 @@
+import * as Option from "fp-ts/Option";
+import * as ReadonlyArray from "fp-ts/ReadonlyArray";
+import { pipe } from "fp-ts/function";
+
 import { map } from "@ndcb/util";
-import { some } from "@ndcb/util/lib/option";
 
 import { extension } from "../src/extension";
 import { normalizedRelativePath } from "../src/relativePath";
@@ -19,7 +22,7 @@ describe("relativePathWithExtension", () => {
       expect(
         relativePathWithExtension(
           normalizedRelativePath(input),
-          some(extension(target)),
+          Option.some(extension(target)),
         ),
       ).toStrictEqual(normalizedRelativePath(expected));
     });
@@ -35,12 +38,15 @@ describe("relativePathWithExtensions", () => {
   } of require("./fixtures/relativePathWithExtensions")) {
     test(description, () => {
       map;
-      expect([
-        ...relativePathWithExtensions(
+      expect(
+        relativePathWithExtensions(
           normalizedRelativePath(input),
-          map(targets as string[], (target) => some(extension(target))),
+          pipe(
+            targets as readonly string[],
+            ReadonlyArray.map((target) => Option.some(extension(target))),
+          ),
         ),
-      ]).toStrictEqual([...map(expected, normalizedRelativePath)]);
+      ).toStrictEqual([...map(expected, normalizedRelativePath)]);
     });
   }
 });

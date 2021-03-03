@@ -1,7 +1,9 @@
+import * as ReadonlyArray from "fp-ts/ReadonlyArray";
+import * as Option from "fp-ts/Option";
+import { pipe } from "fp-ts/function";
+
 import { Configuration } from "@ndcb/config";
 import { colorize } from "@ndcb/logger";
-import { find } from "@ndcb/util";
-import { join } from "@ndcb/util/lib/option";
 
 const TIME_UNITS = ["ns", "μs", "ms", "s"];
 
@@ -14,19 +16,23 @@ export const formatElapsedTime = (elapsed: bigint): string => {
 export const tieredColorizeElapsedTime = (
   formatter: (time: bigint) => string,
 ) => (
-  colorThresholds: Iterable<{
+  colorThresholds: readonly {
     lower: bigint;
     colorize: (token: string) => string;
-  }>,
+  }[],
 ): ((elapsed: bigint) => string) => {
   const thresholds = [...colorThresholds].sort(({ lower: a }, { lower: b }) =>
     a < b ? 1 : a > b ? -1 : 0,
   );
   return (elapsed: bigint): string =>
-    join<{ lower: bigint; colorize: (token: string) => string }, string>(
-      ({ colorize }) => colorize(formatter(elapsed)),
-      () => formatter(elapsed),
-    )(find(thresholds, ({ lower }) => elapsed >= lower));
+    pipe(
+      thresholds,
+      ReadonlyArray.findFirst(({ lower }) => elapsed >= lower),
+      Option.fold(
+        () => formatter(elapsed),
+        ({ colorize }) => colorize(formatter(elapsed)),
+      ),
+    );
 };
 
 export const elapsedTimeFormatter = (

@@ -1,12 +1,20 @@
-import { existsSync, Stats, statSync } from "fs-extra";
-import { resolve, sep, basename, parse } from "path";
+import * as fse from "fs-extra";
+import * as fs from "fs";
+import { resolve, sep, basename, parse } from "path"; // TODO: Use https://www.npmjs.com/package/upath
+import * as Option from "fp-ts/Option";
+import * as IO from "fp-ts/IO";
+import * as Task from "fp-ts/Task";
+import * as TaskEither from "fp-ts/TaskEither";
+import * as ReadonlyArray from "fp-ts/ReadonlyArray";
+import { pipe } from "fp-ts/function";
 
-import { Either, mapLeft, eitherFromThrowable } from "@ndcb/util/lib/either";
-import { every, zip } from "@ndcb/util/lib/iterable";
-import { Option, none, some } from "@ndcb/util/lib/option";
-import { IO } from "@ndcb/util/lib/io";
 import { hashString } from "@ndcb/util/lib/hash";
 import { isNotNull } from "@ndcb/util/lib/type";
+
+export interface PathIOError extends Error {
+  readonly code: string;
+  readonly path: AbsolutePath;
+}
 
 /**
  * An absolute path to an entry in the file system.
@@ -42,23 +50,34 @@ export const hashAbsolutePath = (path: AbsolutePath): number =>
 export const normalizedAbsolutePath = (value: string): AbsolutePath =>
   absolutePath(resolve(value));
 
-export const pathExists = (path: AbsolutePath): IO<boolean> => () =>
-  existsSync(absolutePathToString(path));
+export type PathExistenceTester = (
+  path: AbsolutePath,
+) => IO.IO<Task.Task<boolean>>;
+
+export const pathExists: PathExistenceTester = (path) => () =>
+  pipe(
+    TaskEither.tryCatch(
+      () => fse.pathExists(absolutePathToString(path)),
+      (error) => error,
+    ),
+    TaskEither.fold(
+      () => Task.of(false),
+      (exists) => Task.of(exists),
+    ),
+  );
 
 export const rootPath = (path: AbsolutePath): AbsolutePath =>
   absolutePath(parse(absolutePathToString(path)).root);
 
-export const parentPath = (path: AbsolutePath): Option<AbsolutePath> => {
+export const parentPath = (path: AbsolutePath): Option.Option<AbsolutePath> => {
   const parent = absolutePath(resolve(absolutePathToString(path), ".."));
-  return absolutePathEquals(path, parent) ? none() : some(parent);
+  return absolutePathEquals(path, parent) ? Option.none : Option.some(parent);
 };
 
-export const absolutePathSegments = function* (
-  path: AbsolutePath,
-): Iterable<string> {
+export const absolutePathSegments = (path: AbsolutePath): string[] => {
   const pathString = absolutePathToString(path);
   const withoutRoot = pathString.substring(parse(pathString).root.length);
-  if (withoutRoot.length > 0) yield* withoutRoot.split(sep);
+  return withoutRoot.length > 0 ? withoutRoot.split(sep) : [];
 };
 
 /**
@@ -71,26 +90,26 @@ export const absolutePathSegments = function* (
  */
 export const isUpwardPath = (up: AbsolutePath, down: AbsolutePath): boolean =>
   absolutePathToString(down).startsWith(absolutePathToString(up)) &&
-  every(
-    zip(absolutePathSegments(up), absolutePathSegments(down)),
-    ([s1, s2]) => s1 === s2,
+  pipe(
+    ReadonlyArray.zip(absolutePathSegments(up), absolutePathSegments(down)),
+    ReadonlyArray.every(([s1, s2]) => s1 === s2),
   );
 
 export const absolutePathBaseName = (path: AbsolutePath): string =>
   basename(absolutePathToString(path));
 
-export interface PathIOError extends Error {
-  readonly code: string;
-  readonly path: AbsolutePath;
-}
-
-export const pathStatus = (
+export type PathStatusChecker<E extends Error> = (
   path: AbsolutePath,
-): IO<Either<PathIOError, Stats>> => () =>
-  mapLeft(
-    eitherFromThrowable(() => statSync(absolutePathToString(path))) as Either<
-      Error & { code },
-      Stats
-    >,
-    (error) => ({ ...error, path }),
+) => IO.IO<TaskEither.TaskEither<E, fs.StatsBase<BigInt>>>;
+
+export const pathStatus: PathStatusChecker<PathIOError> = (path) => () =>
+  TaskEither.tryCatch(
+    () =>
+      ((fs.promises.stat as unknown) as (
+        path: fs.PathLike,
+        options: { bigint: true },
+      ) => Promise<fs.StatsBase<BigInt>>)(absolutePathToString(path), {
+        bigint: true,
+      }),
+    (error) => ({ ...(error as Error & { code: string }), path }),
   );

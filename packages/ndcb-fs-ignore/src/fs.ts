@@ -1,77 +1,104 @@
+import * as IO from "fp-ts/IO";
+import * as Option from "fp-ts/Option";
+import * as TaskEither from "fp-ts/TaskEither";
+import * as ReadonlyArray from "fp-ts/ReadonlyArray";
+import { pipe, Predicate } from "fp-ts/function";
+
 import {
   Entry,
   Directory,
   entryIsDirectory,
-  TextFileReader,
   DirectoryReader,
   File,
-  filterFiles,
   DirectoryWalker,
+  DirectoryFilesReader,
 } from "@ndcb/fs-util";
-import { filter, map } from "@ndcb/util/lib/iterable";
-import { IO } from "@ndcb/util/lib/io";
-import { Either, monad, mapRight } from "@ndcb/util/lib/either";
-import { sequence } from "@ndcb/util/lib/eitherIterable";
 
 import {
   ExclusionRule,
   compositeExclusionRule,
   exclusionRuleAsFilter,
+  ExclusionRuleReader,
 } from "./exclusionRule";
-import { gitignoreExclusionRule } from "./gitignore";
 
-export type DirectoryExclusionRuleRetriever = (
-  directory: Directory,
-) => IO<Either<Error, ExclusionRule>>;
-
-export const exclusionRuleFromDirectory = (
-  readTextFile: TextFileReader,
-  readDirectory: DirectoryReader,
+export const readOptionalExculsionRule = <ExclusionRuleReadError extends Error>(
+  isRuleFile: Predicate<File>,
+  readExclusionRule: ExclusionRuleReader<ExclusionRuleReadError>,
 ) => (
-  isRuleFile: (file: File) => IO<Either<Error, boolean>>,
-): DirectoryExclusionRuleRetriever => (
-  directory: Directory,
-): IO<Either<Error, ExclusionRule>> => () =>
-  monad(readDirectory(directory)())
-    .mapRight(filterFiles)
-    .chainRight((files) =>
-      sequence([
-        ...map(files, (file) =>
-          mapRight(isRuleFile(file)(), (isRuleFile) => ({ file, isRuleFile })),
-        ),
-      ]),
-    )
-    .mapRight((files) => filter(files, ({ isRuleFile }) => isRuleFile))
-    .mapRight((files) => map(files, ({ file }) => file))
-    .chainRight((files) =>
-      sequence([
-        ...map(files, (file) => gitignoreExclusionRule(readTextFile)(file)()),
-      ]),
-    )
-    .mapRight(compositeExclusionRule)
-    .toEither();
+  file: File,
+): Option.Option<
+  IO.IO<TaskEither.TaskEither<ExclusionRuleReadError, ExclusionRule>>
+> =>
+  pipe(file, Option.fromPredicate(isRuleFile), Option.map(readExclusionRule));
 
-export const deepEntryExclusionRule = (
-  upwardDirectories: (entry: Entry) => Iterable<Directory>,
-) => (exclusionRuleFromDirectory: DirectoryExclusionRuleRetriever) => (
-  entry: Entry,
-): IO<Either<Error, ExclusionRule>> => () =>
-  mapRight(
-    sequence([
-      ...map(upwardDirectories(entry), (directory) =>
-        exclusionRuleFromDirectory(directory)(),
+export type DirectoryExclusionRuleReader<
+  ExclusionRuleReadError extends Error
+> = (
+  directory: Directory,
+) => IO.IO<TaskEither.TaskEither<ExclusionRuleReadError, ExclusionRule>>;
+
+export const exclusionRuleReaderFromDirectory = <
+  DirectoryReadError extends Error,
+  ExclusionRuleReadError extends Error
+>(
+  readDirectory: DirectoryFilesReader<DirectoryReadError>,
+  readOptionalExculsionRule: (
+    file: File,
+  ) => Option.Option<
+    IO.IO<TaskEither.TaskEither<ExclusionRuleReadError, ExclusionRule>>
+  >,
+): DirectoryExclusionRuleReader<
+  DirectoryReadError | ExclusionRuleReadError
+> => (directory) => () =>
+  pipe(
+    readDirectory(directory)(),
+    TaskEither.chain<
+      DirectoryReadError | ExclusionRuleReadError,
+      readonly File[],
+      ExclusionRule
+    >((files) =>
+      pipe(
+        files,
+        ReadonlyArray.map(readOptionalExculsionRule),
+        ReadonlyArray.filter(Option.isSome),
+        ReadonlyArray.map((readExclusionRule) => readExclusionRule.value()),
+        TaskEither.sequenceArray,
+        TaskEither.map(compositeExclusionRule),
       ),
-    ]),
-    compositeExclusionRule,
+    ),
   );
 
-export const downwardNotIgnoredEntries = (
-  readDirectory: DirectoryReader,
-  directoryExclusionRule: DirectoryExclusionRuleRetriever,
-): DirectoryWalker =>
-  function* (
+export const deepEntryExclusionRule = <ExclusionRuleReadError extends Error>(
+  upwardDirectories: (entry: Entry) => readonly Directory[],
+  exclusionRuleFromDirectory: DirectoryExclusionRuleReader<ExclusionRuleReadError>,
+) => (
+  entry: Entry,
+): IO.IO<TaskEither.TaskEither<ExclusionRuleReadError, ExclusionRule>> => () =>
+  pipe(
+    upwardDirectories(entry),
+    ReadonlyArray.map((directory) => exclusionRuleFromDirectory(directory)()),
+    TaskEither.sequenceSeqArray,
+    TaskEither.map((rules) => compositeExclusionRule(rules)),
+  );
+
+export const downwardNotIgnoredEntries = <
+  DirectoryReadError extends Error,
+  ExclusionRuleReadError extends Error
+>(
+  readDirectory: DirectoryReader<DirectoryReadError>,
+  directoryExclusionRule: DirectoryExclusionRuleReader<ExclusionRuleReadError>,
+): DirectoryWalker<DirectoryReadError | ExclusionRuleReadError> =>
+  async function* (
     directory: Directory,
-  ): Iterable<IO<Either<Error, Iterable<Entry>>>> {
+  ): AsyncIterable<
+    IO.IO<
+      TaskEither.TaskEither<
+        DirectoryReadError | ExclusionRuleReadError,
+        readonly Entry[]
+      >
+    >
+  > {
+    yield () => TaskEither.right([directory]);
     const stack: Array<{
       directory: Directory;
       parentExclusionRule: ExclusionRule;
@@ -82,27 +109,34 @@ export const downwardNotIgnoredEntries = (
         parentExclusionRule: ExclusionRule;
       };
       yield () =>
-        monad(directoryExclusionRule(directory)())
-          .mapRight((currentExclusionRule) =>
+        pipe(
+          directoryExclusionRule(directory)(),
+          TaskEither.map((currentExclusionRule) =>
             compositeExclusionRule([parentExclusionRule, currentExclusionRule]),
-          )
-          .chainRight((exclude) =>
-            mapRight(readDirectory(directory)(), (entries) => ({
-              exclude,
-              entries,
-            })),
-          )
-          .mapRight(function* ({ exclude, entries }): Iterable<Entry> {
-            yield directory;
-            for (const entry of filter(
-              entries,
-              exclusionRuleAsFilter(exclude),
-            )) {
-              yield entry;
-              if (entryIsDirectory(entry))
-                stack.push({ directory: entry, parentExclusionRule: exclude });
-            }
-          })
-          .toEither();
+          ),
+          TaskEither.chain<
+            DirectoryReadError | ExclusionRuleReadError,
+            ExclusionRule,
+            readonly Entry[]
+          >((exclude) =>
+            pipe(
+              readDirectory(directory)(),
+              TaskEither.map((entries) =>
+                pipe(
+                  entries,
+                  ReadonlyArray.filter(exclusionRuleAsFilter(exclude)),
+                  ReadonlyArray.map((entry) => {
+                    if (entryIsDirectory(entry))
+                      stack.push({
+                        directory: entry,
+                        parentExclusionRule: exclude,
+                      });
+                    return entry;
+                  }),
+                ),
+              ),
+            ),
+          ),
+        );
     }
   };

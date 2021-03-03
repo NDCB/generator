@@ -1,3 +1,6 @@
+import * as Either from "fp-ts/Either";
+import * as Option from "fp-ts/Option";
+
 import * as unified from "unified";
 import * as markdown from "remark-parse";
 import * as markdownFrontmatter from "remark-frontmatter";
@@ -16,8 +19,6 @@ import htmlCustomElement, {
   CustomElementPluginOptions,
 } from "@ndcb/rehype-custom-element";
 import { extension } from "@ndcb/fs-util";
-import { eitherFromThrowable } from "@ndcb/util/lib/either";
-import { some } from "@ndcb/util/lib/option";
 
 import { FileProcessor, Processor } from "./processor";
 import { Transformer } from "./html";
@@ -49,22 +50,23 @@ export const markdownTransformer = ({
     .use(htmlCustomElement, customElements)
     .use(htmlStringify);
   return (contents, data) =>
-    eitherFromThrowable(
+    Either.tryCatch(
       () => processor.processSync({ contents, data }).contents as string,
+      (error) => error as Error,
     );
 };
 
 export const markdownFileProcessors = (
-  processor: Processor,
-): FileProcessor[] => [
+  processor: Processor<Error>,
+): FileProcessor<Error>[] => [
   {
     processor,
-    sourceExtension: some(extension(".md")),
-    destinationExtension: some(extension(".html")),
+    sourceExtension: Option.some(extension(".md")),
+    destinationExtension: Option.some(extension(".html")),
   },
   {
     processor,
-    sourceExtension: some(extension(".markdown")),
-    destinationExtension: some(extension(".html")),
+    sourceExtension: Option.some(extension(".markdown")),
+    destinationExtension: Option.some(extension(".html")),
   },
 ];

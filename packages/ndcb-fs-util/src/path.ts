@@ -1,7 +1,6 @@
 import { extname, resolve, relative, join, dirname, basename } from "path";
-
-import { map } from "@ndcb/util/lib/iterable";
-import { Option, optionValue, isSome, some, none } from "@ndcb/util/lib/option";
+import * as Option from "fp-ts/Option";
+import * as ReadonlyArray from "fp-ts/ReadonlyArray";
 
 import {
   AbsolutePath,
@@ -18,6 +17,7 @@ import {
   relativePathSegments,
   relativePath,
 } from "./relativePath";
+import { pipe } from "fp-ts/lib/pipeable";
 
 export type Path = AbsolutePath | RelativePath; // Discriminated union
 
@@ -50,13 +50,13 @@ export const pathToString: (path: Path) => string = matchPath({
   relative: relativePathToString,
 });
 
-export const pathExtension = (path: Path): Option<Extension> => {
+export const pathExtension = (path: Path): Option.Option<Extension> => {
   const extensionName = extname(pathToString(path)).toLowerCase();
-  return !extensionName ? none() : some(extension(extensionName));
+  return !extensionName ? Option.none : Option.some(extension(extensionName));
 };
 
 export const pathHasExtension = (path: Path): boolean =>
-  isSome(pathExtension(path));
+  Option.isSome(pathExtension(path));
 
 export const pathSegments: (path: Path) => Iterable<string> = matchPath({
   absolute: absolutePathSegments,
@@ -80,9 +80,12 @@ const base = (path: string): string =>
 
 const baseWithExtension = (
   base: string,
-  extension: Option<Extension>,
+  extension: Option.Option<Extension>,
 ): string =>
-  isSome(extension) ? base + extensionToString(optionValue(extension)) : base;
+  Option.fold<Extension, string>(
+    () => base,
+    (extension) => base + extensionToString(extension),
+  )(extension);
 
 /**
  * Constructs a relative path corresponding to the given one with its extension
@@ -102,7 +105,7 @@ const baseWithExtension = (
  */
 export const relativePathWithExtension = (
   path: RelativePath,
-  extension: Option<Extension>,
+  extension: Option.Option<Extension>,
 ): RelativePath =>
   relativePath(baseWithExtension(base(relativePathToString(path)), extension));
 
@@ -121,10 +124,13 @@ export const relativePathWithExtension = (
  */
 export const relativePathWithExtensions = (
   path: RelativePath,
-  extensions: Iterable<Option<Extension>>,
-): Iterable<RelativePath> => {
+  extensions: readonly Option.Option<Extension>[],
+): readonly RelativePath[] => {
   const b = base(relativePathToString(path));
-  return map(extensions, (extension) =>
-    relativePath(baseWithExtension(b, extension)),
+  return pipe(
+    extensions,
+    ReadonlyArray.map((extension) =>
+      relativePath(baseWithExtension(b, extension)),
+    ),
   );
 };

@@ -1,7 +1,13 @@
+import * as ReadonlyArray from "fp-ts/ReadonlyArray";
+import * as TaskEither from "fp-ts/TaskEither";
+import * as Option from "fp-ts/Option";
+import { pipe } from "fp-ts/function";
+
 import {
   deepEntryExclusionRule,
+  DirectoryExclusionRuleReader,
   downwardNotIgnoredEntries,
-  DirectoryExclusionRuleRetriever,
+  ExclusionRule,
   exclusionRuleAsFilter,
 } from "@ndcb/fs-ignore";
 import {
@@ -19,37 +25,66 @@ import {
   DirectoryWalker,
   directoryHasDescendent,
   entryRelativePath,
-  directoryToString,
-  fileToString,
+  FileExistenceTester,
+  DirectoryExistenceTester,
 } from "@ndcb/fs-util";
-import { filter } from "@ndcb/util/lib/iterable";
-import { IO } from "@ndcb/util/lib/io";
-import { mapRight, Either, monad, right, left } from "@ndcb/util/lib/either";
-import { some, none, isSome } from "@ndcb/util/lib/option";
 
-import { FileSystem } from "./fileSystem";
+import {
+  FileSystem,
+  FileNotFoundError,
+  fileNotFoundError,
+  DirectoryNotFoundError,
+  directoryNotFoundError,
+} from "./fileSystem";
 
-export interface RootedFileSystem extends FileSystem {
+export interface RootedFileSystem<
+  FileRetrievalError extends Error,
+  FileExistenceTestError extends Error,
+  DirectoryExistenceTestError extends Error,
+  FileReadError extends Error,
+  DirectoryReadError extends Error,
+  DirectoryWalkError extends Error
+> extends FileSystem<
+    FileRetrievalError,
+    FileExistenceTestError,
+    DirectoryExistenceTestError,
+    FileReadError,
+    DirectoryReadError
+  > {
   readonly root: Directory;
-  readonly walker: DirectoryWalker;
+  readonly walker: DirectoryWalker<DirectoryWalkError>;
   readonly fileFromRoot: (path: RelativePath) => File;
   readonly directoryFromRoot: (path: RelativePath) => Directory;
-  readonly fileReader: FileReader;
-  readonly directoryReader: DirectoryReader;
-  readonly upwardDirectories: (entry: Entry) => Iterable<Directory>;
+  readonly fileReader: FileReader<FileReadError>;
+  readonly directoryReader: DirectoryReader<DirectoryReadError>;
+  readonly upwardDirectories: (entry: Entry) => readonly Directory[];
 }
 
-export const rootedFileSystem = ({
+export const rootedFileSystem = <
+  FileExistenceTestError extends Error,
+  DirectoryExistenceTestError extends Error,
+  FileReadError extends Error,
+  DirectoryReadError extends Error
+>({
   fileExists,
   directoryExists,
   readFile,
   readDirectory,
 }: {
-  fileExists: (file: File) => IO<Either<Error, boolean>>;
-  directoryExists: (directory: Directory) => IO<Either<Error, boolean>>;
-  readFile: FileReader;
-  readDirectory: DirectoryReader;
-}) => (root: Directory): RootedFileSystem => {
+  fileExists: FileExistenceTester<FileExistenceTestError>;
+  directoryExists: DirectoryExistenceTester<DirectoryExistenceTestError>;
+  readFile: FileReader<FileReadError>;
+  readDirectory: DirectoryReader<DirectoryReadError>;
+}) => (
+  root: Directory,
+): RootedFileSystem<
+  FileExistenceTestError,
+  FileExistenceTestError,
+  DirectoryExistenceTestError,
+  FileReadError,
+  DirectoryReadError,
+  DirectoryReadError
+> => {
   const pathnameToFile = fileFromDirectory(root);
   const pathnameToDirectory = directoryFromDirectory(root);
   const walker = downwardEntries(readDirectory);
@@ -58,29 +93,36 @@ export const rootedFileSystem = ({
     directoryHasDescendent(root, entry);
   const fileExistsInSystem = (path) => () => {
     const file = pathnameToFile(path);
-    return systemIncludes(file) ? fileExists(file)() : right(false);
+    return systemIncludes(file) ? fileExists(file)() : TaskEither.right(false);
   };
   const directoryExistsInSystem = (path) => () => {
     const directory = pathnameToDirectory(path);
     return systemIncludes(directory)
       ? directoryExists(directory)()
-      : right(false);
+      : TaskEither.right(false);
   };
   const fileFromRoot = pathnameToFile;
   const directoryFromRoot = pathnameToDirectory;
   return {
     root,
     pathname: (entry) =>
-      systemIncludes(entry) ? some(entryRelativePath(root, entry)) : none(),
+      pipe(
+        entry,
+        Option.fromPredicate(systemIncludes),
+        Option.map((entry) => entryRelativePath(root, entry)),
+      ),
     file: (pathname) => () =>
-      mapRight(fileExistsInSystem(pathname)(), (exists) =>
-        exists ? some(fileFromRoot(pathname)) : none(),
+      pipe(
+        fileExistsInSystem(pathname)(),
+        TaskEither.map((exists) =>
+          exists ? Option.some(fileFromRoot(pathname)) : Option.none,
+        ),
       ),
     fileFromRoot,
     directoryFromRoot,
     fileReader: readFile,
     directoryReader: readDirectory,
-    upwardDirectories: upwardDirectoriesUntil(root),
+    upwardDirectories: (entry) => [...upwardDirectoriesUntil(root)(entry)],
     walker,
     files: () => files(root),
     fileExists: fileExistsInSystem,
@@ -90,92 +132,159 @@ export const rootedFileSystem = ({
   };
 };
 
-const fileNotFoundError = (file: File): Error =>
-  new Error(`File not found at "${fileToString(file)}"`);
-
-const directoryNotFoundError = (directory: Directory): Error =>
-  new Error(`Directory not found at "${directoryToString(directory)}"`);
-
-export const excludedRootedFileSystem = (
-  system: RootedFileSystem,
-  exclusionRuleRetriever: DirectoryExclusionRuleRetriever,
-): RootedFileSystem => {
-  const exclusionRuleAt = deepEntryExclusionRule(system.upwardDirectories)(
+export const excludedRootedFileSystem = <
+  FileRetrievalError extends Error,
+  FileExistenceTestError extends Error,
+  DirectoryExistenceTestError extends Error,
+  FileReadError extends Error,
+  DirectoryReadError extends Error,
+  DirectoryWalkError extends Error,
+  ExclusionRuleReadError extends Error
+>(
+  system: RootedFileSystem<
+    FileRetrievalError,
+    FileExistenceTestError,
+    DirectoryExistenceTestError,
+    FileReadError,
+    DirectoryReadError,
+    DirectoryWalkError
+  >,
+  exclusionRuleRetriever: DirectoryExclusionRuleReader<ExclusionRuleReadError>,
+): RootedFileSystem<
+  FileRetrievalError | DirectoryReadError | ExclusionRuleReadError,
+  FileExistenceTestError | ExclusionRuleReadError,
+  DirectoryExistenceTestError | ExclusionRuleReadError,
+  FileReadError | ExclusionRuleReadError | FileNotFoundError,
+  DirectoryReadError | ExclusionRuleReadError | DirectoryNotFoundError,
+  DirectoryWalkError | ExclusionRuleReadError
+> => {
+  const exclusionRuleAt = deepEntryExclusionRule(
+    system.upwardDirectories,
     exclusionRuleRetriever,
+  );
+  const files = downwardFiles(
+    downwardNotIgnoredEntries(system.directoryReader, exclusionRuleRetriever),
   );
   return {
     ...system,
-    file: (pathname) => () => {
-      const file = system.fileFromRoot(pathname);
-      return monad(system.file(pathname)())
-        .chainRight((fileQuery) =>
-          isSome(fileQuery)
-            ? mapRight(exclusionRuleAt(file)(), (excludes) =>
-                excludes(file) ? none() : fileQuery,
-              )
-            : right(none()),
-        )
-        .toEither();
-    },
-    files: () =>
-      downwardFiles(
-        downwardNotIgnoredEntries(
-          system.directoryReader,
-          exclusionRuleRetriever,
+    file: (pathname) => () =>
+      pipe(
+        system.file(pathname)(),
+        TaskEither.chain((fileQuery) =>
+          pipe(
+            fileQuery,
+            Option.fold<
+              File,
+              TaskEither.TaskEither<
+                FileRetrievalError | ExclusionRuleReadError,
+                Option.Option<File>
+              >
+            >(
+              () => TaskEither.right(Option.none),
+              (file) =>
+                pipe(
+                  exclusionRuleAt(file)(),
+                  TaskEither.map((excludes) =>
+                    excludes(file) ? Option.none : fileQuery,
+                  ),
+                ),
+            ),
+          ),
         ),
-      )(system.root),
+      ),
+    files: () => files(system.root),
     fileExists: (path) => () =>
-      monad(
-        mapRight(system.fileExists(path)(), (exists) => ({
+      pipe(
+        system.fileExists(path)(),
+        TaskEither.map((exists) => ({
           file: system.fileFromRoot(path),
           exists,
         })),
-      )
-        .chainRight(({ exists, file }) =>
+        TaskEither.chain<
+          FileExistenceTestError | ExclusionRuleReadError,
+          {
+            exists: boolean;
+            file: File;
+          },
+          boolean
+        >(({ exists, file }) =>
           exists
-            ? mapRight(exclusionRuleAt(file)(), (excludes) => !excludes(file))
-            : right(false),
-        )
-        .toEither(),
+            ? pipe(
+                exclusionRuleAt(file)(),
+                TaskEither.map((excludes) => !excludes(file)),
+              )
+            : TaskEither.right(false),
+        ),
+      ),
     directoryExists: (path) => () =>
-      monad(
-        mapRight(system.directoryExists(path)(), (exists) => ({
+      pipe(
+        system.directoryExists(path)(),
+        TaskEither.map((exists) => ({
           exists,
           directory: system.directoryFromRoot(path),
         })),
-      )
-        .chainRight(({ exists, directory }) =>
+        TaskEither.chain<
+          DirectoryExistenceTestError | ExclusionRuleReadError,
+          {
+            exists: boolean;
+            directory: Directory;
+          },
+          boolean
+        >(({ exists, directory }) =>
           exists
-            ? mapRight(
+            ? pipe(
                 exclusionRuleAt(directory)(),
-                (excludes) => !excludes(directory),
+                TaskEither.map((excludes) => !excludes(directory)),
               )
-            : right(false),
-        )
-        .toEither(),
+            : TaskEither.right(false),
+        ),
+      ),
     readFile: (path) => () => {
       const file = system.fileFromRoot(path);
-      return monad(exclusionRuleAt(file)())
-        .chainRight((excludes) =>
-          excludes(file) ? left(fileNotFoundError(file)) : right(file),
-        )
-        .chainRight(() => system.readFile(path)())
-        .toEither();
+      return pipe(
+        exclusionRuleAt(file)(),
+        TaskEither.chain<
+          ExclusionRuleReadError | FileNotFoundError,
+          ExclusionRule,
+          File
+        >((excludes) =>
+          excludes(file)
+            ? TaskEither.left(fileNotFoundError(path))
+            : TaskEither.right(file),
+        ),
+        TaskEither.chain<
+          FileReadError | ExclusionRuleReadError | FileNotFoundError,
+          File,
+          Buffer
+        >(() => system.readFile(path)()),
+      );
     },
     readDirectory: (path) => () => {
       const directory = system.directoryFromRoot(path);
-      return monad(exclusionRuleAt(directory)())
-        .chainRight((excludes) =>
+      return pipe(
+        exclusionRuleAt(directory)(),
+        TaskEither.chain<
+          ExclusionRuleReadError | DirectoryNotFoundError,
+          ExclusionRule,
+          ExclusionRule
+        >((excludes) =>
           excludes(directory)
-            ? left(directoryNotFoundError(directory))
-            : right(excludes),
-        )
-        .chainRight((excludes) =>
-          mapRight(system.readDirectory(path)(), (entries) =>
-            filter(entries, exclusionRuleAsFilter(excludes)),
+            ? TaskEither.left(directoryNotFoundError(path))
+            : TaskEither.right(excludes),
+        ),
+        TaskEither.chain<
+          DirectoryReadError | ExclusionRuleReadError | DirectoryNotFoundError,
+          ExclusionRule,
+          readonly Entry[]
+        >((excludes) =>
+          pipe(
+            system.readDirectory(path)(),
+            TaskEither.map(
+              ReadonlyArray.filter(exclusionRuleAsFilter(excludes)),
+            ),
           ),
-        )
-        .toEither();
+        ),
+      );
     },
   };
 };

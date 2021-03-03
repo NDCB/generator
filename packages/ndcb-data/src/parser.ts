@@ -1,3 +1,9 @@
+import * as IO from "fp-ts/IO";
+import * as Either from "fp-ts/Either";
+import * as Option from "fp-ts/Option";
+import * as TaskEither from "fp-ts/TaskEither";
+import { pipe } from "fp-ts/function";
+
 import {
   File,
   extension,
@@ -6,25 +12,8 @@ import {
   extensionToString,
   fileToString,
   TextFileReader,
-  FileIOError,
 } from "@ndcb/fs-util";
-import {
-  Either,
-  eitherFromThrowable,
-  monad,
-  right,
-  left,
-  mapLeft,
-} from "@ndcb/util/lib/either";
-import {
-  Option,
-  isSome,
-  optionValue,
-  join,
-  mapNone,
-} from "@ndcb/util/lib/option";
-import { some, find, map, iterableToString } from "@ndcb/util/lib/iterable";
-import { IO } from "@ndcb/util/lib/io";
+import { some, find, map } from "@ndcb/util/lib/iterable";
 
 const parseJson = (contents: string): unknown => JSON.parse(contents);
 import { parse as parseJson5 } from "json5";
@@ -32,158 +21,157 @@ import { parse as parseYaml } from "yaml";
 import { parse as parseToml } from "toml";
 
 export interface DataParsingError extends Error {
-  readonly name: "DataParsingError";
+  readonly contents: string;
 }
 
-export type TextDataParser = (
+export type TextDataParser<E extends DataParsingError> = (
   contents: string,
-) => Either<DataParsingError, unknown>;
+) => Either.Either<E, unknown>;
 
-export interface DataParserByFileExtension {
-  readonly handles: (extension: Option<Extension>) => boolean;
-  readonly parse: TextDataParser;
+export interface DataParserByFileExtension<E extends DataParsingError> {
+  readonly handles: (extension: Option.Option<Extension>) => boolean;
+  readonly parse: TextDataParser<E>;
 }
 
 const dataParserByFileExtensions = (
   handledExtensions: readonly Extension[],
   parse: (contents: string) => unknown,
-): DataParserByFileExtension => ({
+): DataParserByFileExtension<DataParsingError> => ({
   handles: (extension) =>
-    isSome(extension) &&
+    Option.isSome(extension) &&
     some(handledExtensions, (handledExtension) =>
-      extensionEquals(optionValue(extension), handledExtension),
+      extensionEquals(extension.value, handledExtension),
     ),
   parse: (contents) =>
-    mapLeft<Error, unknown, DataParsingError>(
-      eitherFromThrowable(() => parse(contents)) as Either<Error, unknown>,
-      ({ message }: Error) => ({
-        name: "DataParsingError",
-        message: `Failed to parse data from contents argument.
-Cause: "${message}".
-Handled file extensions: "${iterableToString(
-          handledExtensions,
-          extensionToString,
-        )}".
-Contents: "${contents}".`,
-      }),
+    Either.tryCatch(
+      () => parse(contents),
+      (error) => ({ ...(error as Error), contents }),
     ),
 });
 
 const dataParserByExtensionTokens = (
   extensionTokens: Iterable<string>,
   parse: (contents: string) => unknown,
-): DataParserByFileExtension =>
-  dataParserByFileExtensions([...map(extensionTokens, extension)], parse);
+): DataParserByFileExtension<DataParsingError> =>
+  dataParserByFileExtensions(
+    [...map(extensionTokens, (token) => extension(token))],
+    parse,
+  );
 
-export const jsonParser: DataParserByFileExtension = dataParserByExtensionTokens(
+export const jsonParser: DataParserByFileExtension<DataParsingError> = dataParserByExtensionTokens(
   [".json"],
   parseJson,
 );
 
-export const json5Parser: DataParserByFileExtension = dataParserByExtensionTokens(
+export const json5Parser: DataParserByFileExtension<DataParsingError> = dataParserByExtensionTokens(
   [".json5"],
   parseJson5,
 );
 
-export const yamlParser: DataParserByFileExtension = dataParserByExtensionTokens(
+export const yamlParser: DataParserByFileExtension<DataParsingError> = dataParserByExtensionTokens(
   [".yml", ".yaml"],
   parseYaml,
 );
 
-export const tomlParser: DataParserByFileExtension = dataParserByExtensionTokens(
+export const tomlParser: DataParserByFileExtension<DataParsingError> = dataParserByExtensionTokens(
   [".toml"],
   parseToml,
 );
 
-export interface UnhandledDataFormatError extends Error {
-  readonly name: "UnhandledDataFormatError";
-  readonly extension: Option<Extension>;
-}
-
-export interface CompositeDataParserByFileExtension {
-  readonly handles: (extension: Option<Extension>) => boolean;
+export interface CompositeDataParserByFileExtension<E extends Error> {
+  readonly handles: (extension: Option.Option<Extension>) => boolean;
   readonly parse: (
-    extension: Option<Extension>,
+    extension: Option.Option<Extension>,
     contents: string,
-  ) => Either<UnhandledDataFormatError | DataParsingError, unknown>;
+  ) => Either.Either<E, unknown>;
 }
 
-export const compositeTextDataParser = (
-  parsers: readonly DataParserByFileExtension[],
-): CompositeDataParserByFileExtension => ({
-  handles: (extension) => some(parsers, (parser) => parser.handles(extension)),
-  parse: (extension, contents) =>
-    monad(
-      mapNone<DataParserByFileExtension, UnhandledDataFormatError>(() => ({
-        name: "UnhandledDataFormatError",
-        message: `No parser registered for text data file with extension "${join(
-          extensionToString,
-          () => "none",
-        )(extension)}".`,
-        extension,
-      }))(find(parsers, (parser) => parser.handles(extension))),
-    )
-      .chainRight((parser) => parser.parse(contents))
-      .toEither(),
+export interface UnhandledExtensionError extends Error {
+  readonly extension: Option.Option<Extension>;
+}
+
+const unhandledExtensionError = (
+  extension: Option.Option<Extension>,
+): UnhandledExtensionError => ({
+  ...new Error(
+    `Unhandled file extension "${pipe(
+      extension,
+      Option.fold(
+        () => "",
+        (extension) => extensionToString(extension),
+      ),
+    )}"`,
+  ),
+  extension,
 });
 
-export interface TextFileContentsParser {
+export const compositeTextDataParser = (
+  parsers: readonly DataParserByFileExtension<DataParsingError>[],
+): CompositeDataParserByFileExtension<Error> => ({
+  handles: (extension) => some(parsers, (parser) => parser.handles(extension)),
+  parse: (extension, contents) =>
+    pipe(
+      find<DataParserByFileExtension<DataParsingError>>(parsers, (parser) =>
+        parser.handles(extension),
+      ),
+      Either.fromOption(() => unhandledExtensionError(extension)),
+      Either.map((parser) => parser.parse(contents)),
+    ),
+});
+
+export interface TextFileContentsParser<E extends Error> {
   readonly handles: (file: File) => boolean;
-  readonly parse: (
-    file: File,
-    contents: string,
-  ) => Either<UnhandledDataFormatError | DataParsingError, unknown>;
+  readonly parse: (file: File, contents: string) => Either.Either<E, unknown>;
 }
 
-export const compositeTextDataParserToFileContentsParser = (
-  parser: CompositeDataParserByFileExtension,
-  fileExtension: (file: File) => Option<Extension>,
-): TextFileContentsParser => ({
+export const compositeTextDataParserToFileContentsParser = <E extends Error>(
+  parser: CompositeDataParserByFileExtension<E>,
+  fileExtension: (file: File) => Option.Option<Extension>,
+): TextFileContentsParser<E> => ({
   handles: (file: File) => parser.handles(fileExtension(file)),
   parse: (file: File, contents: string) =>
     parser.parse(fileExtension(file), contents),
 });
 
-export interface UnhandledFileFormatError extends Error {
-  readonly name: "UnhandledFileFormatError";
+export type TextFileDataReader<E extends Error> = (
+  file: File,
+) => IO.IO<TaskEither.TaskEither<E, unknown>>;
+
+export interface UnhandledFileError extends Error {
   readonly file: File;
 }
 
-export type TextFileDataReader = (
-  file: File,
-) => IO<
-  Either<
-    | UnhandledFileFormatError
-    | FileIOError
-    | UnhandledDataFormatError
-    | DataParsingError,
-    unknown
-  >
->;
+const unhandledFileError = (file: File): UnhandledFileError => ({
+  ...new Error(`Unhandled file "${fileToString(file)}"`),
+  file,
+});
 
-export const textFileDataReader = (
-  readTextFile: TextFileReader,
-  parser: TextFileContentsParser,
-): TextFileDataReader => (
+export const textFileDataReader = <
+  ReadFileError extends Error,
+  ParseError extends Error
+>(
+  readTextFile: TextFileReader<ReadFileError>,
+  parser: TextFileContentsParser<ParseError>,
+): TextFileDataReader<ReadFileError | ParseError | UnhandledFileError> => (
   file: File,
-): IO<
-  Either<
-    | UnhandledFileFormatError
-    | FileIOError
-    | UnhandledDataFormatError
-    | DataParsingError,
+): IO.IO<
+  TaskEither.TaskEither<
+    ReadFileError | ParseError | UnhandledFileError,
     unknown
   >
 > => () =>
-  monad(
+  pipe(
     parser.handles(file)
-      ? right(file)
-      : left<UnhandledFileFormatError>({
-          name: "UnhandledFileFormatError",
-          message: `Parser does not handle file "${fileToString(file)}".`,
-          file,
-        }),
-  )
-    .chainRight((file) => readTextFile(file)())
-    .chainRight((contents) => parser.parse(file, contents))
-    .toEither();
+      ? TaskEither.right(file)
+      : TaskEither.left(unhandledFileError(file)),
+    TaskEither.chain<
+      ReadFileError | ParseError | UnhandledFileError,
+      File,
+      string
+    >((file) => readTextFile(file)()),
+    TaskEither.chain<
+      ReadFileError | ParseError | UnhandledFileError,
+      string,
+      unknown
+    >((contents) => pipe(parser.parse(file, contents), TaskEither.fromEither)),
+  );

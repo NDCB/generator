@@ -1,13 +1,18 @@
+import * as IO from "fp-ts/IO";
+import * as TaskEither from "fp-ts/TaskEither";
+import { pipe } from "fp-ts/function";
+
 import { detect } from "jschardet";
 import { decode } from "iconv-lite";
 
-import { FileReader, TextFileReader, File, FileIOError } from "@ndcb/fs-util";
-import { IO } from "@ndcb/util/lib/io";
-import { Either, mapRight } from "@ndcb/util/lib/either";
+import { FileReader, TextFileReader, File } from "@ndcb/fs-util";
 
-export const textFileReader = (readFile: FileReader): TextFileReader => (
+export const textFileReader = <FileReadError extends Error>(
+  readFile: FileReader<FileReadError>,
+): TextFileReader<FileReadError> => (
   file: File,
-): IO<Either<FileIOError, string>> => () =>
-  mapRight(readFile(file)(), (contents) =>
-    decode(contents, detect(contents).encoding),
+): IO.IO<TaskEither.TaskEither<FileReadError, string>> => () =>
+  pipe(
+    readFile(file)(),
+    TaskEither.map((contents) => decode(contents, detect(contents).encoding)),
   );

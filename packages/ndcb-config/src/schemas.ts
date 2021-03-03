@@ -1,4 +1,6 @@
 import * as Joi from "joi";
+import * as Option from "fp-ts/Option";
+import * as TaskEither from "fp-ts/TaskEither";
 
 import {
   normalizedFile,
@@ -8,8 +10,6 @@ import {
   directoryHasDescendent,
 } from "@ndcb/fs-util";
 import { orderedPairs, filter, find } from "@ndcb/util/lib/iterable";
-import { Either, left, right } from "@ndcb/util/lib/either";
-import { isSome, optionValue } from "@ndcb/util/lib/option";
 import { ColorCode } from "@ndcb/logger";
 
 export const fileSchema = Joi.string().trim().custom(normalizedFile);
@@ -57,8 +57,8 @@ export const mutuallyDisjointSourceDirectoriesSchema = Joi.array()
       filter(orderedPairs(value), ([d1, d2]) => d1 !== d2),
       ([d1, d2]) => directoryHasDescendent(d1, d2),
     );
-    if (isSome(meetingSourceDirectories)) {
-      const [d1, d2] = optionValue(meetingSourceDirectories);
+    if (Option.isSome(meetingSourceDirectories)) {
+      const [d1, d2] = meetingSourceDirectories.value;
       throw new Error(
         `Source directories must be mutually disjoint.
 Directory "${directoryToString(d1)}" is not disjoint from "${directoryToString(
@@ -186,7 +186,8 @@ export const configurationSchema = Joi.object({
 
 export const validate = (schema: Joi.Schema) => (
   element?: unknown,
-): Either<Joi.ValidationError, unknown> => {
-  const { value, error } = schema.validate(element);
-  return error ? left(error) : right(value);
-};
+): TaskEither.TaskEither<Joi.ValidationError, unknown> =>
+  TaskEither.tryCatch(
+    () => schema.validateAsync(element),
+    (error) => error as Joi.ValidationError,
+  );

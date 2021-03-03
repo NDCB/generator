@@ -18,22 +18,23 @@ import {
 } from "@ndcb/fs-util";
 
 import { mdastTableOfContentsTree } from "../src/toc";
+import { slugifyTableOfContents } from "../src/slugifier";
 
 const { parse } = unified()
   .use(markdown, { commonmark: true } as Record<string, unknown>)
   .use(frontmatter);
 
-describe("mdastTableOfContentsTree", () => {
+describe("slugifyTableOfContents", () => {
   const fixturesDirectory = normalizedDirectory(`${__dirname}/fixtures`);
   const fileInFixtures = fileFromDirectory(fixturesDirectory);
-  const readTextFile = textFileReader(readFile, "utf8");
+  const readTextFile = textFileReader(readFile, "utf-8");
   const readContents = (path: string) =>
     readTextFile(fileInFixtures(normalizedRelativePath(path)));
   for (const {
     file,
     description,
     expected,
-  } of require("./fixtures/mdastTableOfContentsTree")) {
+  } of require("./fixtures/slugifyTableOfContents")) {
     const makeTree = (node) =>
       Tree.make(
         node.node,
@@ -43,11 +44,12 @@ describe("mdastTableOfContentsTree", () => {
       await pipe(
         readContents(file)(),
         TaskEither.getOrElse(() => {
-          throw new Error(`Failed to read fixtures file "${file}"`);
+          throw new Error(`Unexpectedly failed to read file "${file}"`);
         }),
         Task.map((contents) =>
           pipe(
             mdastTableOfContentsTree(parse(contents)),
+            Option.map(slugifyTableOfContents((token) => token.toLowerCase())),
             Option.fold(
               () => {
                 if (expected)

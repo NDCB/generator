@@ -1,16 +1,16 @@
+import * as Task from "fp-ts/Task";
+import * as TaskEither from "fp-ts/TaskEither";
+import * as ReadonlyArray from "fp-ts/ReadonlyArray";
+import { pipe } from "fp-ts/function";
+
 import {
   normalizedDirectory,
   normalizedFile,
-  File,
   normalizedRelativePath,
+  File,
 } from "@ndcb/fs-util";
 import { mockFileSystem, MockDirectory } from "@ndcb/mock-fs";
-import {
-  eitherIsRight,
-  eitherValue,
-  eitherIsLeft,
-} from "@ndcb/util/lib/either";
-import { enumerate, map } from "@ndcb/util/src/iterable";
+import { enumerate } from "@ndcb/util/src/iterable";
 
 import { rootedFileSystem } from "../src/rootedFileSystem";
 
@@ -26,18 +26,22 @@ describe("rootedFileSystem", () => {
       const { files } = rootedFileSystem(mockFileSystem(fs))(
         normalizedDirectory(root),
       );
-      const expectedFiles = [
-        ...map<string, File>(expected, (path) => normalizedFile(path)),
-      ];
-      test(`case #${index}`, () => {
-        const flattenFiles = function* (): Iterable<Error | File> {
-          for (const readFiles of files()) {
-            const filesRead = readFiles();
-            if (eitherIsRight(filesRead)) yield* eitherValue(filesRead);
-            else yield eitherValue(filesRead);
-          }
-        };
-        const actualFiles = [...flattenFiles()];
+      const expectedFiles = pipe(
+        expected,
+        ReadonlyArray.map(normalizedFile),
+        ReadonlyArray.toArray,
+      );
+      test(`case #${index}`, async () => {
+        let actualFiles: File[] = [];
+        for await (const readFiles of files())
+          await pipe(
+            readFiles(),
+            TaskEither.getOrElse(() => {
+              throw new Error(`Unexpectedly failed to read all files`);
+            }),
+            Task.map(ReadonlyArray.toArray),
+            Task.map((files) => (actualFiles = actualFiles.concat(files))),
+          )();
         expect(actualFiles).toEqual(expect.arrayContaining(expectedFiles));
         expect(expectedFiles).toEqual(expect.arrayContaining(actualFiles));
       });
@@ -56,13 +60,16 @@ describe("rootedFileSystem", () => {
         index,
         element: { path, expected },
       } of enumerate<{ path: string; expected: boolean }>(cases, 1)) {
-        test(`case #${index}`, () => {
-          const fileExistenceTest = fileExists(normalizedRelativePath(path))();
-          if (eitherIsLeft(fileExistenceTest))
-            throw new Error(
-              `Unexpectdly failed to determine the existence of file "${path}"`,
-            );
-          expect(eitherValue(fileExistenceTest)).toBe(expected);
+        test(`case #${index}`, async () => {
+          await pipe(
+            fileExists(normalizedRelativePath(path))(),
+            TaskEither.getOrElse(() => {
+              throw new Error(
+                `Unexpectedly failed to determine the existence of file "${path}"`,
+              );
+            }),
+            Task.map((exists) => expect(exists).toBe(expected)),
+          )();
         });
       }
     }
@@ -80,15 +87,18 @@ describe("rootedFileSystem", () => {
         index,
         element: { path, expected },
       } of enumerate<{ path: string; expected: boolean }>(cases, 1)) {
-        test(`case #${index}`, () => {
-          const directoryExistenceTest = directoryExists(
-            normalizedRelativePath(path),
+        test(`case #${index}`, async () => {
+          await pipe(
+            directoryExists(normalizedRelativePath(path))(),
+            TaskEither.getOrElse(() => {
+              throw new Error(
+                `Unexpectedly failed to determine the existence of directory "${path}"`,
+              );
+            }),
+            Task.map((exists) => {
+              expect(exists).toBe(expected);
+            }),
           )();
-          if (eitherIsLeft(directoryExistenceTest))
-            throw new Error(
-              `Unexpectdly failed to determine the existence of directory "${path}"`,
-            );
-          expect(eitherValue(directoryExistenceTest)).toBe(expected);
         });
       }
     }

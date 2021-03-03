@@ -1,12 +1,12 @@
-import { enumerate, map } from "@ndcb/util/lib/iterable";
-import { mockFileSystem } from "@ndcb/mock-fs";
+import * as Eq from "fp-ts/Eq";
+import * as Option from "fp-ts/Option";
+import * as ReadonlyArray from "fp-ts/ReadonlyArray";
+import * as Task from "fp-ts/Task";
+import * as TaskEither from "fp-ts/TaskEither";
+import { pipe } from "fp-ts/function";
 
-import {
-  Pathname,
-  sourcePathname,
-  possibleSourcePathnames,
-  sourcePathname404,
-} from "../src/router";
+import { enumerate } from "@ndcb/util/lib/iterable";
+import { mockFileSystem } from "@ndcb/mock-fs";
 import {
   file,
   resolvedAbsolutePath,
@@ -17,14 +17,14 @@ import {
   normalizedRelativePath,
   Extension,
 } from "@ndcb/fs-util";
-import { inversedHashMap, eitherIsLeft, eitherValue } from "@ndcb/util";
+import { inversedHashMap } from "@ndcb/util";
+
 import {
-  none,
-  some,
-  hashOption,
-  optionEquals,
-  Option,
-} from "@ndcb/util/lib/option";
+  Pathname,
+  sourcePathname,
+  possibleSourcePathnames,
+  sourcePathname404,
+} from "../src/router";
 
 describe("sourcePathname", () => {
   for (const {
@@ -40,15 +40,18 @@ describe("sourcePathname", () => {
         file(resolvedAbsolutePath(normalizedAbsolutePath("/"), pathname)),
       );
     const sourceExtensionsMap = inversedHashMap<
-      Option<Extension>,
-      Option<Extension>
+      Option.Option<Extension>,
+      Option.Option<Extension>
     >(
-      map(mapping as [string, string][], ([e1, e2]) => [
-        e1 ? some(extension(e1)) : none(),
-        e2 ? some(extension(e2)) : none(),
-      ]),
-      hashOption(hashExtension),
-      optionEquals(extensionEquals),
+      pipe(
+        mapping as [string, string][],
+        ReadonlyArray.map(([e1, e2]) => [
+          e1 ? Option.some(extension(e1)) : Option.none,
+          e2 ? Option.some(extension(e2)) : Option.none,
+        ]),
+      ),
+      Option.fold(() => 0, hashExtension),
+      Option.getEq(Eq.fromEquals(extensionEquals)),
     );
     const source = sourcePathname(
       possibleSourcePathnames(sourceExtensionsMap),
@@ -64,14 +67,20 @@ describe("sourcePathname", () => {
     }>(tests, 1)) {
       test(`case #${suiteIndex}:${testIndex}${
         description ? `: ${description}` : ""
-      }`, () => {
-        const queryResult = source(normalizedRelativePath(query))();
-        if (eitherIsLeft(queryResult))
-          throw new Error(`Unexpectedly failed to find query result.`);
-        const result = eitherValue(queryResult);
-        expect(result).toStrictEqual(
-          expected === null ? none() : some(normalizedRelativePath(expected)),
-        );
+      }`, async () => {
+        await pipe(
+          source(normalizedRelativePath(query))(),
+          TaskEither.getOrElse(() => {
+            throw new Error(`Unexpectedly failed to find query result.`);
+          }),
+          Task.map((result) =>
+            expect(result).toStrictEqual(
+              expected === null
+                ? Option.none
+                : Option.some(normalizedRelativePath(expected)),
+            ),
+          ),
+        )();
       });
     }
   }
@@ -91,15 +100,18 @@ describe("sourcePathname404", () => {
         file(resolvedAbsolutePath(normalizedAbsolutePath("/"), pathname)),
       );
     const sourceExtensionsMap = inversedHashMap<
-      Option<Extension>,
-      Option<Extension>
+      Option.Option<Extension>,
+      Option.Option<Extension>
     >(
-      map(mapping as [string, string][], ([e1, e2]) => [
-        e1 ? some(extension(e1)) : none(),
-        e2 ? some(extension(e2)) : none(),
-      ]),
-      hashOption(hashExtension),
-      optionEquals(extensionEquals),
+      pipe(
+        mapping as [string, string][],
+        ReadonlyArray.map(([e1, e2]) => [
+          e1 ? Option.some(extension(e1)) : Option.none,
+          e2 ? Option.some(extension(e2)) : Option.none,
+        ]),
+      ),
+      Option.fold(() => 0, hashExtension),
+      Option.getEq(Eq.fromEquals(extensionEquals)),
     );
     const source = sourcePathname(
       possibleSourcePathnames(sourceExtensionsMap),
@@ -116,14 +128,20 @@ describe("sourcePathname404", () => {
     }>(tests, 1)) {
       test(`case #${suiteIndex}:${testIndex}${
         description ? `: ${description}` : ""
-      }`, () => {
-        const queryResult = source404(normalizedRelativePath(query))();
-        if (eitherIsLeft(queryResult))
-          throw new Error(`Unexpectedly failed to find query result.`);
-        const result = eitherValue(queryResult);
-        expect(result).toStrictEqual(
-          expected === null ? none() : some(normalizedRelativePath(expected)),
-        );
+      }`, async () => {
+        await pipe(
+          source404(normalizedRelativePath(query))(),
+          TaskEither.getOrElse(() => {
+            throw new Error(`Unexpectedly failed to find query result.`);
+          }),
+          Task.map((result) =>
+            expect(result).toStrictEqual(
+              expected === null
+                ? Option.none
+                : Option.some(normalizedRelativePath(expected)),
+            ),
+          ),
+        )();
       });
     }
   }

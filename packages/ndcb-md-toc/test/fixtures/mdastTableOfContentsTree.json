@@ -1,7 +1,7 @@
 [
   {
     "file": "./mdast-toc-empty.md",
-    "description": "returns `null` if the file has no headings",
+    "description": "returns none if the file has no headings",
     "expected": null
   },
   {

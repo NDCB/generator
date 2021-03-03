@@ -1,42 +1,31 @@
-import { writeFileSync } from "fs";
-
-import { IO } from "@ndcb/util/lib/io";
-import { Either, mapLeft, eitherFromThrowable } from "@ndcb/util/lib/either";
+import * as fse from "fs-extra";
+import * as IO from "fp-ts/IO";
+import * as TaskEither from "fp-ts/TaskEither";
 
 import { absolutePathToString } from "./absolutePath";
-import { File, filePath } from "./file";
+import { File, FileIOError, filePath } from "./file";
 
-export type FileWritingErrorCode = string;
-
-export interface FileWritingError {
-  readonly code: FileWritingErrorCode;
-  readonly file: File;
-  readonly message: string;
-}
-
-export type FileWriter = (
+export type FileWriter<FileWriteError extends Error> = (
   file: File,
   contents: Buffer,
-) => IO<Either<FileWritingError, void>>;
+) => IO.IO<TaskEither.TaskEither<FileWriteError, void>>;
 
-export const writeFile: FileWriter = (
-  file: File,
-  contents: Buffer,
-): IO<Either<FileWritingError, void>> => () =>
-  mapLeft(
-    eitherFromThrowable(() =>
-      writeFileSync(absolutePathToString(filePath(file)), contents),
-    ) as Either<Error & { code: FileWritingErrorCode }, void>,
-    (error) => ({ ...error, file }),
+export const writeFile: FileWriter<FileIOError> = (file, contents) => () =>
+  TaskEither.tryCatch(
+    () => fse.writeFile(absolutePathToString(filePath(file)), contents),
+    (error) => ({ ...(error as Error & { code: string }), file }),
   );
 
-export type TextFileWriter = (
+export type TextFileWriter<FileWriteError extends Error> = (
   file: File,
   contents: string,
-) => IO<Either<FileWritingError, void>>;
+) => IO.IO<TaskEither.TaskEither<FileWriteError, void>>;
 
-export const writeTextFile = (
-  writeFile: FileWriter,
-  encoding: BufferEncoding,
-): TextFileWriter => (file, contents) =>
-  writeFile(file, Buffer.from(contents, encoding));
+export const writeTextFile: TextFileWriter<FileIOError> = (
+  file,
+  contents,
+) => () =>
+  TaskEither.tryCatch(
+    () => fse.writeFile(absolutePathToString(filePath(file)), contents),
+    (error) => ({ ...(error as Error & { code: string }), file }),
+  );

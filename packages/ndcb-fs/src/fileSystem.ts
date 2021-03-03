@@ -1,119 +1,240 @@
-import { File, RelativePath, Entry, relativePathToString } from "@ndcb/fs-util";
-import {
-  bimap,
-  Option,
-  isSome,
-  optionValue,
-  Some,
-  map as mapOption,
-  join,
-  none,
-} from "@ndcb/util/lib/option";
-import { flatMap, some, find, map, filter } from "@ndcb/util/lib/iterable";
-import { IO } from "@ndcb/util/lib/io";
-import { Either, monad, mapRight, right, left } from "@ndcb/util/lib/either";
-import { sequence } from "@ndcb/util/lib/eitherIterable";
+import * as IO from "fp-ts/IO";
+import * as ReadonlyArray from "fp-ts/ReadonlyArray";
+import * as TaskEither from "fp-ts/TaskEither";
+import * as Option from "fp-ts/Option";
+import { pipe } from "fp-ts/function";
 
-export interface FileSystem {
-  readonly pathname: (entry: Entry) => Option<RelativePath>;
-  readonly file: (pathname: RelativePath) => IO<Either<Error, Option<File>>>;
-  readonly files: () => Iterable<IO<Either<Error, Iterable<File>>>>;
-  readonly fileExists: (path: RelativePath) => IO<Either<Error, boolean>>;
-  readonly directoryExists: (path: RelativePath) => IO<Either<Error, boolean>>;
-  readonly readFile: (path: RelativePath) => IO<Either<Error, Buffer>>;
+import { File, RelativePath, Entry, relativePathToString } from "@ndcb/fs-util";
+
+export interface FileSystem<
+  FileRetrievalError extends Error,
+  FileExistenceTestError extends Error,
+  DirectoryExistenceTestError extends Error,
+  FileReadError extends Error,
+  DirectoryReadError extends Error
+> {
+  readonly pathname: (entry: Entry) => Option.Option<RelativePath>;
+  readonly file: (
+    pathname: RelativePath,
+  ) => IO.IO<TaskEither.TaskEither<FileRetrievalError, Option.Option<File>>>;
+  readonly files: () => AsyncIterable<
+    IO.IO<TaskEither.TaskEither<DirectoryReadError, readonly File[]>>
+  >;
+  readonly fileExists: (
+    path: RelativePath,
+  ) => IO.IO<TaskEither.TaskEither<FileExistenceTestError, boolean>>;
+  readonly directoryExists: (
+    path: RelativePath,
+  ) => IO.IO<TaskEither.TaskEither<DirectoryExistenceTestError, boolean>>;
+  readonly readFile: (
+    path: RelativePath,
+  ) => IO.IO<TaskEither.TaskEither<FileReadError, Buffer>>;
   readonly readDirectory: (
     path: RelativePath,
-  ) => IO<Either<Error, Iterable<Entry>>>;
+  ) => IO.IO<TaskEither.TaskEither<DirectoryReadError, readonly Entry[]>>;
 }
 
-const fileNotFoundError = (path: RelativePath): Error =>
-  new Error(`File not found at "${relativePathToString(path)}"`);
+export interface FileNotFoundError extends Error {
+  path: RelativePath;
+}
 
-const directoryNotFoundError = (path: RelativePath): Error =>
-  new Error(`Directory not found at "${relativePathToString(path)}"`);
+export const fileNotFoundError = (path: RelativePath): FileNotFoundError => ({
+  ...new Error(`File not found at "${relativePathToString(path)}"`),
+  path,
+});
 
-export const compositeFileSystem = (
-  systems: readonly FileSystem[],
-): FileSystem => ({
+export interface DirectoryNotFoundError extends Error {
+  path: RelativePath;
+}
+
+export const directoryNotFoundError = (
+  path: RelativePath,
+): DirectoryNotFoundError => ({
+  ...new Error(`Directory not found at "${relativePathToString(path)}"`),
+  path,
+});
+
+export const compositeFileSystem = <
+  FileRetrievalError extends Error,
+  FileExistenceTestError extends Error,
+  DirectoryExistenceTestError extends Error,
+  FileReadError extends Error,
+  DirectoryReadError extends Error
+>(
+  systems: readonly FileSystem<
+    FileRetrievalError,
+    FileExistenceTestError,
+    DirectoryExistenceTestError,
+    FileReadError,
+    DirectoryReadError
+  >[],
+): FileSystem<
+  FileRetrievalError,
+  FileExistenceTestError,
+  DirectoryExistenceTestError,
+  FileExistenceTestError | FileNotFoundError | FileReadError,
+  DirectoryExistenceTestError | DirectoryNotFoundError | DirectoryReadError
+> => ({
   pathname: (entry) =>
-    mapOption(optionValue)(
-      find<Option<RelativePath>, Some<RelativePath>>(
-        map(systems, (system) => system.pathname(entry)),
-        isSome,
-      ),
+    pipe(
+      systems,
+      ReadonlyArray.map((system) => system.pathname(entry)),
+      ReadonlyArray.findFirst(Option.isSome),
+      Option.flatten,
     ),
   file: (pathname) => () =>
-    monad(sequence([...map(systems, (system) => system.file(pathname)())]))
-      .mapRight<Option<File>>((files) =>
-        join<Option<File>, Option<File>>(
-          (file) => file,
-          () => none(),
-        )(find(files, isSome)),
-      )
-      .toEither(),
-  files: () => flatMap(systems, (system) => system.files()),
+    pipe(
+      systems,
+      ReadonlyArray.map((system) => system.file(pathname)()),
+      TaskEither.sequenceSeqArray,
+      TaskEither.map((files) =>
+        pipe(files, ReadonlyArray.findFirst(Option.isSome), Option.flatten),
+      ),
+    ),
+  files: async function* () {
+    for (const systemFiles of pipe(
+      systems,
+      ReadonlyArray.map((system) => system.files()),
+    ))
+      yield* systemFiles;
+  },
   fileExists: (path) => () =>
-    monad(sequence([...map(systems, (system) => system.fileExists(path)())]))
-      .mapRight((tests) => some(tests, (exists) => exists))
-      .toEither(),
+    pipe(
+      systems,
+      ReadonlyArray.map((system) => system.fileExists(path)()),
+      TaskEither.sequenceSeqArray,
+      TaskEither.map((tests) =>
+        pipe(
+          tests,
+          ReadonlyArray.some((exists) => exists),
+        ),
+      ),
+    ),
   directoryExists: (path) => () =>
-    monad(
-      sequence([...map(systems, (system) => system.directoryExists(path)())]),
-    )
-      .mapRight((tests) => some(tests, (exists) => exists))
-      .toEither(),
+    pipe(
+      systems,
+      ReadonlyArray.map((system) => system.directoryExists(path)()),
+      TaskEither.sequenceSeqArray,
+      TaskEither.map((tests) =>
+        pipe(
+          tests,
+          ReadonlyArray.some((exists) => exists),
+        ),
+      ),
+    ),
   readFile: (path) => () =>
-    monad(
-      sequence([
-        ...map(systems, (system) =>
-          mapRight(system.fileExists(path)(), (fileExists) => ({
-            system,
-            fileExists,
-          })),
+    pipe(
+      systems,
+      ReadonlyArray.map((system) =>
+        pipe(
+          system.fileExists(path)(),
+          TaskEither.map((fileExists) => ({ system, fileExists })),
         ),
-      ]),
-    )
-      .mapRight((systems) =>
-        find<{ system: FileSystem; fileExists: boolean }>(
-          systems,
-          ({ fileExists }) => fileExists,
+      ),
+      TaskEither.sequenceSeqArray,
+      TaskEither.map(ReadonlyArray.findFirst(({ fileExists }) => fileExists)),
+      TaskEither.chain<
+        FileExistenceTestError | FileNotFoundError,
+        Option.Option<{
+          system: FileSystem<
+            FileRetrievalError,
+            FileExistenceTestError,
+            DirectoryExistenceTestError,
+            FileReadError,
+            DirectoryReadError
+          >;
+          fileExists: boolean;
+        }>,
+        FileSystem<
+          FileRetrievalError,
+          FileExistenceTestError,
+          DirectoryExistenceTestError,
+          FileReadError,
+          DirectoryReadError
+        >
+      >((option) =>
+        pipe(
+          option,
+          TaskEither.fromOption(() => fileNotFoundError(path)),
+          TaskEither.map(({ system }) => system),
         ),
-      )
-      .chainRight(
-        bimap(
-          ({ system }) => system,
-          () => fileNotFoundError(path),
-        ),
-      )
-      .chainRight((system) => system.readFile(path)())
-      .toEither(),
+      ),
+      TaskEither.chain<
+        FileReadError | FileExistenceTestError | FileNotFoundError,
+        FileSystem<
+          FileRetrievalError,
+          FileExistenceTestError,
+          DirectoryExistenceTestError,
+          FileReadError,
+          DirectoryReadError
+        >,
+        Buffer
+      >((system) => system.readFile(path)()),
+    ),
   readDirectory: (path) => () =>
-    monad(
-      sequence([
-        ...map(systems, (system) =>
-          mapRight(system.directoryExists(path)(), (directoryExists) => ({
-            system,
-            directoryExists,
-          })),
+    pipe(
+      systems,
+      ReadonlyArray.map<
+        FileSystem<
+          FileRetrievalError,
+          FileExistenceTestError,
+          DirectoryExistenceTestError,
+          FileReadError,
+          DirectoryReadError
+        >,
+        TaskEither.TaskEither<
+          | DirectoryNotFoundError
+          | DirectoryExistenceTestError
+          | DirectoryReadError,
+          {
+            system: FileSystem<
+              FileRetrievalError,
+              FileExistenceTestError,
+              DirectoryExistenceTestError,
+              FileReadError,
+              DirectoryReadError
+            >;
+            directoryExists: boolean;
+          }
+        >
+      >((system) =>
+        pipe(
+          system.directoryExists(path)(),
+          TaskEither.map((directoryExists) => ({ system, directoryExists })),
         ),
-      ]),
-    )
-      .mapRight((systems) => [
-        ...map(
-          filter(systems, ({ directoryExists }) => directoryExists),
-          ({ system }) => system,
+      ),
+      TaskEither.sequenceSeqArray,
+      TaskEither.map((systems) =>
+        pipe(
+          systems,
+          ReadonlyArray.filter(({ directoryExists }) => directoryExists),
+          ReadonlyArray.map(({ system }) => system),
         ),
-      ])
-      .chainRight((systems) =>
+      ),
+      TaskEither.chain((systems) =>
         systems.length > 0
-          ? right(systems)
-          : left(directoryNotFoundError(path)),
-      )
-      .chainRight((systems) =>
-        sequence([...map(systems, (system) => system.readDirectory(path)())]),
-      )
-      .mapRight((entries) =>
-        flatMap(entries, (directoryEntries) => directoryEntries),
-      )
-      .toEither(),
+          ? TaskEither.right(systems)
+          : TaskEither.left(directoryNotFoundError(path)),
+      ),
+      TaskEither.chain<
+        | DirectoryNotFoundError
+        | DirectoryExistenceTestError
+        | DirectoryReadError,
+        readonly FileSystem<
+          FileRetrievalError,
+          FileExistenceTestError,
+          DirectoryExistenceTestError,
+          FileReadError,
+          DirectoryReadError
+        >[],
+        readonly (readonly Entry[])[]
+      >((systems) =>
+        pipe(
+          systems,
+          ReadonlyArray.map((system) => system.readDirectory(path)()),
+          TaskEither.sequenceSeqArray,
+        ),
+      ),
+      TaskEither.map(ReadonlyArray.flatten),
+    ),
 });

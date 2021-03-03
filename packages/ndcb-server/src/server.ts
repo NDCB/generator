@@ -1,6 +1,10 @@
-import { createServer } from "http";
+/*
+import { createServer, RequestListener } from "http";
 import { join } from "path";
 import * as browserSync from "browser-sync";
+import * as IO from "fp-ts/IO";
+import * as TaskEither from "fp-ts/TaskEither";
+import { pipe } from "fp-ts/function";
 
 import { configurationFetcher, Configuration } from "@ndcb/config";
 import {
@@ -13,15 +17,6 @@ import {
   tomlParser,
 } from "@ndcb/data";
 import { scoppedLogger, Logger } from "@ndcb/logger";
-import { IO } from "@ndcb/util/lib/io";
-import {
-  matchEitherPattern,
-  Either,
-  monad,
-  right,
-  eitherFromThrowable,
-  mapLeft,
-} from "@ndcb/util/lib/either";
 import { forEach, filter, map } from "@ndcb/util/lib/iterable";
 import { sequence } from "@ndcb/util/lib/eitherIterable";
 import {
@@ -38,18 +33,128 @@ import { Pathname, pathnameToString } from "./router";
 import { elapsedTimeFormatter } from "./time";
 
 interface Server {
-  readonly start: IO<Either<ServerStartError, void>>;
-  readonly stop: IO<void>;
-  readonly isActive: IO<boolean>;
+  readonly start: IO.IO<TaskEither.TaskEither<Error, void>>;
 }
 
-interface ServerInitializationError extends Error {
-  readonly name: "ServerInitializationError";
-}
+const mainServerConfiguration = (
+  configuration: Configuration,
+): { requestListener: RequestListener; port: number } => {
+  const formatElapsedTime = elapsedTimeFormatter(configuration);
+  const { port, hostname } = configuration.serve.main;
+  const server = createServer(
+    siteFilesServerRequestListener(
+      processorAsTimedProcessor(serverProcessor(configuration)),
+      (pathname) => logger.info(`Processing "${pathnameToString(pathname)}"`),
+      (pathname: Pathname, elapsedTime: bigint) =>
+        logger.trace(
+          `Finished processing "${pathnameToString(
+            pathname,
+          )}" in ${formatElapsedTime(elapsedTime)}`,
+        ),
+      (error: Error, pathname: Pathname) => () => {
+        logger.error({
+          name: "",
+          message: `Unexpectedly failed to process "${pathnameToString(
+            pathname,
+          )}". ${error.message}`,
+          stack: error.stack,
+        })();
+      },
+    ),
+  );
 
-interface ServerStartError extends Error {
-  readonly name: "ServerStartError";
-}
+  return right({
+    start: () =>
+      mapLeft(
+        eitherFromThrowable(() =>
+          server.listen(
+            port,
+            hostname,
+            () =>
+              LOGGER.success(
+                `Server listening at http://${hostname}:${port}/`,
+              )(), // TODO: Use URL class
+          ),
+        ) as Either<Error, void>,
+        ({ message }) => ({
+          name: "ServerStartError",
+          message: `Failed to start main server.
+${message}`,
+        }),
+      ),
+    stop: () => server.close(),
+    isActive: () => server.listening,
+  });
+};
+
+const mainServer = ({
+  listener,
+  port,
+}: {
+  listener: RequestListener;
+  port: number;
+}): Server => {
+  const server = createServer(listener);
+  return {
+    start: () =>
+      TaskEither.tryCatch(
+        () =>
+          new Promise((resolve, reject) =>
+            server
+              .listen(port, () => resolve())
+              .once("error", (error) => reject(error)),
+          ),
+        (reason) => reason as Error,
+      ),
+  };
+};
+
+const browserSyncConfiguration = (
+  configuration: Configuration,
+): browserSync.Options => {
+  const { hostname: mainHostname, port: mainPort } = configuration.serve.main;
+  const { port, hostname } = configuration.serve.browserSync;
+  const { sources } = configuration.common;
+  return {
+    files: sources.map((directory) =>
+      join(absolutePathToString(directoryPath(directory)), "**", "*"),
+    ),
+    proxy: `${mainHostname}:${mainPort}`,
+    host: hostname,
+    port,
+    logLevel: "silent",
+    ui: false,
+    open: false,
+    injectChanges: false,
+    minify: false,
+  };
+};
+
+const browserSyncServer = (configuration: browserSync.Options): Server => {
+  const server = browserSync.create();
+  return {
+    start: () =>
+      TaskEither.tryCatch(
+        () =>
+          new Promise((resolve, reject) =>
+            server.init(configuration, (error) =>
+              error ? reject(error) : resolve(),
+            ),
+          ),
+        (reason) => reason as Error,
+      ),
+  };
+};
+
+const addStartListener = (startListener: IO.IO<void>) => (
+  server: Server,
+): Server => ({
+  start: () =>
+    pipe(
+      server.start(),
+      TaskEither.map(() => startListener()),
+    ),
+});
 
 const initializeMainServer = (
   configuration: Configuration,
@@ -152,14 +257,13 @@ const initializeServers = (
 
 const startServers = (
   servers: readonly Server[],
-): IO<Either<ServerStartError, readonly void[]>> => () =>
-  sequence([...map(servers, (server) => server.start())]);
+): IO.IO<TaskEither.TaskEither<Error, readonly void[]>> => () =>
+  TaskEither.sequenceSeqArray(servers.map((server) => server.start()));
 
-const stopActiveServers = (servers: readonly Server[]): IO<void> => () =>
-  forEach(
-    filter(servers, (server) => server.isActive()),
-    (server) => server.stop(),
-  );
+const stopServers = (
+  servers: readonly Server[],
+): IO.IO<TaskEither.TaskEither<Error, readonly void[]>> => () =>
+  TaskEither.sequenceSeqArray(servers.map((server) => server.stop()));
 
 const fetchConfiguration = configurationFetcher(
   textFileDataReader(
@@ -178,7 +282,8 @@ const fetchConfiguration = configurationFetcher(
 
 const LOGGER: Logger = scoppedLogger("server");
 
-export const serve = (config?: string): IO<void> => () =>
+// TODO: Catch CTRL+C and gracefully close servers
+export const serve = (config?: string): IO.IO<void> => () =>
   matchEitherPattern<Error, Configuration, void>({
     right: (configuration) =>
       matchEitherPattern<
@@ -207,3 +312,10 @@ ${message}`,
       )();
     },
   })(fetchConfiguration(config)());
+*/
+
+import * as IO from "fp-ts/IO";
+
+export const serve = (config?: string): IO.IO<void> => () => {
+  // no-op
+};

@@ -1,3 +1,8 @@
+import * as Option from "fp-ts/Option";
+import * as TaskEither from "fp-ts/TaskEither";
+import * as ReadonlyArray from "fp-ts/ReadonlyArray";
+import { pipe } from "fp-ts/function";
+
 import { scoppedLogger, Logger } from "@ndcb/logger";
 import { Configuration } from "@ndcb/config";
 import {
@@ -19,6 +24,11 @@ import {
   directoryExists,
   TextFileReader,
   FileExistenceTester,
+  pathStatus,
+  FileIOError,
+  PathIOError,
+  DirectoryIOError,
+  directoryFilesReader,
 } from "@ndcb/fs-util";
 import {
   cachingFileReader,
@@ -26,35 +36,45 @@ import {
   cachingDirectoryReader,
 } from "@ndcb/fs-cache";
 import { textFileReader } from "@ndcb/fs-text";
-import { exclusionRuleFromDirectory } from "@ndcb/fs-ignore";
-import { map } from "@ndcb/util/lib/iterable";
-import { right } from "@ndcb/util/lib/either";
+import {
+  exclusionRuleReaderFromDirectory,
+  gitignoreExclusionRule,
+} from "@ndcb/fs-ignore";
 
-const logReadFile = (readFile: FileReader, logger: Logger): FileReader => (
-  file: File,
-) => () => {
+const logReadFile = <FileReadError extends Error>(
+  readFile: FileReader<FileReadError>,
+  logger: Logger,
+): FileReader<FileReadError> => (file: File) => () => {
   logger.trace(`Reading file "${fileToString(file)}"`)();
-  const result = readFile(file)();
-  logger.trace(`Read file "${fileToString(file)}"`)();
-  return result;
+  return pipe(
+    readFile(file)(),
+    TaskEither.map((contents) => {
+      logger.trace(`Read file "${fileToString(file)}"`)();
+      return contents;
+    }),
+  );
 };
 
-const logReadDirectory = (
-  readDirectory: DirectoryReader,
+const logReadDirectory = <DirectoryReadError extends Error>(
+  readDirectory: DirectoryReader<DirectoryReadError>,
   logger: Logger,
-): DirectoryReader => (directory: Directory) => () => {
+): DirectoryReader<DirectoryReadError> => (directory: Directory) => () => {
   logger.trace(`Reading directory "${directoryToString(directory)}"`)();
-  const result = readDirectory(directory)();
-  logger.trace(`Read directory "${directoryToString(directory)}"`)();
-  return result;
+  return pipe(
+    readDirectory(directory)(),
+    TaskEither.map((entries) => {
+      logger.trace(`Read directory "${directoryToString(directory)}"`)();
+      return entries;
+    }),
+  );
 };
 
 export const fileSystemReaders = (
   configuration: Configuration,
 ): {
-  readFile: FileReader;
-  readTextFile: TextFileReader;
-  readDirectory: DirectoryReader;
+  readFile: FileReader<FileIOError | PathIOError>;
+  readTextFile: TextFileReader<PathIOError | FileIOError>;
+  readDirectory: DirectoryReader<DirectoryIOError | PathIOError>;
 } => {
   const {
     pathEncoding,
@@ -68,63 +88,82 @@ export const fileSystemReaders = (
   const logger = scoppedLogger("fs");
   const readFile = cachingFileReader(
     logFileReader ? logReadFile(simplyReadFile, logger) : simplyReadFile,
+    pathStatus,
     fileReaderCacheSize,
   );
   const readTextFile = cachingTextFileReader(
     textFileReader(readFile),
+    pathStatus,
     textFileReaderCacheSize,
   );
   const readDirectory = cachingDirectoryReader(
     logDirectoryReader
       ? logReadDirectory(directoryReader(pathEncoding), logger)
       : directoryReader(pathEncoding),
+    pathStatus,
     directoryReaderCacheSize,
   );
   return { readFile, readTextFile, readDirectory };
 };
 
-export const fileSystem = (
+export const fileSystem = <
+  FileReadError extends Error,
+  TextFileReadError extends Error,
+  DirectoryReadError extends Error,
+  FileExistenceTestError extends Error
+>(
   configuration: Configuration,
-  readFile: FileReader,
-  readTextFile: TextFileReader,
-  readDirectory: DirectoryReader,
-  fileExists: FileExistenceTester,
-): FileSystem => {
+  readFile: FileReader<FileReadError>,
+  readTextFile: TextFileReader<TextFileReadError>,
+  readDirectory: DirectoryReader<DirectoryReadError>,
+  fileExists: FileExistenceTester<FileExistenceTestError>,
+): FileSystem<Error, Error, Error, Error, Error> => {
   const rootedSystemBuilder = rootedFileSystem({
     readFile,
     readDirectory,
     directoryExists,
     fileExists,
   });
+  const readDirectoryFiles = directoryFilesReader(readDirectory);
+  const readExclusionRule = gitignoreExclusionRule(readTextFile);
   const { sources: roots, exclusionRulesFileNames } = configuration.common;
-  const exclusionRuleRetriever = exclusionRuleFromDirectory(
-    readTextFile,
-    readDirectory,
-  )((file) => () => right(exclusionRulesFileNames.includes(fileName(file))));
-  return compositeFileSystem([
-    ...map(roots, (root) =>
-      excludedRootedFileSystem(
-        rootedSystemBuilder(root),
-        exclusionRuleRetriever,
+  const exclusionRuleRetriever = exclusionRuleReaderFromDirectory(
+    readDirectoryFiles,
+    (file) =>
+      exclusionRulesFileNames.includes(fileName(file))
+        ? Option.some(readExclusionRule(file))
+        : Option.none,
+  );
+  return compositeFileSystem(
+    pipe(
+      roots,
+      ReadonlyArray.map((root) =>
+        excludedRootedFileSystem(
+          rootedSystemBuilder(root),
+          exclusionRuleRetriever,
+        ),
       ),
     ),
-  ]);
+  );
 };
 
-export const unsafeFileSystem = (
+export const unsafeFileSystem = <
+  FileReadError extends Error,
+  DirectoryReadError extends Error,
+  FileExistenceTestError extends Error
+>(
   configuration: Configuration,
-  readFile: FileReader,
-  readTextFile: TextFileReader,
-  readDirectory: DirectoryReader,
-  fileExists: FileExistenceTester,
-): FileSystem => {
+  readFile: FileReader<FileReadError>,
+  readDirectory: DirectoryReader<DirectoryReadError>,
+  fileExists: FileExistenceTester<FileExistenceTestError>,
+): FileSystem<Error, Error, Error, Error, Error> => {
   const rootedSystemBuilder = rootedFileSystem({
     readFile,
     readDirectory,
     directoryExists,
     fileExists,
   });
-  return compositeFileSystem([
-    ...map(configuration.common.sources, rootedSystemBuilder),
-  ]);
+  return compositeFileSystem(
+    pipe(configuration.common.sources, ReadonlyArray.map(rootedSystemBuilder)),
+  );
 };

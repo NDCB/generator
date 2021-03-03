@@ -1,7 +1,10 @@
-import { Either } from "@ndcb/util/lib/either";
-import { IO } from "@ndcb/util/lib/io";
+import * as IO from "fp-ts/IO";
+import * as Option from "fp-ts/Option";
+import * as Task from "fp-ts/Task";
+import * as TaskEither from "fp-ts/TaskEither";
+import { pipe } from "fp-ts/function";
+
 import { enumerate } from "@ndcb/util/lib/iterable";
-import { Option } from "@ndcb/util/lib/option";
 import { File } from "@ndcb/fs-util";
 
 import { fileRouter } from "../src/processor";
@@ -12,26 +15,32 @@ describe("fileRouter", () => {
     element: { routerSupplier, correspondingFileSupplier, cases },
     index,
   } of enumerate<{
-    routerSupplier: () => PathnameRouter;
+    routerSupplier: () => PathnameRouter<never>;
     correspondingFileSupplier: () => (
       query: Pathname,
-    ) => IO<Either<Error, Option<File>>>;
+    ) => IO.IO<TaskEither.TaskEither<Error, Option.Option<File>>>;
     cases: Array<{
       query: Pathname;
-      expected: Either<
+      expected: TaskEither.TaskEither<
         Error,
-        Option<{ file: File; destination: Pathname; statusCode: 200 | 404 }>
+        Option.Option<{
+          file: File;
+          destination: Pathname;
+          statusCode: 200 | 404;
+        }>
       >;
       description?: string;
     }>;
   }>(require("./fixtures/fileRouter"), 1)) {
-    const routedFile = fileRouter(
-      routerSupplier(),
-      correspondingFileSupplier(),
-    );
     for (const { query, expected, description } of cases) {
-      test(description ?? `test #${index}`, () => {
-        expect(routedFile(query)()).toStrictEqual(expected);
+      test(description ?? `test #${index}`, async () => {
+        await pipe(
+          fileRouter(routerSupplier(), correspondingFileSupplier())(query)(),
+          TaskEither.getOrElse(() => {
+            throw new Error();
+          }),
+          Task.map((actual) => expect(actual).toEqual(expected)),
+        )();
       });
     }
   }

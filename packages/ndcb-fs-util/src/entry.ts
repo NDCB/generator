@@ -1,14 +1,10 @@
-import { IO } from "@ndcb/util/lib/io";
-import { Either } from "@ndcb/util/lib/either";
-import { takeWhile, filter } from "@ndcb/util/lib/iterable";
-import {
-  Option,
-  Some,
-  isSome,
-  some,
-  optionValue,
-  map,
-} from "@ndcb/util/lib/option";
+import * as IO from "fp-ts/IO";
+import * as Option from "fp-ts/Option";
+import * as TaskEither from "fp-ts/TaskEither";
+import * as ReadonlyArray from "fp-ts/ReadonlyArray";
+import { pipe, Refinement } from "fp-ts/function";
+
+import { takeWhile } from "@ndcb/util/lib/iterable";
 
 import {
   AbsolutePath,
@@ -55,11 +51,9 @@ export interface EntryPattern<T> {
   readonly directory: (directory: Directory) => T;
 }
 
-export const entryIsFile: (entry: Entry) => entry is File = isFile;
+export const entryIsFile: Refinement<Entry, File> = isFile;
 
-export const entryIsDirectory: (
-  entry: Entry,
-) => entry is Directory = isDirectory;
+export const entryIsDirectory: Refinement<Entry, Directory> = isDirectory;
 
 export const matchEntry = <T>(pattern: EntryPattern<T>) => (
   entry: Entry,
@@ -69,16 +63,19 @@ export const matchEntry = <T>(pattern: EntryPattern<T>) => (
   else if (entryIsDirectory(entry)) return pattern.directory(entry);
   else
     throw new Error(
-      `Failed <Entry> pattern matching for object "${JSON.stringify(entry)}"`,
+      `Unexpectedly failed <Entry> pattern matching for object "${JSON.stringify(
+        entry,
+      )}"`,
     );
 };
 
-export const filterFiles = (entries: Iterable<Entry>): Iterable<File> =>
-  filter(entries, entryIsFile);
+export const filterFiles = (entries: readonly Entry[]): readonly File[] =>
+  pipe(entries, ReadonlyArray.filter(entryIsFile));
 
 export const filterDirectories = (
-  entries: Iterable<Entry>,
-): Iterable<Directory> => filter(entries, entryIsDirectory);
+  entries: readonly Entry[],
+): readonly Directory[] =>
+  pipe(entries, ReadonlyArray.filter(entryIsDirectory));
 
 export const entryPath: (entry: Entry) => AbsolutePath = matchEntry({
   file: filePath,
@@ -96,15 +93,17 @@ export const entryEquals = (e1: Entry, e2: Entry): boolean =>
 
 export const entryExists: (
   entry: Entry,
-) => IO<Either<PathIOError, boolean>> = matchEntry({
+) => IO.IO<TaskEither.TaskEither<PathIOError, boolean>> = matchEntry({
   file: fileExists,
   directory: directoryExists,
 });
 
 export const ensureEntry: (
   entry: Entry,
-) => IO<Either<FileIOError | DirectoryIOError, void>> = matchEntry<
-  IO<Either<FileIOError | DirectoryIOError, void>>
+) => IO.IO<
+  TaskEither.TaskEither<FileIOError | DirectoryIOError, void>
+> = matchEntry<
+  IO.IO<TaskEither.TaskEither<FileIOError | DirectoryIOError, void>>
 >({
   file: ensureFile,
   directory: ensureDirectory,
@@ -118,21 +117,24 @@ export const entryName: (entry: Entry) => string = matchEntry({
 export const topmostDirectory = (entry: Entry): Directory =>
   directory(rootPath(entryPath(entry)));
 
-export function parentDirectory(file: File): Some<Directory>;
-export function parentDirectory(directory: Directory): Option<Directory>;
-export function parentDirectory(entry: Entry): Option<Directory> {
-  return map<AbsolutePath, Directory>(directory)(parentPath(entryPath(entry)));
+export function parentDirectory(file: File): Option.Some<Directory>;
+export function parentDirectory(directory: Directory): Option.Option<Directory>;
+export function parentDirectory(entry: Entry): Option.Option<Directory> {
+  return pipe(
+    parentPath(entryPath(entry)),
+    Option.map((path) => directory(path)),
+  );
 }
 
 export const fileDirectory = (file: File): Directory =>
-  optionValue(parentDirectory(file));
+  parentDirectory(file).value;
 
 const upwardDirectoriesFromDirectory = function* (
   directory: Directory,
 ): Iterable<Directory> {
-  let current: Option<Directory> = some(directory);
-  while (isSome(current)) {
-    const value = optionValue(current);
+  let current: Option.Option<Directory> = Option.some(directory);
+  while (Option.isSome(current)) {
+    const value = current.value;
     yield value;
     current = parentDirectory(value);
   }

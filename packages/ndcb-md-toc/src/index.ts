@@ -1,2 +1,2 @@
 export * from "./toc";
-export * from "./slugger";
+export * from "./slugifier";

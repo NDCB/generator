@@ -1,30 +1,30 @@
-import { readFileSync } from "fs-extra";
-
-import { IO } from "@ndcb/util/lib/io";
-import {
-  Either,
-  eitherFromThrowable,
-  mapLeft,
-  mapRight,
-} from "@ndcb/util/lib/either";
+import * as fse from "fs-extra";
+import * as IO from "fp-ts/IO";
+import * as TaskEither from "fp-ts/TaskEither";
+import { pipe } from "fp-ts/function";
 
 import { absolutePathToString } from "./absolutePath";
 import { File, filePath, FileIOError } from "./file";
 
-export type FileReader = (file: File) => IO<Either<FileIOError, Buffer>>;
+export type FileReader<FileReadError extends Error> = (
+  file: File,
+) => IO.IO<TaskEither.TaskEither<FileReadError, Buffer>>;
 
-export const readFile: FileReader = (file) => () =>
-  mapLeft(
-    eitherFromThrowable(() =>
-      readFileSync(absolutePathToString(filePath(file))),
-    ) as Either<Error & { code }, Buffer>,
-    (error) => ({ ...error, file }),
+export const readFile: FileReader<FileIOError> = (file) => () =>
+  TaskEither.tryCatch(
+    () => fse.readFile(absolutePathToString(filePath(file))),
+    (error) => ({ ...(error as Error & { code: string }), file }),
   );
 
-export type TextFileReader = (file: File) => IO<Either<FileIOError, string>>;
+export type TextFileReader<TextFileReadError extends Error> = (
+  file: File,
+) => IO.IO<TaskEither.TaskEither<TextFileReadError, string>>;
 
-export const textFileReader = (
-  readFile: FileReader,
+export const textFileReader = <E extends Error>(
+  readFile: FileReader<E>,
   encoding: BufferEncoding,
-): TextFileReader => (file) => () =>
-  mapRight(readFile(file)(), (buffer) => buffer.toString(encoding));
+): TextFileReader<E> => (file) => () =>
+  pipe(
+    readFile(file)(),
+    TaskEither.map((buffer) => buffer.toString(encoding)),
+  );

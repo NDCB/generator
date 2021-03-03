@@ -14,9 +14,9 @@
     "lib"
   ],
   "dependencies": {
-    "@ndcb/util": "^0.9.1",
     "consola": "^2.15.0",
-    "chalk": "^4.1.0"
+    "chalk": "^4.1.0",
+    "fp-ts": "^2.9.5"
   },
   "publishConfig": {
     "access": "public"

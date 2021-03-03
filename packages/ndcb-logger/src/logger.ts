@@ -1,9 +1,8 @@
 const consola = require("consola");
+import * as IO from "fp-ts/IO";
 
-import { IO } from "@ndcb/util";
-
-export type MessageLogger = (message: string) => IO<void>;
-export type ErrorLogger = MessageLogger & ((error: Error) => IO<void>);
+export type MessageLogger = (message: string) => IO.IO<void>;
+export type ErrorLogger = MessageLogger & ((error: Error) => IO.IO<void>);
 
 const messageLogger = (logger: (message: string) => void): MessageLogger => (
   message: string,

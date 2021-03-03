@@ -1,25 +1,32 @@
-import { some } from "@ndcb/util/lib/iterable";
-import { Option, isSome, optionValue, isNone } from "@ndcb/util/lib/option";
+import * as Option from "fp-ts/Option";
+import * as ReadonlyArray from "fp-ts/ReadonlyArray";
+import { pipe } from "fp-ts/function";
 
 import { Extension, extensionEquals } from "./extension";
 import { filePath, File } from "./file";
 import { pathExtension } from "./path";
 
-export const fileExtension = (file: File): Option<Extension> =>
+export const fileExtension = (file: File): Option.Option<Extension> =>
   pathExtension(filePath(file));
 
 export const fileHasExtension = (target: Extension) => (
   file: File,
 ): boolean => {
   const extension = fileExtension(file);
-  return isSome(extension) && extensionEquals(target, optionValue(extension));
+  return Option.isSome(extension) && extensionEquals(target, extension.value);
 };
 
 export const fileHasSomeExtensionFrom = (
-  targets: ReadonlyArray<Extension>,
-): ((file: File) => boolean) => (file: File): boolean => {
-  const extension = fileExtension(file);
-  if (isNone(extension)) return false;
-  const extensionValue = optionValue(extension);
-  return some(targets, (target) => extensionEquals(extensionValue, target));
-};
+  targets: readonly Extension[],
+): ((file: File) => boolean) => (file: File): boolean =>
+  pipe(
+    fileExtension(file),
+    Option.fold(
+      () => false,
+      (extension) =>
+        pipe(
+          targets,
+          ReadonlyArray.some((target) => extensionEquals(extension, target)),
+        ),
+    ),
+  );

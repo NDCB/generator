@@ -1,74 +1,61 @@
 import * as LRU from "lru-cache";
+import * as IO from "fp-ts/IO";
+import * as TaskEither from "fp-ts/TaskEither";
+import { pipe } from "fp-ts/function";
+import { StatsBase } from "fs";
 
 import {
   File,
-  FileIOError,
-  pathStatus,
   absolutePathToString,
   filePath,
-  fileToString,
   TextFileReader,
+  PathStatusChecker,
 } from "@ndcb/fs-util";
-import { IO } from "@ndcb/util/lib/io";
-import {
-  Either,
-  eitherIsRight,
-  eitherValue,
-  eitherIsLeft,
-  left,
-  right,
-} from "@ndcb/util/lib/either";
 
-type CachingTextFileReaderEntry = { ctime: number; contents: string };
-
-const fileStatusReadError = (file: File): FileIOError => ({
-  name: "FileStatusReadError",
-  code: "FileStatusReadError",
-  file,
-  message: `Failed to read status of file ${fileToString(file)}`,
-});
-
-export const cachingTextFileReader = (
-  readFile: TextFileReader,
+export const cachingTextFileReader = <
+  TextFileReadError extends Error,
+  PathStatusError extends Error
+>(
+  readFile: TextFileReader<TextFileReadError>,
+  pathStatus: PathStatusChecker<PathStatusError>,
   cacheSize = 50, // MiB
-): TextFileReader => {
+): TextFileReader<TextFileReadError | PathStatusError> => {
   // Cached entries mapped by file path as string
-  const cache = new LRU<string, CachingTextFileReaderEntry>({
+  const cache = new LRU<string, { ctimeNs: BigInt; contents: string }>({
     max: cacheSize * 1024 ** 2,
     length: ({ contents }) => contents.length,
   });
-  const entry = (
-    ctime: number,
-    contents: string,
-  ): CachingTextFileReaderEntry => ({
-    ctime,
-    contents,
-  });
-  const setEntry = (key: string, ctime: number, contents: string): void => {
-    cache.set(key, entry(ctime, contents));
-  };
-  const setCacheEntryAndReturnContents = (
-    key: string,
-    ctime: number,
-    contents: Either<FileIOError, string>,
-  ): Either<FileIOError, string> => {
-    if (eitherIsRight(contents)) setEntry(key, ctime, eitherValue(contents));
-    return contents;
-  };
-  return (file: File): IO<Either<FileIOError, string>> => () => {
+  return (
+    file: File,
+  ): IO.IO<
+    TaskEither.TaskEither<TextFileReadError | PathStatusError, string>
+  > => () => {
     const path = filePath(file);
-    const status = pathStatus(path)();
-    if (eitherIsLeft(status)) return left(fileStatusReadError(file));
     const key = absolutePathToString(path);
-    const { ctimeMs: ctime } = eitherValue(status);
-    const readFileContents: IO<Either<FileIOError, string>> = readFile(file);
-    if (!cache.has(key))
-      return setCacheEntryAndReturnContents(key, ctime, readFileContents());
-    const { ctime: cachedCtime, contents: cachedContents } = cache.get(
-      key,
-    ) as CachingTextFileReaderEntry;
-    return ctime > cachedCtime
-      ? setCacheEntryAndReturnContents(key, ctime, readFileContents())
-      : right(cachedContents);
+    return pipe(
+      pathStatus(path)(),
+      TaskEither.chain<
+        TextFileReadError | PathStatusError,
+        StatsBase<BigInt>,
+        string
+      >((status) =>
+        cache.has(key) &&
+        ((status as unknown) as { ctimeNs: BigInt }).ctimeNs ===
+          (cache.get(key) as { ctimeNs: BigInt }).ctimeNs
+          ? TaskEither.right(
+              ((cache.peek(key) as unknown) as { contents: string }).contents,
+            )
+          : pipe(
+              readFile(file)(),
+              TaskEither.map((contents) => {
+                cache.set(key, {
+                  ctimeNs: ((status as unknown) as { ctimeNs: BigInt }).ctimeNs,
+                  contents,
+                });
+                return contents;
+              }),
+            ),
+      ),
+    );
   };
 };

@@ -1,14 +1,8 @@
-import { readdirSync, ensureDirSync, emptyDirSync } from "fs-extra";
+import * as fse from "fs-extra";
+import * as IO from "fp-ts/IO";
+import * as TaskEither from "fp-ts/TaskEither";
+import { pipe } from "fp-ts/lib/function";
 
-import { IO } from "@ndcb/util/lib/io";
-import {
-  Either,
-  right,
-  mapRight,
-  mapLeft,
-  mapEither,
-  eitherFromThrowable,
-} from "@ndcb/util/lib/either";
 import { isNotNull } from "@ndcb/util/lib/type";
 
 import {
@@ -62,19 +56,26 @@ export const directoryEquals = (d1: Directory, d2: Directory): boolean =>
 export const hashDirectory = (directory: Directory): number =>
   hashAbsolutePath(directoryPath(directory));
 
-export type DirectoryExistenceTester = (
+export type DirectoryExistenceTester<E extends Error> = (
   directory: Directory,
-) => IO<Either<PathIOError, boolean>>;
+) => IO.IO<TaskEither.TaskEither<E, boolean>>;
 
-export const directoryExists: DirectoryExistenceTester = (directory) => {
-  const path = directoryPath(directory);
-  return () => {
-    if (!pathExists(path)()) return right(false);
-    return mapRight(pathStatus(path)(), (stats) => stats.isDirectory());
-  };
-};
+export const directoryExists: DirectoryExistenceTester<PathIOError> = (
+  directory,
+) => () =>
+  pipe(
+    TaskEither.fromTask<never, boolean>(pathExists(directoryPath(directory))()),
+    TaskEither.chainFirst((exists) =>
+      exists
+        ? pipe(
+            pathStatus(directoryPath(directory))(),
+            TaskEither.map((status) => status.isDirectory()),
+          )
+        : TaskEither.right(false),
+    ),
+  );
 
-export const currentWorkingDirectory = (): IO<Directory> => () =>
+export const currentWorkingDirectory: IO.IO<Directory> = () =>
   directory(absolutePath(process.cwd()));
 
 export const fileFromDirectory = (from: Directory) => (
@@ -92,33 +93,29 @@ export interface DirectoryIOError extends Error {
 
 export const ensureDirectory = (
   directory: Directory,
-): IO<Either<DirectoryIOError, void>> => () =>
-  mapLeft(
-    eitherFromThrowable(() =>
-      ensureDirSync(absolutePathToString(directoryPath(directory))),
-    ) as Either<Error & { code }, void>,
-    (error) => ({ ...error, directory }),
+): IO.IO<TaskEither.TaskEither<DirectoryIOError, void>> => () =>
+  TaskEither.tryCatch(
+    () => fse.ensureDir(absolutePathToString(directoryPath(directory))),
+    (error) => ({ ...(error as Error & { code: string }), directory }),
   );
 
 export const isDirectoryEmpty = (
   directory: Directory,
-): IO<Either<DirectoryIOError, boolean>> => () =>
-  mapEither(
-    eitherFromThrowable(() =>
-      readdirSync(absolutePathToString(directoryPath(directory))),
-    ) as Either<Error & { code }, string[]>,
-    (error) => ({ ...error, directory }),
-    (filenames) => !(filenames.length > 0),
+): IO.IO<TaskEither.TaskEither<DirectoryIOError, boolean>> => () =>
+  pipe(
+    TaskEither.tryCatch(
+      () => fse.readdir(absolutePathToString(directoryPath(directory))),
+      (error) => ({ ...(error as Error & { code: string }), directory }),
+    ),
+    TaskEither.map((filenames) => !(filenames.length > 0)),
   );
 
 export const emptyDirectory = (
   directory: Directory,
-): IO<Either<DirectoryIOError, void>> => () =>
-  mapLeft(
-    eitherFromThrowable(() =>
-      emptyDirSync(absolutePathToString(directoryPath(directory))),
-    ) as Either<Error & { code }, void>,
-    (error) => ({ ...error, directory }),
+): IO.IO<TaskEither.TaskEither<DirectoryIOError, void>> => () =>
+  TaskEither.tryCatch(
+    () => fse.emptyDir(absolutePathToString(directoryPath(directory))),
+    (error) => ({ ...(error as Error & { code: string }), directory }),
   );
 
 export const directoryName = (directory: Directory): string =>

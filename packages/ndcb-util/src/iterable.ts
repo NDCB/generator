@@ -1,4 +1,4 @@
-import * as Option from "./option";
+import * as Option from "fp-ts/Option";
 
 export const every = <T>(
   iterable: Iterable<T>,
@@ -33,7 +33,7 @@ export function* filter<T>(
 
 export const first = <T>(iterable: Iterable<T>): Option.Option<T> => {
   for (const element of iterable) return Option.some(element);
-  return Option.none();
+  return Option.none;
 };
 
 export const rest = function* <T>(iterable: Iterable<T>): Iterable<T> {

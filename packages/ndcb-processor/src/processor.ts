@@ -1,3 +1,10 @@
+import * as ReadonlyArray from "fp-ts/ReadonlyArray";
+import * as Eq from "fp-ts/Eq";
+import * as IO from "fp-ts/IO";
+import * as Option from "fp-ts/Option";
+import * as TaskEither from "fp-ts/TaskEither";
+import { pipe } from "fp-ts/function";
+
 import { detect as detectEncoding } from "jschardet";
 
 import {
@@ -7,62 +14,73 @@ import {
   fileExtension,
   hashExtension,
 } from "@ndcb/fs-util/lib";
-import { find, hashMap, HashMap, inversedHashMap } from "@ndcb/util";
-import { Either } from "@ndcb/util/lib/either";
-import { IO } from "@ndcb/util/lib/io";
-import { hashOption, join, Option, optionEquals } from "@ndcb/util/lib/option";
+import { hashMap, HashMap, inversedHashMap } from "@ndcb/util";
 
-export type Processor = (
+export type Processor<ProcessorError extends Error> = (
   file: File,
-) => IO<Either<Error, { contents: Buffer; encoding: BufferEncoding }>>;
+) => IO.IO<
+  TaskEither.TaskEither<
+    ProcessorError,
+    { contents: Buffer; encoding: BufferEncoding }
+  >
+>;
 
 export type Locals = Record<string, unknown>;
 
-export interface FileProcessor {
-  readonly processor: Processor;
-  readonly sourceExtension: Option<Extension>;
-  readonly destinationExtension: Option<Extension>;
+export interface FileProcessor<ProcessorError extends Error> {
+  readonly processor: Processor<ProcessorError>;
+  readonly sourceExtension: Option.Option<Extension>;
+  readonly destinationExtension: Option.Option<Extension>;
 }
 
-export const fileProcessorExtensionMaps = (
-  processors: readonly FileProcessor[],
+const hashFileExtension: (
+  fileExtension: Option.Option<Extension>,
+) => number = Option.fold(
+  () => 0,
+  (extension) => hashExtension(extension),
+);
+
+const fileExtensionEquals = Option.getEq(Eq.fromEquals(extensionEquals));
+
+export const fileProcessorExtensionMaps = <ProcessorError extends Error>(
+  processors: readonly FileProcessor<ProcessorError>[],
 ): {
-  source: HashMap<Option<Extension>, Option<Extension>[]>;
-  destination: HashMap<Option<Extension>, Option<Extension>>;
+  source: HashMap<Option.Option<Extension>, Option.Option<Extension>[]>;
+  destination: HashMap<Option.Option<Extension>, Option.Option<Extension>>;
 } => {
-  const entries: Array<
-    [Option<Extension>, Option<Extension>]
-  > = processors.map((processor) => [
-    processor.sourceExtension,
-    processor.destinationExtension,
-  ]);
-  const hash = hashOption(hashExtension);
-  const equals = optionEquals(extensionEquals);
+  const entries: readonly [
+    Option.Option<Extension>,
+    Option.Option<Extension>,
+  ][] = pipe(
+    processors,
+    ReadonlyArray.map((processor) => [
+      processor.sourceExtension,
+      processor.destinationExtension,
+    ]),
+  );
   return {
-    source: inversedHashMap(entries, hash, equals),
-    destination: hashMap(entries, hash, equals),
+    source: inversedHashMap(entries, hashFileExtension, fileExtensionEquals),
+    destination: hashMap(entries, hashFileExtension, fileExtensionEquals),
   };
 };
 
-const fileExtensionEquals = optionEquals(extensionEquals);
-
-export const compositeFileProcessor = (
-  processors: readonly FileProcessor[],
-  fallbackProcessor: Processor,
-): Processor => (file: File) => () => {
-  const extension = fileExtension(file);
-  return join<
-    FileProcessor,
-    Either<Error, { contents: Buffer; encoding: BufferEncoding }>
-  >(
-    (processor) => processor.processor(file)(),
-    () => fallbackProcessor(file)(),
-  )(
-    find(processors, (processor) =>
-      fileExtensionEquals(extension, processor.sourceExtension),
+export const compositeFileProcessor = <ProcessorError extends Error>(
+  processors: readonly FileProcessor<ProcessorError>[],
+  fallbackProcessor: Processor<ProcessorError>,
+): Processor<ProcessorError> => (file: File) => () =>
+  pipe(
+    processors,
+    ReadonlyArray.findFirst((processor) =>
+      fileExtensionEquals.equals(
+        processor.sourceExtension,
+        fileExtension(file),
+      ),
+    ),
+    Option.fold(
+      () => fallbackProcessor(file)(),
+      (processor) => processor.processor(file)(),
     ),
   );
-};
 
 export const bufferToProcessorResult = (
   contents: Buffer,

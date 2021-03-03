@@ -1,42 +1,80 @@
+import * as Option from "fp-ts/Option";
+import * as Task from "fp-ts/Task";
+import * as TaskEither from "fp-ts/TaskEither";
+import { pipe } from "fp-ts/function";
+
 import { mockFileSystem } from "@ndcb/mock-fs";
-import { textFileReader, fileName, entryToString } from "@ndcb/fs-util";
+import {
+  textFileReader,
+  fileName,
+  entryToString,
+  directoryFilesReader,
+  directoryToString,
+} from "@ndcb/fs-util";
 
-import { exclusionRuleFromDirectory } from "../src/fs";
-import { eitherIsLeft, eitherValue, right } from "@ndcb/util";
+import { exclusionRuleReaderFromDirectory } from "../src/fs";
+import { gitignoreExclusionRule } from "../src/gitignore";
 
-describe("exclusionRuleFromDirectory", () => {
+describe("exclusionRuleReaderFromDirectory", () => {
   let scenario = 0;
   for (const {
     fs,
     rulesFilenames,
     cases,
-  } of require("./fixtures/exclusionRuleFromDirectory")) {
+  } of require("./fixtures/exclusionRuleReaderFromDirectory")) {
     describe(`scenario #${++scenario}`, () => {
       const { readDirectory, readFile } = mockFileSystem(fs);
+      const readDirectoryFiles = directoryFilesReader(readDirectory);
       const readTextFile = textFileReader(readFile, "utf8");
-      const exclusion = exclusionRuleFromDirectory(
-        readTextFile,
-        readDirectory,
-      )((file) => () => right(rulesFilenames.includes(fileName(file))));
+      const exclusion = exclusionRuleReaderFromDirectory(
+        readDirectoryFiles,
+        (file) =>
+          pipe(
+            file,
+            Option.fromPredicate((file) =>
+              rulesFilenames.includes(fileName(file)),
+            ),
+            Option.map((file) => () =>
+              gitignoreExclusionRule(readTextFile)(file)(),
+            ),
+          ),
+      );
       for (const { directory, considered, ignored } of cases) {
-        const exclusionEither = exclusion(directory)();
-        if (eitherIsLeft(exclusionEither)) throw new Error();
-        const ignores = eitherValue(exclusionEither);
         for (const entry of considered) {
-          test(`considers "${entryToString(entry)}"`, () => {
-            expect(ignores(entry)).toBe(false);
+          test(`considers "${entryToString(entry)}"`, async () => {
+            await pipe(
+              exclusion(directory)(),
+              TaskEither.getOrElse(() => {
+                throw new Error(
+                  `Unexpectedly failed to read exclusion rule for directory "${directoryToString(
+                    directory,
+                  )}"`,
+                );
+              }),
+              Task.map((ignores) => {
+                expect(ignores(entry)).toBe(false);
+              }),
+            )();
           });
         }
         for (const entry of ignored) {
-          test(`ignores "${entryToString(entry)}"`, () => {
-            expect(ignores(entry)).toBe(true);
+          test(`ignores "${entryToString(entry)}"`, async () => {
+            await pipe(
+              exclusion(directory)(),
+              TaskEither.getOrElse(() => {
+                throw new Error(
+                  `Unexpectedly failed to read exclusion rule for directory "${directoryToString(
+                    directory,
+                  )}"`,
+                );
+              }),
+              Task.map((ignores) => {
+                expect(ignores(entry)).toBe(true);
+              }),
+            )();
           });
         }
       }
     });
   }
 });
-
-// TODO: describe("deepEntryExclusionRule", () => {});
-
-// TODO: describe("downwardNotIgnoredEntries", () => {});
