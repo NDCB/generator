@@ -13,7 +13,8 @@
     "noLib": false,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "listEmittedFiles": true
   },
   "exclude": ["node_modules", "**/test/**/*"]
 }
