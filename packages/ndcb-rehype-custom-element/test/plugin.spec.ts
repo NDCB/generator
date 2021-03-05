@@ -23,12 +23,12 @@ describe("rehype-custom-element", () => {
   for (const {
     index,
     element: { input, elements, description, expected },
-  } of enumerate<{
+  } of enumerate(1)<{
     input;
     elements;
     description;
     expected;
-  }>(require("./fixtures/plugin.json"), 1)) {
+  }>(require("./fixtures/plugin.json"))) {
     const markdownProcessor = unified()
       .use(markdown)
       .use(markdownToHtml, {

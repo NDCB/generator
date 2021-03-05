@@ -23,7 +23,7 @@ import {
   fileToString,
 } from "@ndcb/fs-util";
 import { HashMap, hashMap } from "@ndcb/util/lib/hashMap";
-import { map, filter } from "@ndcb/util/lib/iterable";
+import * as Sequence from "@ndcb/util/lib/sequence";
 
 export type MockFile = string;
 
@@ -110,14 +110,9 @@ const transformMockStructure = (
     mock: [Entry, unknown],
   ): mock is [Directory, Entry[]] => entryIsDirectory(mock[0]);
   return {
-    fileContents: fileHashMap(
-      map(filter(entries, mockIsFile), ([file, contents]) => [file, contents]),
-    ),
+    fileContents: fileHashMap(pipe(entries, Sequence.filter(mockIsFile))),
     directoryEntries: directoryHashMap(
-      map(filter(entries, mockIsDirectory), ([directory, entries]) => [
-        directory,
-        entries,
-      ]),
+      pipe(entries, Sequence.filter(mockIsDirectory)),
     ),
   };
 };

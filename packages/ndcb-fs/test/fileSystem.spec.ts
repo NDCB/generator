@@ -94,7 +94,7 @@ describe("FileSystem", () => {
       for (const {
         index,
         element: { path, expected },
-      } of enumerate<{ path: string; expected: boolean }>(fileExistsCases, 1)) {
+      } of enumerate(1)<{ path: string; expected: boolean }>(fileExistsCases)) {
         test(`case #${index}`, async () => {
           await pipe(
             system.fileExists(normalizedRelativePath(path))(),
@@ -112,9 +112,8 @@ describe("FileSystem", () => {
       for (const {
         index,
         element: { path, expected },
-      } of enumerate<{ path: string; expected: boolean }>(
+      } of enumerate(1)<{ path: string; expected: boolean }>(
         directoryExistsCases,
-        1,
       )) {
         test(`case #${index}`, async () => {
           await pipe(
@@ -133,7 +132,7 @@ describe("FileSystem", () => {
       for (const {
         index,
         element: { path, expected },
-      } of enumerate<{ path: string; expected: boolean }>(readFileCases, 1)) {
+      } of enumerate(1)<{ path: string; expected: boolean }>(readFileCases)) {
         if (typeof expected === "string")
           test(`case #${index}`, async () => {
             await pipe(
@@ -167,7 +166,7 @@ describe("FileSystem", () => {
       for (const {
         index,
         element: { path, expected },
-      } of enumerate<{
+      } of enumerate(1)<{
         path: string;
         expected:
           | boolean
@@ -175,7 +174,7 @@ describe("FileSystem", () => {
               path: string;
               type: string;
             }[];
-      }>(readDirectoryCases, 1)) {
+      }>(readDirectoryCases)) {
         if (isIterable(expected)) {
           const expectedEntries = pipe(
             expected as readonly {
@@ -227,11 +226,11 @@ describe("FileSystem", () => {
       for (const {
         index,
         element: { path, type, expected },
-      } of enumerate<{
+      } of enumerate(1)<{
         path: string;
         type: "file" | "directory";
         expected: string | null;
-      }>(pathnameCases, 1)) {
+      }>(pathnameCases)) {
         const entry = (type === "file" ? normalizedFile : normalizedDirectory)(
           path,
         );
@@ -251,10 +250,10 @@ describe("FileSystem", () => {
       for (const {
         index,
         element: { pathname, expected },
-      } of enumerate<{
+      } of enumerate(1)<{
         pathname: string;
         expected: string | null;
-      }>(fileCases, 1)) {
+      }>(fileCases)) {
         if (!expected)
           test(`case #${index}`, async () => {
             await pipe(

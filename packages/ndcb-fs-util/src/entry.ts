@@ -4,7 +4,7 @@ import * as TaskEither from "fp-ts/TaskEither";
 import * as ReadonlyArray from "fp-ts/ReadonlyArray";
 import { pipe, Refinement } from "fp-ts/function";
 
-import { takeWhile } from "@ndcb/util/lib/iterable";
+import * as Sequence from "@ndcb/util/lib/sequence";
 
 import {
   AbsolutePath,
@@ -157,9 +157,9 @@ export const directoryHasDescendent = (
 
 export const upwardDirectoriesUntil = (root: Directory) =>
   function* (entry: Entry): Iterable<Directory> {
-    yield* takeWhile(
+    yield* pipe(
       upwardDirectories(entry),
-      (directory) => !directoryEquals(directory, root),
+      Sequence.takeWhile((directory) => !directoryEquals(directory, root)),
     );
     if (directoryHasDescendent(root, entry)) yield root;
   };

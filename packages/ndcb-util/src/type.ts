@@ -1,4 +1,6 @@
-import { every } from "./iterable";
+import { pipe } from "fp-ts/function";
+
+import * as Sequence from "./sequence";
 
 export const isString = (element: unknown): element is string =>
   typeof element === "string";
@@ -19,7 +21,8 @@ export const isIterable = (element: unknown): element is Iterable<unknown> =>
 export const isTypeIterable = <T>(
   element: unknown,
   isOfType: (element: unknown) => element is T,
-): element is Iterable<T> => isIterable(element) && every(element, isOfType);
+): element is Iterable<T> =>
+  isIterable(element) && pipe(element, Sequence.every(isOfType));
 
 export const isArray = (element: unknown): element is unknown[] =>
   Array.isArray(element);

@@ -4,7 +4,7 @@ import * as Task from "fp-ts/Task";
 import * as TaskEither from "fp-ts/TaskEither";
 import { pipe } from "fp-ts/function";
 
-import { enumerate } from "@ndcb/util/lib/iterable";
+import { enumerate } from "@ndcb/util";
 import { File } from "@ndcb/fs-util";
 
 import { fileRouter } from "../src/processor";
@@ -14,7 +14,7 @@ describe("fileRouter", () => {
   for (const {
     element: { routerSupplier, correspondingFileSupplier, cases },
     index,
-  } of enumerate<{
+  } of enumerate(1)<{
     routerSupplier: () => PathnameRouter<never>;
     correspondingFileSupplier: () => (
       query: Pathname,
@@ -31,7 +31,7 @@ describe("fileRouter", () => {
       >;
       description?: string;
     }>;
-  }>(require("./fixtures/fileRouter"), 1)) {
+  }>(require("./fixtures/fileRouter"))) {
     for (const { query, expected, description } of cases) {
       test(description ?? `test #${index}`, async () => {
         await pipe(

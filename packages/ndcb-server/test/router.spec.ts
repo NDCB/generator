@@ -5,7 +5,7 @@ import * as Task from "fp-ts/Task";
 import * as TaskEither from "fp-ts/TaskEither";
 import { pipe } from "fp-ts/function";
 
-import { enumerate } from "@ndcb/util/lib/iterable";
+import { enumerate } from "@ndcb/util/lib/sequence";
 import { mockFileSystem } from "@ndcb/mock-fs";
 import {
   file,
@@ -30,9 +30,8 @@ describe("sourcePathname", () => {
   for (const {
     element: { fs, mapping, tests },
     index: suiteIndex,
-  } of enumerate<{ fs; mapping; tests }>(
+  } of enumerate(1)<{ fs; mapping; tests }>(
     require("./fixtures/sourcePathname.json"),
-    1,
   )) {
     const { fileExists } = mockFileSystem(fs);
     const sourceExists = (pathname: Pathname) =>
@@ -60,11 +59,11 @@ describe("sourcePathname", () => {
     for (const {
       index: testIndex,
       element: { query, expected, description },
-    } of enumerate<{
+    } of enumerate(1)<{
       query: string;
       expected: string | null;
       description: string | undefined;
-    }>(tests, 1)) {
+    }>(tests)) {
       test(`case #${suiteIndex}:${testIndex}${
         description ? `: ${description}` : ""
       }`, async () => {
@@ -90,9 +89,8 @@ describe("sourcePathname404", () => {
   for (const {
     element: { fs, mapping, tests },
     index: suiteIndex,
-  } of enumerate<{ fs; mapping; tests }>(
+  } of enumerate(1)<{ fs; mapping; tests }>(
     require("./fixtures/sourcePathname404.json"),
-    1,
   )) {
     const { fileExists } = mockFileSystem(fs);
     const sourceExists = (pathname: Pathname) =>
@@ -121,11 +119,11 @@ describe("sourcePathname404", () => {
     for (const {
       index: testIndex,
       element: { query, expected, description },
-    } of enumerate<{
+    } of enumerate(1)<{
       query: string;
       expected: string | null;
       description: string | undefined;
-    }>(tests, 1)) {
+    }>(tests)) {
       test(`case #${suiteIndex}:${testIndex}${
         description ? `: ${description}` : ""
       }`, async () => {

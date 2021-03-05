@@ -10,7 +10,7 @@ import {
   File,
 } from "@ndcb/fs-util";
 import { mockFileSystem, MockDirectory } from "@ndcb/mock-fs";
-import { enumerate } from "@ndcb/util/src/iterable";
+import { enumerate } from "@ndcb/util/lib/sequence";
 
 import { rootedFileSystem } from "../src/rootedFileSystem";
 
@@ -19,9 +19,8 @@ describe("rootedFileSystem", () => {
     for (const {
       index,
       element: { fs, root, expected },
-    } of enumerate<{ fs: MockDirectory; root: string; expected: string[] }>(
+    } of enumerate(1)<{ fs: MockDirectory; root: string; expected: string[] }>(
       require("./fixtures/rootedFileSystem-files"),
-      1,
     )) {
       const { files } = rootedFileSystem(mockFileSystem(fs))(
         normalizedDirectory(root),
@@ -59,7 +58,7 @@ describe("rootedFileSystem", () => {
       for (const {
         index,
         element: { path, expected },
-      } of enumerate<{ path: string; expected: boolean }>(cases, 1)) {
+      } of enumerate(1)<{ path: string; expected: boolean }>(cases)) {
         test(`case #${index}`, async () => {
           await pipe(
             fileExists(normalizedRelativePath(path))(),
@@ -86,7 +85,7 @@ describe("rootedFileSystem", () => {
       for (const {
         index,
         element: { path, expected },
-      } of enumerate<{ path: string; expected: boolean }>(cases, 1)) {
+      } of enumerate(1)<{ path: string; expected: boolean }>(cases)) {
         test(`case #${index}`, async () => {
           await pipe(
             directoryExists(normalizedRelativePath(path))(),

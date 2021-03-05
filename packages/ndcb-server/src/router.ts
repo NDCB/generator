@@ -18,7 +18,7 @@ import {
   relativePathToString,
 } from "@ndcb/fs-util";
 import { HashMap } from "@ndcb/util/lib/hashMap";
-import { flatMap } from "@ndcb/util";
+import * as Sequence from "@ndcb/util/lib/sequence";
 
 export type Pathname = RelativePath;
 
@@ -39,9 +39,9 @@ export const possibleSourcePathnames = (
     readonly Option.Option<Extension>[]
   >,
 ) => (query: Pathname): Iterable<Pathname> =>
-  flatMap(
+  pipe(
     possibleHtmlSourcePathnames(query),
-    function* (possibleSourcePathname) {
+    Sequence.flatMap(function* (possibleSourcePathname) {
       yield possibleSourcePathname;
       if (!relativePathIsEmpty(possibleSourcePathname))
         yield* relativePathWithExtensions(
@@ -51,7 +51,7 @@ export const possibleSourcePathnames = (
             Option.getOrElse<readonly Option.Option<Extension>[]>(() => []),
           ),
         );
-    },
+    }),
   );
 
 export const sourcePathname = <FileExistenceTestError extends Error>(

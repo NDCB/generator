@@ -2,7 +2,7 @@ import * as Option from "fp-ts/Option";
 import * as ReadonlyArray from "fp-ts/ReadonlyArray";
 import { pipe } from "fp-ts/function";
 
-import { map } from "@ndcb/util";
+import * as Sequence from "@ndcb/util/lib/sequence";
 
 import { extension } from "../src/extension";
 import { normalizedRelativePath } from "../src/relativePath";
@@ -37,7 +37,6 @@ describe("relativePathWithExtensions", () => {
     description,
   } of require("./fixtures/relativePathWithExtensions")) {
     test(description, () => {
-      map;
       expect(
         relativePathWithExtensions(
           normalizedRelativePath(input),
@@ -46,7 +45,13 @@ describe("relativePathWithExtensions", () => {
             ReadonlyArray.map((target) => Option.some(extension(target))),
           ),
         ),
-      ).toStrictEqual([...map(expected, normalizedRelativePath)]);
+      ).toStrictEqual(
+        pipe(
+          expected,
+          Sequence.map(normalizedRelativePath),
+          Sequence.toReadonlyArray,
+        ),
+      );
     });
   }
 });

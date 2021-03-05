@@ -1,6 +1,7 @@
 import * as Joi from "joi";
 import * as Option from "fp-ts/Option";
 import * as TaskEither from "fp-ts/TaskEither";
+import { pipe } from "fp-ts/function";
 
 import {
   normalizedFile,
@@ -9,7 +10,7 @@ import {
   Directory,
   directoryHasDescendent,
 } from "@ndcb/fs-util";
-import { orderedPairs, filter, find } from "@ndcb/util/lib/iterable";
+import * as Sequence from "@ndcb/util/lib/sequence";
 import { ColorCode } from "@ndcb/logger";
 
 export const fileSchema = Joi.string().trim().custom(normalizedFile);
@@ -53,9 +54,11 @@ export const mutuallyDisjointSourceDirectoriesSchema = Joi.array()
   .items(directorySchema)
   .min(1)
   .custom((value: Directory[]) => {
-    const meetingSourceDirectories = find(
-      filter(orderedPairs(value), ([d1, d2]) => d1 !== d2),
-      ([d1, d2]) => directoryHasDescendent(d1, d2),
+    const meetingSourceDirectories = pipe(
+      value,
+      Sequence.orderedPairs,
+      Sequence.filter(([d1, d2]) => d1 !== d2),
+      Sequence.find(([d1, d2]) => directoryHasDescendent(d1, d2)),
     );
     if (Option.isSome(meetingSourceDirectories)) {
       const [d1, d2] = meetingSourceDirectories.value;

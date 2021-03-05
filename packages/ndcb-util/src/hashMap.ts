@@ -2,7 +2,7 @@ import * as Eq from "fp-ts/Eq";
 import * as Option from "fp-ts/Option";
 import { pipe } from "fp-ts/function";
 
-import { find, some } from "./iterable";
+import * as Sequence from "./sequence";
 import { hashString } from "./hash";
 
 export interface HashMap<K, V> {
@@ -21,9 +21,8 @@ export const hashMap = <K, V>(
     const hashCode = hash(key);
     if (!buckets[hashCode]) buckets[hashCode] = [];
     pipe(
-      find<[K, V]>(buckets[hashCode], (bucket) =>
-        keyEquality.equals(key, bucket[0]),
-      ),
+      buckets[hashCode],
+      Sequence.find<[K, V]>((bucket) => keyEquality.equals(key, bucket[0])),
       Option.fold(
         () => {
           const bucket: [K, V] = [key, value];
@@ -35,16 +34,18 @@ export const hashMap = <K, V>(
     )[1] = value;
   }
   const has = (key: K): boolean =>
-    some<[K, V]>(buckets[hash(key)] ?? [], (bucket) =>
-      keyEquality.equals(key, bucket[0]),
+    pipe(
+      buckets[hash(key)] ?? [],
+      Sequence.some<[K, V]>((bucket) => keyEquality.equals(key, bucket[0])),
     );
   const bucketOptionalValue = <K, V>(
     bucket: Option.Option<[K, V]>,
   ): Option.Option<V> => Option.map<[K, V], V>((bucket) => bucket[1])(bucket);
   const get = (key: K): Option.Option<V> =>
     bucketOptionalValue(
-      find(buckets[hash(key)] ?? [], (bucket) =>
-        keyEquality.equals(key, bucket[0]),
+      pipe(
+        buckets[hash(key)] ?? [],
+        Sequence.find((bucket) => keyEquality.equals(key, bucket[0])),
       ),
     );
   return { has, get };

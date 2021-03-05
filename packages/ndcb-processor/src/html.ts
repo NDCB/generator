@@ -1,9 +1,9 @@
+import * as IO from "fp-ts/IO";
 import * as Either from "fp-ts/Either";
 import * as TaskEither from "fp-ts/TaskEither";
 import { pipe } from "fp-ts/function";
 
 import { File, TextFileReader } from "@ndcb/fs-util";
-import { IO } from "@ndcb/util";
 
 import { Locals, Processor, contentsToProcessorResult } from "./processor";
 
@@ -35,10 +35,10 @@ export const templatingProcessor = <
   readTextFile: TextFileReader<TextFileReadError>,
   dataSupplier: (
     file: File,
-  ) => IO<TaskEither.TaskEither<DataFetchError, Locals>>,
+  ) => IO.IO<TaskEither.TaskEither<DataFetchError, Locals>>,
   transformerSupplier: (
     data: Locals,
-  ) => IO<TaskEither.TaskEither<TransformerFetchError, Transformer>>,
+  ) => IO.IO<TaskEither.TaskEither<TransformerFetchError, Transformer>>,
 ): Processor<
   TextFileReadError | DataFetchError | TransformerFetchError | Error
 > => (file) => () =>

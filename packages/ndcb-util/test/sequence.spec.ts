@@ -1,22 +1,6 @@
-import {
-  append,
-  concat,
-  every,
-  filter,
-  find,
-  first,
-  flatMap,
-  iterableToString,
-  map,
-  orderedPairs,
-  prepend,
-  rest,
-  reverse,
-  some,
-  takeWhile,
-  unorderedPairs,
-  enumerate,
-} from "../src/iterable";
+import { pipe } from "fp-ts/function";
+
+import * as Sequence from "../src/sequence";
 
 describe("iterableToString", () => {
   for (const {
@@ -26,7 +10,9 @@ describe("iterableToString", () => {
     expected,
   } of require("./fixtures/iterableToString")) {
     test(`returns "${expected}" for input "${input}"`, () => {
-      expect(iterableToString(input, stringify, delimiter)).toBe(expected);
+      expect(pipe(input, Sequence.toString(stringify, delimiter))).toBe(
+        expected,
+      );
     });
   }
 });
@@ -39,7 +25,7 @@ describe("every", () => {
     description,
   } of require("./fixtures/every")) {
     test(description, () => {
-      expect(every(input, predicate)).toBe(expected);
+      expect(pipe(input, Sequence.every(predicate))).toBe(expected);
     });
   }
 });
@@ -52,7 +38,7 @@ describe("some", () => {
     description,
   } of require("./fixtures/some")) {
     test(description, () => {
-      expect(some(input, predicate)).toBe(expected);
+      expect(pipe(input, Sequence.some(predicate))).toBe(expected);
     });
   }
 });
@@ -65,19 +51,22 @@ describe("filter", () => {
     description,
   } of require("./fixtures/filter")) {
     test(description, () => {
-      expect([...filter(input, predicate)]).toStrictEqual(expected);
+      expect(
+        pipe(input, Sequence.filter(predicate), Sequence.toReadonlyArray),
+      ).toStrictEqual(expected);
     });
   }
 });
 
 describe("filter type assertion", () => {
   test("type checks", () => {
-    const xs: Iterable<number | string> = [1, 2, "3", 4, "5", 6];
-    const ns: Iterable<number> = filter<number | string, number>(
-      xs,
-      (x): x is number => typeof x === "number",
-    );
-    expect([...ns]).toStrictEqual([1, 2, 4, 6]);
+    expect(
+      pipe(
+        [1, 2, "3", 4, "5", 6],
+        Sequence.filter((x): x is number => typeof x === "number"),
+        Sequence.toReadonlyArray,
+      ),
+    ).toStrictEqual([1, 2, 4, 6]);
   });
 });
 
@@ -89,7 +78,9 @@ describe("filter type assertion yield", () => {
     description,
   } of require("./fixtures/filterForType")) {
     test(description, () => {
-      expect([...filter(input, assertion)]).toStrictEqual(expected);
+      expect(
+        pipe(input, Sequence.filter(assertion), Sequence.toReadonlyArray),
+      ).toStrictEqual(expected);
     });
   }
 });
@@ -102,7 +93,9 @@ describe("map", () => {
     description,
   } of require("./fixtures/map")) {
     test(description, () => {
-      expect([...map(input, mapper)]).toStrictEqual(expected);
+      expect(
+        pipe(input, Sequence.map(mapper), Sequence.toReadonlyArray),
+      ).toStrictEqual(expected);
     });
   }
 });
@@ -115,7 +108,9 @@ describe("flatMap", () => {
     description,
   } of require("./fixtures/flatMap")) {
     test(description, () => {
-      expect([...flatMap(input, mapper)]).toStrictEqual(expected);
+      expect(
+        pipe(input, Sequence.flatMap(mapper), Sequence.toReadonlyArray),
+      ).toStrictEqual(expected);
     });
   }
 });
@@ -123,7 +118,7 @@ describe("flatMap", () => {
 describe("first", () => {
   for (const { input, expected, description } of require("./fixtures/first")) {
     test(description, () => {
-      expect(first(input)).toStrictEqual(expected);
+      expect(pipe(input, Sequence.first)).toStrictEqual(expected);
     });
   }
 });
@@ -131,19 +126,9 @@ describe("first", () => {
 describe("rest", () => {
   for (const { input, expected, description } of require("./fixtures/rest")) {
     test(description, () => {
-      expect([...rest(input)]).toStrictEqual(expected);
-    });
-  }
-});
-
-describe("reverse", () => {
-  for (const {
-    input,
-    expected,
-    description,
-  } of require("./fixtures/reverse")) {
-    test(description, () => {
-      expect([...reverse(input)]).toStrictEqual(expected);
+      expect(
+        pipe(input, Sequence.rest, Sequence.toReadonlyArray),
+      ).toStrictEqual(expected);
     });
   }
 });
@@ -156,7 +141,9 @@ describe("concat", () => {
     description,
   } of require("./fixtures/concat")) {
     test(description, () => {
-      expect([...concat(input, ...rest)]).toStrictEqual(expected);
+      expect(
+        pipe(input, Sequence.concat(...rest), Sequence.toReadonlyArray),
+      ).toStrictEqual(expected);
     });
   }
 });
@@ -169,7 +156,9 @@ describe("prepend", () => {
     description,
   } of require("./fixtures/prepend")) {
     test(description, () => {
-      expect([...prepend(input, element)]).toStrictEqual(expected);
+      expect(
+        pipe(input, Sequence.prepend(element), Sequence.toReadonlyArray),
+      ).toStrictEqual(expected);
     });
   }
 });
@@ -182,7 +171,9 @@ describe("append", () => {
     description,
   } of require("./fixtures/append")) {
     test(description, () => {
-      expect([...append(input, element)]).toStrictEqual(expected);
+      expect(
+        pipe(input, Sequence.append(element), Sequence.toReadonlyArray),
+      ).toStrictEqual(expected);
     });
   }
 });
@@ -195,7 +186,9 @@ describe("takeWhile", () => {
     description,
   } of require("./fixtures/takeWhile")) {
     test(description, () => {
-      expect([...takeWhile(input, predicate)]).toStrictEqual(expected);
+      expect(
+        pipe(input, Sequence.takeWhile(predicate), Sequence.toReadonlyArray),
+      ).toStrictEqual(expected);
     });
   }
 });
@@ -208,41 +201,49 @@ describe("find", () => {
     description,
   } of require("./fixtures/find")) {
     test(description, () => {
-      expect(find(input, predicate)).toStrictEqual(expected);
+      expect(pipe(input, Sequence.find(predicate))).toStrictEqual(expected);
     });
   }
 });
 
 describe("orderedPairs", () => {
   for (const { input, expected } of require("./fixtures/orderedPairs")) {
-    test(`returns "${iterableToString(
+    test(`returns "${pipe(
       expected,
-      (e) => `[${e}]`,
-    )}" for input "${iterableToString(input)}"`, () => {
-      expect([...orderedPairs(input)]).toStrictEqual(expected);
+      Sequence.toString((e) => `[${e}]`),
+    )}" for input "${pipe(input, Sequence.toString)}"`, () => {
+      expect(
+        pipe(input, Sequence.orderedPairs, Sequence.toReadonlyArray),
+      ).toStrictEqual(expected);
     });
   }
 });
 
 describe("unorderedPairs", () => {
   for (const { input, expected } of require("./fixtures/unorderedPairs")) {
-    test(`returns "${iterableToString(
+    test(`returns "${pipe(
       expected,
-      (e) => `[${e}]`,
-    )}" for input "${iterableToString(input)}"`, () => {
-      expect([...unorderedPairs(input)]).toStrictEqual(expected);
+      Sequence.toString((e) => `[${e}]`),
+    )}" for input "${pipe(input, Sequence.toString)}"`, () => {
+      expect(
+        pipe(input, Sequence.unorderedPairs, Sequence.toReadonlyArray),
+      ).toStrictEqual(expected);
     });
   }
 });
 
 describe("enumerate", () => {
   for (const { input, expected } of require("./fixtures/enumerate")) {
-    test(`returns "${iterableToString(
+    test(`returns "${pipe(
       expected,
-      (item) =>
-        `(${(item as { index }).index}, ${(item as { element }).element})`,
-    )}" for input "${iterableToString(input)}"`, () => {
-      expect([...enumerate(input)]).toStrictEqual(expected);
+      Sequence.toString(
+        (item) =>
+          `(${(item as { index }).index}, ${(item as { element }).element})`,
+      ),
+    )}" for input "${pipe(input, Sequence.toString)}"`, () => {
+      expect(
+        pipe(input, Sequence.enumerate(), Sequence.toReadonlyArray),
+      ).toStrictEqual(expected);
     });
   }
 });

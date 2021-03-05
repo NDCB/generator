@@ -1,4 +1,6 @@
-import { map } from "@ndcb/util";
+import { pipe } from "fp-ts/function";
+
+import * as Sequence from "@ndcb/util/lib/sequence";
 
 import {
   normalizedRelativePath,
@@ -15,7 +17,13 @@ describe("upwardRelativePaths", () => {
     test(description, () => {
       expect([
         ...upwardRelativePaths(normalizedRelativePath(input)),
-      ]).toStrictEqual([...map(expected, normalizedRelativePath)]);
+      ]).toStrictEqual(
+        pipe(
+          expected,
+          Sequence.map(normalizedRelativePath),
+          Sequence.toReadonlyArray,
+        ),
+      );
     });
   }
 });

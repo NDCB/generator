@@ -1,6 +1,7 @@
 import * as IO from "fp-ts/IO";
 import * as Either from "fp-ts/Either";
 import * as Option from "fp-ts/Option";
+import * as ReadonlyArray from "fp-ts/ReadonlyArray";
 import * as TaskEither from "fp-ts/TaskEither";
 import { pipe } from "fp-ts/function";
 
@@ -13,7 +14,6 @@ import {
   fileToString,
   TextFileReader,
 } from "@ndcb/fs-util";
-import { some, find, map } from "@ndcb/util/lib/iterable";
 
 const parseJson = (contents: string): unknown => JSON.parse(contents);
 import { parse as parseJson5 } from "json5";
@@ -39,8 +39,11 @@ const dataParserByFileExtensions = (
 ): DataParserByFileExtension<DataParsingError> => ({
   handles: (extension) =>
     Option.isSome(extension) &&
-    some(handledExtensions, (handledExtension) =>
-      extensionEquals(extension.value, handledExtension),
+    pipe(
+      handledExtensions,
+      ReadonlyArray.some((handledExtension) =>
+        extensionEquals(extension.value, handledExtension),
+      ),
     ),
   parse: (contents) =>
     Either.tryCatch(
@@ -50,11 +53,11 @@ const dataParserByFileExtensions = (
 });
 
 const dataParserByExtensionTokens = (
-  extensionTokens: Iterable<string>,
+  extensionTokens: readonly string[],
   parse: (contents: string) => unknown,
 ): DataParserByFileExtension<DataParsingError> =>
   dataParserByFileExtensions(
-    [...map(extensionTokens, (token) => extension(token))],
+    pipe(extensionTokens, ReadonlyArray.map(extension)),
     parse,
   );
 
@@ -108,12 +111,15 @@ const unhandledExtensionError = (
 export const compositeTextDataParser = (
   parsers: readonly DataParserByFileExtension<DataParsingError>[],
 ): CompositeDataParserByFileExtension<Error> => ({
-  handles: (extension) => some(parsers, (parser) => parser.handles(extension)),
+  handles: (extension) =>
+    pipe(
+      parsers,
+      ReadonlyArray.some((parser) => parser.handles(extension)),
+    ),
   parse: (extension, contents) =>
     pipe(
-      find<DataParserByFileExtension<DataParsingError>>(parsers, (parser) =>
-        parser.handles(extension),
-      ),
+      parsers,
+      ReadonlyArray.findFirst((parser) => parser.handles(extension)),
       Either.fromOption(() => unhandledExtensionError(extension)),
       Either.map((parser) => parser.parse(contents)),
     ),
