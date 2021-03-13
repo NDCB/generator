@@ -5,16 +5,14 @@ import { Command } from "commander";
 
 import { serve } from "@ndcb/server";
 
-const program = new Command();
-
-program
+new Command()
   .version(require("./../package.json").version)
   .description(
     "Start development servers using the specified configuration file",
   )
   .option("-c, --config <file>", "website configuration file")
-  .parse(process.argv);
-
-const { config } = program;
-
-serve(config)();
+  .action((command) => {
+    const { config } = command;
+    return serve(config)()();
+  })
+  .parseAsync(process.argv);

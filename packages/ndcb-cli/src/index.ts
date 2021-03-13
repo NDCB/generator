@@ -3,9 +3,7 @@ import "source-map-support/register";
 
 import { Command } from "commander";
 
-const program = new Command();
-
-program
+new Command()
   .version(require("./../package.json").version)
   .description("Serve or build site")
   .command(

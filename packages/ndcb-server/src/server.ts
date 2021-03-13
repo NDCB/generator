@@ -1,41 +1,30 @@
-/*
-import { createServer, RequestListener } from "http";
-import { join } from "path";
-import * as browserSync from "browser-sync";
 import * as IO from "fp-ts/IO";
+import * as Option from "fp-ts/Option";
+import * as ReadonlyArray from "fp-ts/ReadonlyArray";
+import * as Task from "fp-ts/Task";
 import * as TaskEither from "fp-ts/TaskEither";
 import { pipe } from "fp-ts/function";
 
-import { configurationFetcher, Configuration } from "@ndcb/config";
-import {
-  textFileDataReader,
-  compositeTextDataParserToFileContentsParser,
-  compositeTextDataParser,
-  jsonParser,
-  json5Parser,
-  yamlParser,
-  tomlParser,
-} from "@ndcb/data";
-import { scoppedLogger, Logger } from "@ndcb/logger";
-import { forEach, filter, map } from "@ndcb/util/lib/iterable";
-import { sequence } from "@ndcb/util/lib/eitherIterable";
-import {
-  directoryPath,
-  absolutePathToString,
-  readFile,
-  fileExtension,
-} from "@ndcb/fs-util";
-import { textFileReader } from "@ndcb/fs-text";
+import { createServer, RequestListener } from "http";
+import { join } from "path";
+import * as browserSync from "browser-sync";
 
-import { siteFilesServerRequestListener } from "./listener";
-import { processorAsTimedProcessor, serverProcessor } from "./processor";
-import { Pathname, pathnameToString } from "./router";
-import { elapsedTimeFormatter } from "./time";
+import { scoppedLogger } from "@ndcb/logger";
+import { Configuration } from "@ndcb/config";
+import { directoryPath, absolutePathToString } from "@ndcb/fs-util";
 
 interface Server {
   readonly start: IO.IO<TaskEither.TaskEither<Error, void>>;
 }
 
+const mainServerConfiguration = (
+  configuration: Configuration,
+): { listener: RequestListener; hostname: string; port: number } => {
+  const { port, hostname } = configuration.serve.main;
+  throw new Error("Not implemented");
+};
+
+/*
 const mainServerConfiguration = (
   configuration: Configuration,
 ): { requestListener: RequestListener; port: number } => {
@@ -79,19 +68,22 @@ const mainServerConfiguration = (
         ({ message }) => ({
           name: "ServerStartError",
           message: `Failed to start main server.
-${message}`,
+                ${message}`,
         }),
       ),
     stop: () => server.close(),
     isActive: () => server.listening,
   });
 };
+*/
 
 const mainServer = ({
   listener,
+  hostname,
   port,
 }: {
   listener: RequestListener;
+  hostname: string;
   port: number;
 }): Server => {
   const server = createServer(listener);
@@ -101,7 +93,7 @@ const mainServer = ({
         () =>
           new Promise((resolve, reject) =>
             server
-              .listen(port, () => resolve())
+              .listen(port, hostname, () => resolve())
               .once("error", (error) => reject(error)),
           ),
         (reason) => reason as Error,
@@ -116,8 +108,11 @@ const browserSyncConfiguration = (
   const { port, hostname } = configuration.serve.browserSync;
   const { sources } = configuration.common;
   return {
-    files: sources.map((directory) =>
-      join(absolutePathToString(directoryPath(directory)), "**", "*"),
+    files: pipe(
+      sources,
+      ReadonlyArray.map((directory) =>
+        join(absolutePathToString(directoryPath(directory)), "**", "*"),
+      ),
     ),
     proxy: `${mainHostname}:${mainPort}`,
     host: hostname,
@@ -156,10 +151,42 @@ const addStartListener = (startListener: IO.IO<void>) => (
     ),
 });
 
-const initializeMainServer = (
-  configuration: Configuration,
-): Either<ServerInitializationError, Server> => {
-  const logger = scoppedLogger("main-server");
+const startServers = (
+  servers: readonly Server[],
+): IO.IO<TaskEither.TaskEither<Error, readonly void[]>> => () =>
+  pipe(
+    servers,
+    ReadonlyArray.map((server) => server.start()),
+    TaskEither.sequenceSeqArray,
+  );
+
+const ms = (configuration: Configuration): Option.Option<Server> =>
+  pipe(
+    configuration,
+    mainServerConfiguration,
+    mainServer,
+    addStartListener(() => {
+      console.log("Started");
+    }),
+    Option.some,
+  );
+
+const bs = (configuration: Configuration): Option.Option<Server> =>
+  pipe(
+    configuration,
+    browserSyncConfiguration,
+    browserSyncServer,
+    addStartListener(() => {
+      console.log("Started");
+    }),
+    Option.some,
+  );
+
+/*
+        const initializeMainServer = (
+          configuration: Configuration,
+          ): Either<ServerInitializationError, Server> => {
+            const logger = scoppedLogger("main-server");
   const formatElapsedTime = elapsedTimeFormatter(configuration);
   const { port, hostname } = configuration.serve.main;
   const server = createServer(
@@ -167,22 +194,22 @@ const initializeMainServer = (
       processorAsTimedProcessor(serverProcessor(configuration)),
       (pathname) => logger.info(`Processing "${pathnameToString(pathname)}"`),
       (pathname: Pathname, elapsedTime: bigint) =>
-        logger.trace(
-          `Finished processing "${pathnameToString(
-            pathname,
+      logger.trace(
+        `Finished processing "${pathnameToString(
+          pathname,
           )}" in ${formatElapsedTime(elapsedTime)}`,
-        ),
-      (error: Error, pathname: Pathname) => () => {
-        logger.error({
-          name: "",
-          message: `Unexpectedly failed to process "${pathnameToString(
-            pathname,
-          )}". ${error.message}`,
-          stack: error.stack,
-        })();
-      },
-    ),
-  );
+          ),
+          (error: Error, pathname: Pathname) => () => {
+            logger.error({
+              name: "",
+              message: `Unexpectedly failed to process "${pathnameToString(
+                pathname,
+                )}". ${error.message}`,
+                stack: error.stack,
+              })();
+            },
+            ),
+            );
 
   return right({
     start: () =>
@@ -255,10 +282,6 @@ const initializeServers = (
     initializeBrowserSyncServer(configuration),
   ]);
 
-const startServers = (
-  servers: readonly Server[],
-): IO.IO<TaskEither.TaskEither<Error, readonly void[]>> => () =>
-  TaskEither.sequenceSeqArray(servers.map((server) => server.start()));
 
 const stopServers = (
   servers: readonly Server[],
@@ -314,8 +337,18 @@ ${message}`,
   })(fetchConfiguration(config)());
 */
 
-import * as IO from "fp-ts/IO";
+export const servers = (configuration: Configuration): readonly Server[] =>
+  pipe(
+    [ms, bs],
+    ReadonlyArray.map((serverBuilder) => serverBuilder(configuration)),
+    ReadonlyArray.filter(Option.isSome),
+    ReadonlyArray.map((serverOption) => serverOption.value),
+  );
 
-export const serve = (config?: string): IO.IO<void> => () => {
-  // no-op
-};
+const LOGGER = scoppedLogger("server");
+
+export const serve = (config?: string): IO.IO<Task.Task<void>> => () => () =>
+  new Promise(() => {
+    LOGGER.error("Not implemented yet")();
+    LOGGER.info(`Config: ${config}`)();
+  });

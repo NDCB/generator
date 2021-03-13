@@ -4,7 +4,7 @@
   "description": "Website builder",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
-  "repository": "https://github.com/NDCB/generator/tree/master/packages/ndcb-processor",
+  "repository": "https://github.com/NDCB/generator/tree/master/packages/ndcb-builder",
   "author": "Marc-Antoine Ouimet",
   "license": "MIT",
   "files": [
