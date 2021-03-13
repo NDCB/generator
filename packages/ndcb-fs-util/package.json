@@ -13,7 +13,8 @@
   "dependencies": {
     "@ndcb/util": "^0.9.1",
     "fp-ts": "^2.9.5",
-    "fs-extra": "^9.0.1"
+    "fs-extra": "^9.0.1",
+    "upath": "^2.0.1"
   },
   "devDependencies": {
     "@types/fs-extra": "^9.0.4"

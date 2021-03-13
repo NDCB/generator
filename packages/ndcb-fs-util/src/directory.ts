@@ -1,13 +1,12 @@
 import * as fse from "fs-extra";
 import * as IO from "fp-ts/IO";
 import * as TaskEither from "fp-ts/TaskEither";
-import { pipe } from "fp-ts/lib/function";
+import { pipe, flow } from "fp-ts/lib/function";
 
 import { isNotNull } from "@ndcb/util/lib/type";
 
 import {
   AbsolutePath,
-  absolutePath,
   absolutePathEquals,
   absolutePathBaseName,
   absolutePathToString,
@@ -41,20 +40,26 @@ export const isDirectory = (element: unknown): element is Directory =>
   isNotNull(element) &&
   element["tag"] === "DIRECTORY";
 
-export const normalizedDirectory = (path: string): Directory =>
-  directory(normalizedAbsolutePath(path));
+export const normalizedDirectory: (path: string) => Directory = flow(
+  normalizedAbsolutePath,
+  directory,
+);
 
 export const directoryPath = (directory: Directory): AbsolutePath =>
   directory.path;
 
-export const directoryToString = (directory: Directory): string =>
-  absolutePathToString(directoryPath(directory));
+export const directoryToString: (directory: Directory) => string = flow(
+  directoryPath,
+  absolutePathToString,
+);
 
 export const directoryEquals = (d1: Directory, d2: Directory): boolean =>
   absolutePathEquals(directoryPath(d1), directoryPath(d2));
 
-export const hashDirectory = (directory: Directory): number =>
-  hashAbsolutePath(directoryPath(directory));
+export const hashDirectory: (directory: Directory) => number = flow(
+  directoryPath,
+  hashAbsolutePath,
+);
 
 export type DirectoryExistenceTester<E extends Error> = (
   directory: Directory,
@@ -64,7 +69,8 @@ export const directoryExists: DirectoryExistenceTester<PathIOError> = (
   directory,
 ) => () =>
   pipe(
-    TaskEither.fromTask<never, boolean>(pathExists(directoryPath(directory))()),
+    pathExists(directoryPath(directory))(),
+    TaskEither.fromTask,
     TaskEither.chainFirst((exists) =>
       exists
         ? pipe(
@@ -76,7 +82,7 @@ export const directoryExists: DirectoryExistenceTester<PathIOError> = (
   );
 
 export const currentWorkingDirectory: IO.IO<Directory> = () =>
-  directory(absolutePath(process.cwd()));
+  pipe(process.cwd(), normalizedDirectory);
 
 export const fileFromDirectory = (from: Directory) => (
   to: RelativePath,

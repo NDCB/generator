@@ -1,13 +1,21 @@
 import * as Option from "fp-ts/Option";
 import * as ReadonlyArray from "fp-ts/ReadonlyArray";
-import { pipe } from "fp-ts/function";
+import { pipe, flow } from "fp-ts/function";
+
+import * as Sequence from "@ndcb/util/lib/sequence";
 
 import { Extension, extensionEquals } from "./extension";
 import { filePath, File } from "./file";
-import { pathExtension } from "./path";
+import { pathExtension, pathExtensions } from "./path";
 
-export const fileExtension = (file: File): Option.Option<Extension> =>
-  pathExtension(filePath(file));
+export const fileExtension: (file: File) => Option.Option<Extension> = flow(
+  filePath,
+  pathExtension,
+);
+
+export const fileExtensions: (
+  file: File,
+) => Sequence.Sequence<Extension> = flow(filePath, pathExtensions);
 
 export const fileHasExtension = (target: Extension) => (
   file: File,

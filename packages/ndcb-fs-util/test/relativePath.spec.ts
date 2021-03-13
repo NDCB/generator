@@ -15,9 +15,14 @@ describe("upwardRelativePaths", () => {
     description,
   } of require("./fixtures/upwardRelativePaths")) {
     test(description, () => {
-      expect([
-        ...upwardRelativePaths(normalizedRelativePath(input)),
-      ]).toStrictEqual(
+      expect(
+        pipe(
+          input,
+          normalizedRelativePath,
+          upwardRelativePaths,
+          Sequence.toReadonlyArray,
+        ),
+      ).toStrictEqual(
         pipe(
           expected,
           Sequence.map(normalizedRelativePath),
@@ -35,9 +40,14 @@ describe("relativePathSegments", () => {
     description,
   } of require("./fixtures/relativePathSegments")) {
     test(description, () => {
-      expect([
-        ...relativePathSegments(normalizedRelativePath(input)),
-      ]).toStrictEqual(expected);
+      expect(
+        pipe(
+          input,
+          normalizedRelativePath,
+          relativePathSegments,
+          Sequence.toReadonlyArray,
+        ),
+      ).toStrictEqual(expected);
     });
   }
 });

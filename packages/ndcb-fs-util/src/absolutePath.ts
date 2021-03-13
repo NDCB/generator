@@ -1,6 +1,6 @@
 import * as fse from "fs-extra";
 import * as fs from "fs";
-import { resolve, sep, basename, parse } from "path"; // TODO: Use https://www.npmjs.com/package/upath
+import { resolve, sep, basename, parse } from "upath";
 import * as Option from "fp-ts/Option";
 import * as IO from "fp-ts/IO";
 import * as Task from "fp-ts/Task";

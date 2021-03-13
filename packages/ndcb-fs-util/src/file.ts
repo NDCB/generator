@@ -1,7 +1,7 @@
 import * as fse from "fs-extra";
 import * as IO from "fp-ts/IO";
 import * as TaskEither from "fp-ts/TaskEither";
-import { pipe } from "fp-ts/function";
+import { pipe, flow } from "fp-ts/function";
 
 import { isNotNull } from "@ndcb/util/lib/type";
 
@@ -37,19 +37,25 @@ export const file = (path: AbsolutePath): File => ({
   tag: "FILE",
 });
 
-export const normalizedFile = (path: string): File =>
-  file(normalizedAbsolutePath(path));
+export const normalizedFile: (path: string) => File = flow(
+  normalizedAbsolutePath,
+  file,
+);
 
 export const filePath = (file: File): AbsolutePath => file.path;
 
-export const fileToString = (file: File): string =>
-  absolutePathToString(filePath(file));
+export const fileToString: (file: File) => string = flow(
+  filePath,
+  absolutePathToString,
+);
 
 export const fileEquals = (f1: File, f2: File): boolean =>
   absolutePathEquals(filePath(f1), filePath(f2));
 
-export const hashFile = (file: File): number =>
-  hashAbsolutePath(filePath(file));
+export const hashFile: (file: File) => number = flow(
+  filePath,
+  hashAbsolutePath,
+);
 
 export type FileExistenceTester<E extends Error> = (
   file: File,
@@ -57,7 +63,8 @@ export type FileExistenceTester<E extends Error> = (
 
 export const fileExists: FileExistenceTester<PathIOError> = (file) => () =>
   pipe(
-    TaskEither.fromTask<never, boolean>(pathExists(filePath(file))()),
+    pathExists(filePath(file))(),
+    TaskEither.fromTask,
     TaskEither.chainFirst((exists) =>
       exists
         ? pipe(
@@ -81,5 +88,7 @@ export const ensureFile = (
     (error) => ({ ...(error as Error & { code: string }), file }),
   );
 
-export const fileName = (file: File): string =>
-  absolutePathBaseName(filePath(file));
+export const fileName: (file: File) => string = flow(
+  filePath,
+  absolutePathBaseName,
+);

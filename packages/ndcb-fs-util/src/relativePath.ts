@@ -1,4 +1,5 @@
-import { dirname, join, normalize, sep } from "path"; // TODO: Use https://www.npmjs.com/package/upath
+import { dirname, join, normalizeTrim, sep } from "upath";
+import { flow } from "fp-ts/function";
 
 import { hashString } from "@ndcb/util/lib/hash";
 import { isString, isNotNull } from "@ndcb/util/lib/type";
@@ -39,8 +40,10 @@ export const relativePathEquals = (
   p2: RelativePath,
 ): boolean => p1.value === p2.value;
 
-export const hashRelativePath = (path: RelativePath): number =>
-  hashString(relativePathToString(path));
+export const hashRelativePath: (path: RelativePath) => number = flow(
+  relativePathToString,
+  hashString,
+);
 
 /**
  * Constructs a relative path of a given value, normalized.
@@ -49,8 +52,10 @@ export const hashRelativePath = (path: RelativePath): number =>
  *
  * @return The constructed relative path.
  */
-export const normalizedRelativePath = (value: string): RelativePath =>
-  relativePath(normalize(value));
+export const normalizedRelativePath: (value: string) => RelativePath = flow(
+  normalizeTrim,
+  relativePath,
+);
 
 /**
  * Constructs an iterable over the relative paths upwards from and including the
@@ -94,15 +99,12 @@ export function joinRelativePath(
 }
 
 export const relativePathIsEmpty = (path: RelativePath): boolean =>
-  ["", "."].includes(relativePathToString(path));
+  relativePathToString(path) === ".";
 
 export const relativePathSegments = function* (
   path: RelativePath,
 ): Iterable<string> {
   const segments = relativePathToString(path).split(sep);
-  if (segments[0] !== ".") {
-    let last = segments.length - 1;
-    if (segments[last] === sep || segments[last].length === 0) last--;
-    for (let i = 0; i <= last; i++) yield segments[i];
-  }
+  for (let i = segments[0] === "." ? 1 : 0; i < segments.length; i++)
+    yield segments[i];
 };

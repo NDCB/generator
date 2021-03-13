@@ -2,7 +2,7 @@ import * as IO from "fp-ts/IO";
 import * as Option from "fp-ts/Option";
 import * as TaskEither from "fp-ts/TaskEither";
 import * as ReadonlyArray from "fp-ts/ReadonlyArray";
-import { pipe, Refinement } from "fp-ts/function";
+import { pipe, flow, Refinement } from "fp-ts/function";
 
 import * as Sequence from "@ndcb/util/lib/sequence";
 
@@ -114,14 +114,19 @@ export const entryName: (entry: Entry) => string = matchEntry({
   directory: directoryName,
 });
 
-export const topmostDirectory = (entry: Entry): Directory =>
-  directory(rootPath(entryPath(entry)));
+export const topmostDirectory: (entry: Entry) => Directory = flow(
+  entryPath,
+  rootPath,
+  directory,
+);
 
 export function parentDirectory(file: File): Option.Some<Directory>;
 export function parentDirectory(directory: Directory): Option.Option<Directory>;
 export function parentDirectory(entry: Entry): Option.Option<Directory> {
   return pipe(
-    parentPath(entryPath(entry)),
+    entry,
+    entryPath,
+    parentPath,
     Option.map((path) => directory(path)),
   );
 }

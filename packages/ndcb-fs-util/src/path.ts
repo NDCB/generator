@@ -1,6 +1,17 @@
-import { extname, resolve, relative, join, dirname, basename } from "path";
+import {
+  extname,
+  resolve,
+  relative,
+  joinSafe,
+  dirname,
+  basename,
+  trimExt,
+} from "upath";
 import * as Option from "fp-ts/Option";
 import * as ReadonlyArray from "fp-ts/ReadonlyArray";
+import { flow } from "fp-ts/function";
+
+import * as Sequence from "@ndcb/util/lib/sequence";
 
 import {
   AbsolutePath,
@@ -55,8 +66,22 @@ export const pathExtension = (path: Path): Option.Option<Extension> => {
   return !extensionName ? Option.none : Option.some(extension(extensionName));
 };
 
-export const pathHasExtension = (path: Path): boolean =>
-  Option.isSome(pathExtension(path));
+export const pathExtensions = function* (
+  path: Path,
+): Sequence.Sequence<Extension> {
+  let pathString = pathToString(path);
+  do {
+    const extensionName = extname(pathString).toLowerCase();
+    if (!extensionName) return;
+    yield extension(extensionName);
+    pathString = trimExt(pathString);
+  } while (true);
+};
+
+export const pathHasExtension: (path: Path) => boolean = flow(
+  pathExtension,
+  Option.isSome,
+);
 
 export const pathSegments: (path: Path) => Iterable<string> = matchPath({
   absolute: absolutePathSegments,
@@ -76,7 +101,7 @@ export const relativePathFromAbsolutePaths = (
   relativePath(relative(absolutePathToString(from), absolutePathToString(to)));
 
 const base = (path: string): string =>
-  join(dirname(path), basename(path, extname(path)));
+  joinSafe(dirname(path), basename(path, extname(path)));
 
 const baseWithExtension = (
   base: string,
