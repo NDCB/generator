@@ -3,7 +3,7 @@ import * as Eq from "fp-ts/Eq";
 import * as TaskEither from "fp-ts/TaskEither";
 import { pipe } from "fp-ts/function";
 
-import { join } from "path";
+import { join } from "upath";
 
 import {
   File,

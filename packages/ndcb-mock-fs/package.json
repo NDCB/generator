@@ -13,7 +13,8 @@
   "dependencies": {
     "@ndcb/fs-util": "^0.3.0",
     "@ndcb/util": "^0.9.1",
-    "fp-ts": "^2.9.5"
+    "fp-ts": "^2.9.5",
+    "upath": "^2.0.1"
   },
   "publishConfig": {
     "access": "public"
