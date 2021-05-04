@@ -1,6 +1,7 @@
 [![Build Status][travis-status-shield]][travis-status-url]
 [![lerna][lerna-shield]][lerna-url]
 [![MIT License][license-shield]][license-url]
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FNDCB%2Fgenerator.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FNDCB%2Fgenerator?ref=badge_shield)
 
 # generator
 
@@ -39,3 +40,7 @@ yarn run deploy
 [lerna-url]: https://lerna.js.org/
 [license-shield]: https://img.shields.io/github/license/NDCB/generator.svg?style=flat
 [license-url]: ./LICENSE.md
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FNDCB%2Fgenerator.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FNDCB%2Fgenerator?ref=badge_large)
