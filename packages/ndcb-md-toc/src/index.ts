@@ -1,2 +1,2 @@
-export * from "./toc";
-export * from "./slugifier";
+export * from "./toc.js";
+export * from "./slugifier.js";

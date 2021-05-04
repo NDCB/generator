@@ -1,7 +1,4 @@
-import * as Option from "fp-ts/Option";
-import * as TaskEither from "fp-ts/TaskEither";
-import * as ReadonlyArray from "fp-ts/ReadonlyArray";
-import { pipe } from "fp-ts/function";
+import { option, taskEither, readonlyArray, function as fn } from "fp-ts";
 
 import { scoppedLogger, Logger } from "@ndcb/logger";
 import { Configuration } from "@ndcb/config";
@@ -46,9 +43,9 @@ const logReadFile = <FileReadError extends Error>(
   logger: Logger,
 ): FileReader<FileReadError> => (file: File) => () => {
   logger.trace(`Reading file "${fileToString(file)}"`)();
-  return pipe(
+  return fn.pipe(
     readFile(file)(),
-    TaskEither.map((contents) => {
+    taskEither.map((contents) => {
       logger.trace(`Read file "${fileToString(file)}"`)();
       return contents;
     }),
@@ -60,9 +57,9 @@ const logReadDirectory = <DirectoryReadError extends Error>(
   logger: Logger,
 ): DirectoryReader<DirectoryReadError> => (directory: Directory) => () => {
   logger.trace(`Reading directory "${directoryToString(directory)}"`)();
-  return pipe(
+  return fn.pipe(
     readDirectory(directory)(),
-    TaskEither.map((entries) => {
+    taskEither.map((entries) => {
       logger.trace(`Read directory "${directoryToString(directory)}"`)();
       return entries;
     }),
@@ -131,13 +128,13 @@ export const fileSystem = <
     readDirectoryFiles,
     (file) =>
       exclusionRulesFileNames.includes(fileName(file))
-        ? Option.some(readExclusionRule(file))
-        : Option.none,
+        ? option.some(readExclusionRule(file))
+        : option.none,
   );
   return compositeFileSystem(
-    pipe(
+    fn.pipe(
       roots,
-      ReadonlyArray.map((root) =>
+      readonlyArray.map((root) =>
         excludedRootedFileSystem(
           rootedSystemBuilder(root),
           exclusionRuleRetriever,
@@ -164,6 +161,9 @@ export const unsafeFileSystem = <
     fileExists,
   });
   return compositeFileSystem(
-    pipe(configuration.common.sources, ReadonlyArray.map(rootedSystemBuilder)),
+    fn.pipe(
+      configuration.common.sources,
+      readonlyArray.map(rootedSystemBuilder),
+    ),
   );
 };

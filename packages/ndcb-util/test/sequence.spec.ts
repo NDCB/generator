@@ -1,6 +1,24 @@
-import { pipe } from "fp-ts/function";
+import { function as fn } from "fp-ts";
 
-import * as Sequence from "../src/sequence";
+import { sequence } from "@ndcb/util";
+
+import iterableToStringTestCases from "./fixtures/iterableToString";
+import everyTestCases from "./fixtures/every";
+import someTestCases from "./fixtures/some";
+import filterTestCases from "./fixtures/filter";
+import filterForTypeTestCases from "./fixtures/filterForType";
+import mapTestCases from "./fixtures/map";
+import flatMapTestCases from "./fixtures/flatMap";
+import firstTestCases from "./fixtures/first";
+import restTestCases from "./fixtures/rest.json";
+import concatTestCases from "./fixtures/concat";
+import prependTestCases from "./fixtures/prepend.json";
+import appendTestCases from "./fixtures/append.json";
+import takeWhileTestCases from "./fixtures/takeWhile";
+import findTestCases from "./fixtures/find";
+import orderedPairsTestCases from "./fixtures/orderedPairs.json";
+import unorderedPairsTestCases from "./fixtures/unorderedPairs.json";
+import enumerateTestCases from "./fixtures/enumerate.json";
 
 describe("iterableToString", () => {
   for (const {
@@ -8,9 +26,9 @@ describe("iterableToString", () => {
     stringify,
     delimiter,
     expected,
-  } of require("./fixtures/iterableToString")) {
+  } of iterableToStringTestCases) {
     test(`returns "${expected}" for input "${input}"`, () => {
-      expect(pipe(input, Sequence.toString(stringify, delimiter))).toBe(
+      expect(fn.pipe(input, sequence.toString(stringify, delimiter))).toBe(
         expected,
       );
     });
@@ -18,41 +36,26 @@ describe("iterableToString", () => {
 });
 
 describe("every", () => {
-  for (const {
-    input,
-    predicate,
-    expected,
-    description,
-  } of require("./fixtures/every")) {
+  for (const { input, predicate, expected, description } of everyTestCases) {
     test(description, () => {
-      expect(pipe(input, Sequence.every(predicate))).toBe(expected);
+      expect(fn.pipe(input, sequence.every(predicate))).toBe(expected);
     });
   }
 });
 
 describe("some", () => {
-  for (const {
-    input,
-    predicate,
-    expected,
-    description,
-  } of require("./fixtures/some")) {
+  for (const { input, predicate, expected, description } of someTestCases) {
     test(description, () => {
-      expect(pipe(input, Sequence.some(predicate))).toBe(expected);
+      expect(fn.pipe(input, sequence.some(predicate))).toBe(expected);
     });
   }
 });
 
 describe("filter", () => {
-  for (const {
-    input,
-    predicate,
-    expected,
-    description,
-  } of require("./fixtures/filter")) {
+  for (const { input, predicate, expected, description } of filterTestCases) {
     test(description, () => {
       expect(
-        pipe(input, Sequence.filter(predicate), Sequence.toReadonlyArray),
+        fn.pipe(input, sequence.filter(predicate), sequence.toReadonlyArray),
       ).toStrictEqual(expected);
     });
   }
@@ -61,10 +64,10 @@ describe("filter", () => {
 describe("filter type assertion", () => {
   test("type checks", () => {
     expect(
-      pipe(
+      fn.pipe(
         [1, 2, "3", 4, "5", 6],
-        Sequence.filter((x): x is number => typeof x === "number"),
-        Sequence.toReadonlyArray,
+        sequence.filter((x): x is number => typeof x === "number"),
+        sequence.toReadonlyArray,
       ),
     ).toStrictEqual([1, 2, 4, 6]);
   });
@@ -76,103 +79,78 @@ describe("filter type assertion yield", () => {
     assertion,
     expected,
     description,
-  } of require("./fixtures/filterForType")) {
+  } of filterForTypeTestCases) {
     test(description, () => {
       expect(
-        pipe(input, Sequence.filter(assertion), Sequence.toReadonlyArray),
+        fn.pipe(input, sequence.filter(assertion), sequence.toReadonlyArray),
       ).toStrictEqual(expected);
     });
   }
 });
 
 describe("map", () => {
-  for (const {
-    input,
-    mapper,
-    expected,
-    description,
-  } of require("./fixtures/map")) {
+  for (const { input, mapper, expected, description } of mapTestCases) {
     test(description, () => {
       expect(
-        pipe(input, Sequence.map(mapper), Sequence.toReadonlyArray),
+        fn.pipe(input, sequence.map(mapper), sequence.toReadonlyArray),
       ).toStrictEqual(expected);
     });
   }
 });
 
 describe("flatMap", () => {
-  for (const {
-    input,
-    mapper,
-    expected,
-    description,
-  } of require("./fixtures/flatMap")) {
+  for (const { input, mapper, expected, description } of flatMapTestCases) {
     test(description, () => {
       expect(
-        pipe(input, Sequence.flatMap(mapper), Sequence.toReadonlyArray),
+        fn.pipe(input, sequence.flatMap(mapper), sequence.toReadonlyArray),
       ).toStrictEqual(expected);
     });
   }
 });
 
 describe("first", () => {
-  for (const { input, expected, description } of require("./fixtures/first")) {
+  for (const { input, expected, description } of firstTestCases) {
     test(description, () => {
-      expect(pipe(input, Sequence.first)).toStrictEqual(expected);
+      expect(fn.pipe(input, sequence.first)).toStrictEqual(expected);
     });
   }
 });
 
 describe("rest", () => {
-  for (const { input, expected, description } of require("./fixtures/rest")) {
+  for (const { input, expected, description } of restTestCases) {
     test(description, () => {
       expect(
-        pipe(input, Sequence.rest, Sequence.toReadonlyArray),
+        fn.pipe(input, sequence.rest, sequence.toReadonlyArray),
       ).toStrictEqual(expected);
     });
   }
 });
 
 describe("concat", () => {
-  for (const {
-    input,
-    rest,
-    expected,
-    description,
-  } of require("./fixtures/concat")) {
+  for (const { input, rest, expected, description } of concatTestCases) {
     test(description, () => {
       expect(
-        pipe(input, Sequence.concat(...rest), Sequence.toReadonlyArray),
+        fn.pipe(input, sequence.concat(...rest), sequence.toReadonlyArray),
       ).toStrictEqual(expected);
     });
   }
 });
 
 describe("prepend", () => {
-  for (const {
-    input,
-    element,
-    expected,
-    description,
-  } of require("./fixtures/prepend")) {
+  for (const { input, element, expected, description } of prependTestCases) {
     test(description, () => {
       expect(
-        pipe(input, Sequence.prepend(element), Sequence.toReadonlyArray),
+        fn.pipe(input, sequence.prepend(element), sequence.toReadonlyArray),
       ).toStrictEqual(expected);
     });
   }
 });
 
 describe("append", () => {
-  for (const {
-    input,
-    element,
-    expected,
-    description,
-  } of require("./fixtures/append")) {
+  for (const { input, element, expected, description } of appendTestCases) {
     test(description, () => {
       expect(
-        pipe(input, Sequence.append(element), Sequence.toReadonlyArray),
+        fn.pipe(input, sequence.append(element), sequence.toReadonlyArray),
       ).toStrictEqual(expected);
     });
   }
@@ -184,65 +162,60 @@ describe("takeWhile", () => {
     predicate,
     expected,
     description,
-  } of require("./fixtures/takeWhile")) {
+  } of takeWhileTestCases) {
     test(description, () => {
       expect(
-        pipe(input, Sequence.takeWhile(predicate), Sequence.toReadonlyArray),
+        fn.pipe(input, sequence.takeWhile(predicate), sequence.toReadonlyArray),
       ).toStrictEqual(expected);
     });
   }
 });
 
 describe("find", () => {
-  for (const {
-    input,
-    predicate,
-    expected,
-    description,
-  } of require("./fixtures/find")) {
+  for (const { input, predicate, expected, description } of findTestCases) {
     test(description, () => {
-      expect(pipe(input, Sequence.find(predicate))).toStrictEqual(expected);
+      expect(fn.pipe(input, sequence.find(predicate))).toStrictEqual(expected);
     });
   }
 });
 
 describe("orderedPairs", () => {
-  for (const { input, expected } of require("./fixtures/orderedPairs")) {
-    test(`returns "${pipe(
+  for (const { input, expected } of orderedPairsTestCases) {
+    test(`returns "${fn.pipe(
       expected,
-      Sequence.toString((e) => `[${e}]`),
-    )}" for input "${pipe(input, Sequence.toString)}"`, () => {
+      sequence.toString((e) => `[${e}]`),
+    )}" for input "${fn.pipe(input, sequence.toString())}"`, () => {
       expect(
-        pipe(input, Sequence.orderedPairs, Sequence.toReadonlyArray),
+        fn.pipe(input, sequence.orderedPairs, sequence.toReadonlyArray),
       ).toStrictEqual(expected);
     });
   }
 });
 
 describe("unorderedPairs", () => {
-  for (const { input, expected } of require("./fixtures/unorderedPairs")) {
-    test(`returns "${pipe(
+  for (const { input, expected } of unorderedPairsTestCases) {
+    test(`returns "${fn.pipe(
       expected,
-      Sequence.toString((e) => `[${e}]`),
-    )}" for input "${pipe(input, Sequence.toString)}"`, () => {
+      sequence.toString((e) => `[${e}]`),
+    )}" for input "${fn.pipe(input, sequence.toString())}"`, () => {
       expect(
-        pipe(input, Sequence.unorderedPairs, Sequence.toReadonlyArray),
+        fn.pipe(input, sequence.unorderedPairs, sequence.toReadonlyArray),
       ).toStrictEqual(expected);
     });
   }
 });
 
 describe("enumerate", () => {
-  for (const { input, expected } of require("./fixtures/enumerate")) {
-    test(`returns "${pipe(
+  for (const { input, expected } of enumerateTestCases) {
+    test(`returns "${fn.pipe(
       expected,
-      Sequence.toString(
+      sequence.toString(
         (item) =>
           `(${(item as { index }).index}, ${(item as { element }).element})`,
       ),
-    )}" for input "${pipe(input, Sequence.toString)}"`, () => {
+    )}" for input "${fn.pipe(input, sequence.toString())}"`, () => {
       expect(
-        pipe(input, Sequence.enumerate(), Sequence.toReadonlyArray),
+        fn.pipe(input, sequence.enumerate(), sequence.toReadonlyArray),
       ).toStrictEqual(expected);
     });
   }

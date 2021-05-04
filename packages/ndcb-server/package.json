@@ -2,7 +2,9 @@
   "name": "@ndcb/server",
   "version": "0.2.0",
   "description": "Website server",
+  "type": "module",
   "main": "./lib/index.js",
+  "exports": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "repository": "https://github.com/NDCB/generator/tree/master/packages/ndcb-server",
   "author": "Marc-Antoine Ouimet",
@@ -20,9 +22,9 @@
     "@ndcb/logger": "^0.1.1",
     "@ndcb/util": "^0.9.1",
     "@ndcb/processor": "^0.0.0",
-    "browser-sync": "^2.26.13",
-    "mime-types": "^2.1.28",
-    "fp-ts": "^2.9.5"
+    "browser-sync": "^2.26.14",
+    "mime-types": "^2.1.30",
+    "fp-ts": "^2.10.5"
   },
   "devDependencies": {
     "@types/mime-types": "^2.1.0",

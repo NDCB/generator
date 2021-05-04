@@ -1,6 +1,4 @@
-import * as ReadonlyArray from "fp-ts/ReadonlyArray";
-import * as Option from "fp-ts/Option";
-import { pipe } from "fp-ts/function";
+import { readonlyArray, option, function as fn } from "fp-ts";
 
 export type Sequence<T> = Iterable<T>;
 
@@ -32,9 +30,9 @@ export function filter<T>(
   };
 }
 
-export const first = <T>(sequence: Sequence<T>): Option.Option<T> => {
-  for (const element of sequence) return Option.some(element);
-  return Option.none;
+export const first = <T>(sequence: Sequence<T>): option.Option<T> => {
+  for (const element of sequence) return option.some(element);
+  return option.none;
 };
 
 export const rest = function* <T>(sequence: Sequence<T>): Sequence<T> {
@@ -47,14 +45,14 @@ export const rest = function* <T>(sequence: Sequence<T>): Sequence<T> {
 
 export function find<T, K>(
   assertion: (element: T | K) => element is K,
-): (sequence: Sequence<T>) => Option.Option<K>;
+): (sequence: Sequence<T>) => option.Option<K>;
 export function find<T>(
   predicate: (element: T) => boolean,
-): (sequence: Sequence<T>) => Option.Option<T>;
+): (sequence: Sequence<T>) => option.Option<T>;
 export function find<T>(
   predicate: (element: T) => boolean,
-): (sequence: Sequence<T>) => Option.Option<T> {
-  return (sequence) => pipe(sequence, filter(predicate), first);
+): (sequence: Sequence<T>) => option.Option<T> {
+  return (sequence) => fn.pipe(sequence, filter(predicate), first);
 }
 
 export const toArray = <T>(sequence: Sequence<T>): T[] => [...sequence];
@@ -129,26 +127,26 @@ export const forEach = <T>(callback: (element: T) => void) => (
 };
 
 export function* zip<T>(...sequences: readonly Sequence<T>[]): Sequence<T[]> {
-  const iterators = pipe(
+  const iterators = fn.pipe(
     sequences,
     map((sequence) => sequence[Symbol.iterator]()),
   );
   while (true) {
-    const current = pipe(
+    const current = fn.pipe(
       iterators,
       map((iterator) => iterator.next()),
       toReadonlyArray,
     );
     if (
-      pipe(
+      fn.pipe(
         current,
         some(({ done }) => done ?? false),
       )
     )
       return;
-    yield pipe(
+    yield fn.pipe(
       current,
-      ReadonlyArray.map(({ value }) => value),
+      readonlyArray.map(({ value }) => value),
     ) as T[];
   }
 }
@@ -161,4 +159,4 @@ export const toString = <T>(
   elementToString: (element: T) => string = JSON.stringify,
   separator?: string,
 ) => (sequence: Sequence<T>): string =>
-  `[${pipe(sequence, map(elementToString), join(separator))}]`;
+  `[${fn.pipe(sequence, map(elementToString), join(separator))}]`;

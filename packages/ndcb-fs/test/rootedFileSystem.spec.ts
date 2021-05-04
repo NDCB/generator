@@ -1,7 +1,4 @@
-import * as Task from "fp-ts/Task";
-import * as TaskEither from "fp-ts/TaskEither";
-import * as ReadonlyArray from "fp-ts/ReadonlyArray";
-import { pipe } from "fp-ts/function";
+import { task, taskEither, readonlyArray, function as fn } from "fp-ts";
 
 import {
   normalizedDirectory,
@@ -10,36 +7,42 @@ import {
   File,
 } from "@ndcb/fs-util";
 import { mockFileSystem, MockDirectory } from "@ndcb/mock-fs";
-import { enumerate } from "@ndcb/util/lib/sequence";
+import { sequence } from "@ndcb/util";
 
-import { rootedFileSystem } from "../src/rootedFileSystem";
+import { rootedFileSystem } from "@ndcb/fs";
+
+import rootedFileSystemFilesTestCases from "./fixtures/rootedFileSystem-files.json";
+import rootedFileSystemFileExistsTestCases from "./fixtures/rootedFileSystem-fileExists.json";
+import rootedFileSystemDirectoryExistsTestCases from "./fixtures/rootedFileSystem-directoryExists.json";
 
 describe("rootedFileSystem", () => {
   describe("#files", () => {
     for (const {
       index,
       element: { fs, root, expected },
-    } of enumerate(1)<{ fs: MockDirectory; root: string; expected: string[] }>(
-      require("./fixtures/rootedFileSystem-files"),
-    )) {
+    } of sequence.enumerate(1)<{
+      fs: MockDirectory;
+      root: string;
+      expected: string[];
+    }>(rootedFileSystemFilesTestCases)) {
       const { files } = rootedFileSystem(mockFileSystem(fs))(
         normalizedDirectory(root),
       );
-      const expectedFiles = pipe(
+      const expectedFiles = fn.pipe(
         expected,
-        ReadonlyArray.map(normalizedFile),
-        ReadonlyArray.toArray,
+        readonlyArray.map(normalizedFile),
+        readonlyArray.toArray,
       );
       test(`case #${index}`, async () => {
         let actualFiles: File[] = [];
         for await (const readFiles of files())
-          await pipe(
+          await fn.pipe(
             readFiles(),
-            TaskEither.getOrElse(() => {
+            taskEither.getOrElse(() => {
               throw new Error(`Unexpectedly failed to read all files`);
             }),
-            Task.map(ReadonlyArray.toArray),
-            Task.map((files) => (actualFiles = actualFiles.concat(files))),
+            task.map(readonlyArray.toArray),
+            task.map((files) => (actualFiles = actualFiles.concat(files))),
           )();
         expect(actualFiles).toEqual(expect.arrayContaining(expectedFiles));
         expect(expectedFiles).toEqual(expect.arrayContaining(actualFiles));
@@ -47,27 +50,23 @@ describe("rootedFileSystem", () => {
     }
   });
   describe("#fileExists", () => {
-    for (const {
-      fs,
-      root,
-      cases,
-    } of require("./fixtures/rootedFileSystem-fileExists")) {
+    for (const { fs, root, cases } of rootedFileSystemFileExistsTestCases) {
       const { fileExists } = rootedFileSystem(mockFileSystem(fs))(
         normalizedDirectory(root),
       );
       for (const {
         index,
         element: { path, expected },
-      } of enumerate(1)<{ path: string; expected: boolean }>(cases)) {
+      } of sequence.enumerate(1)<{ path: string; expected: boolean }>(cases)) {
         test(`case #${index}`, async () => {
-          await pipe(
+          await fn.pipe(
             fileExists(normalizedRelativePath(path))(),
-            TaskEither.getOrElse(() => {
+            taskEither.getOrElse(() => {
               throw new Error(
                 `Unexpectedly failed to determine the existence of file "${path}"`,
               );
             }),
-            Task.map((exists) => expect(exists).toBe(expected)),
+            task.map((exists) => expect(exists).toBe(expected)),
           )();
         });
       }
@@ -78,23 +77,23 @@ describe("rootedFileSystem", () => {
       fs,
       root,
       cases,
-    } of require("./fixtures/rootedFileSystem-directoryExists")) {
+    } of rootedFileSystemDirectoryExistsTestCases) {
       const { directoryExists } = rootedFileSystem(mockFileSystem(fs))(
         normalizedDirectory(root),
       );
       for (const {
         index,
         element: { path, expected },
-      } of enumerate(1)<{ path: string; expected: boolean }>(cases)) {
+      } of sequence.enumerate(1)<{ path: string; expected: boolean }>(cases)) {
         test(`case #${index}`, async () => {
-          await pipe(
+          await fn.pipe(
             directoryExists(normalizedRelativePath(path))(),
-            TaskEither.getOrElse(() => {
+            taskEither.getOrElse(() => {
               throw new Error(
                 `Unexpectedly failed to determine the existence of directory "${path}"`,
               );
             }),
-            Task.map((exists) => {
+            task.map((exists) => {
               expect(exists).toBe(expected);
             }),
           )();

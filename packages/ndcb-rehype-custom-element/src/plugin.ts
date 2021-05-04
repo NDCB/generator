@@ -1,13 +1,12 @@
-import deepMerge = require("lodash.defaultsdeep");
+import { defaultsDeep } from "lodash-es";
 
-import * as unified from "unified";
-import * as hastFromParse5 from "hast-util-from-parse5";
+import unified from "unified";
+import { fromParse5 as hastFromParse5 } from "hast-util-from-parse5";
 import * as parse5 from "parse5";
-import * as hastToHtml from "hast-util-to-html";
-import * as visit from "unist-util-visit";
-import * as is from "hast-util-is-element";
+import { toHtml as hastToHtml } from "hast-util-to-html";
+import { visit, CONTINUE } from "unist-util-visit";
+import { convertElement } from "hast-util-is-element";
 
-// eslint-disable-next-line import/no-unresolved
 import { Node } from "unist";
 
 type HastNode = Node & {
@@ -34,14 +33,14 @@ export const attacher: unified.Attacher<
 > = ({ transformers } = {}): unified.Transformer => (tree, { data }) => {
   for (const { tagName, transformer } of transformers ?? []) {
     let elementNumber = 0;
-    visit(tree, is.convert(tagName), (node, index, parent) => {
-      const innerHtml = hastToHtml((node as HastNode).children ?? []);
+    visit(tree, convertElement(tagName), (node, index, parent) => {
+      const innerHtml = hastToHtml(node.children ?? []);
       const { properties } = (node as HastNode) ?? {};
       const transformedNode = hastFromParse5(
         parse5.parseFragment(
           transformer(
             innerHtml,
-            deepMerge(
+            defaultsDeep(
               { [`${tagName}Number`]: ++elementNumber },
               properties,
               data,
@@ -49,8 +48,8 @@ export const attacher: unified.Attacher<
           ),
         ),
       );
-      (parent as HastNode).children[index] = transformedNode;
-      return [visit.CONTINUE, index];
+      (parent as HastNode).children[index as number] = transformedNode;
+      return [CONTINUE, index];
     });
   }
 };

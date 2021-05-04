@@ -1,8 +1,8 @@
-import { dirname, join, normalizeTrim, sep } from "upath";
-import { flow } from "fp-ts/function";
+import upath from "upath";
+const { dirname, join, normalizeTrim, sep } = upath;
+import { function as fn } from "fp-ts";
 
-import { hashString } from "@ndcb/util/lib/hash";
-import { isString, isNotNull } from "@ndcb/util/lib/type";
+import { hash, type } from "@ndcb/util";
 
 /**
  * A relative path between entries in the file system.
@@ -30,7 +30,7 @@ export const relativePath = (value: string): RelativePath => ({
 
 export const isRelativePath = (element: unknown): element is RelativePath =>
   typeof element === "object" &&
-  isNotNull(element) &&
+  type.isNotNull(element) &&
   element["tag"] === "RELATIVE_PATH";
 
 export const relativePathToString = (path: RelativePath): string => path.value;
@@ -40,9 +40,9 @@ export const relativePathEquals = (
   p2: RelativePath,
 ): boolean => p1.value === p2.value;
 
-export const hashRelativePath: (path: RelativePath) => number = flow(
+export const hashRelativePath: (path: RelativePath) => number = fn.flow(
   relativePathToString,
-  hashString,
+  hash.hashString,
 );
 
 /**
@@ -52,7 +52,7 @@ export const hashRelativePath: (path: RelativePath) => number = flow(
  *
  * @return The constructed relative path.
  */
-export const normalizedRelativePath: (value: string) => RelativePath = flow(
+export const normalizedRelativePath: (value: string) => RelativePath = fn.flow(
   normalizeTrim,
   relativePath,
 );
@@ -93,7 +93,7 @@ export function joinRelativePath(
   return relativePath(
     join(
       relativePathToString(path),
-      isString(other) ? other : relativePathToString(other),
+      type.isString(other) ? other : relativePathToString(other),
     ),
   );
 }

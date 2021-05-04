@@ -1,4 +1,6 @@
-module.exports = [
+import { sequence } from "@ndcb/util";
+
+export default [
   {
     input: [],
     assertion: (element: unknown): element is number =>
@@ -29,4 +31,9 @@ module.exports = [
     expected: [1, 2, 3, 4],
     description: "return the iterable over the elements of the asserted type",
   },
-];
+] as sequence.Sequence<{
+  input: sequence.Sequence<unknown>;
+  assertion: (element: unknown) => element is unknown;
+  expected: sequence.Sequence<unknown>;
+  description: string;
+}>;

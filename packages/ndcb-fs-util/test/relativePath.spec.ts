@@ -1,32 +1,31 @@
-import { pipe } from "fp-ts/function";
+import { function as fn } from "fp-ts";
 
-import * as Sequence from "@ndcb/util/lib/sequence";
+import { sequence } from "@ndcb/util";
 
 import {
   normalizedRelativePath,
   upwardRelativePaths,
   relativePathSegments,
-} from "../src/relativePath";
+} from "@ndcb/fs-util";
+
+import upwardRelativePathsTestCases from "./fixtures/upwardRelativePaths.json";
+import relativePathSegmentsTestCases from "./fixtures/relativePathSegments.json";
 
 describe("upwardRelativePaths", () => {
-  for (const {
-    input,
-    expected,
-    description,
-  } of require("./fixtures/upwardRelativePaths")) {
+  for (const { input, expected, description } of upwardRelativePathsTestCases) {
     test(description, () => {
       expect(
-        pipe(
+        fn.pipe(
           input,
           normalizedRelativePath,
           upwardRelativePaths,
-          Sequence.toReadonlyArray,
+          sequence.toReadonlyArray,
         ),
       ).toStrictEqual(
-        pipe(
+        fn.pipe(
           expected,
-          Sequence.map(normalizedRelativePath),
-          Sequence.toReadonlyArray,
+          sequence.map(normalizedRelativePath),
+          sequence.toReadonlyArray,
         ),
       );
     });
@@ -38,14 +37,14 @@ describe("relativePathSegments", () => {
     input,
     expected,
     description,
-  } of require("./fixtures/relativePathSegments")) {
+  } of relativePathSegmentsTestCases) {
     test(description, () => {
       expect(
-        pipe(
+        fn.pipe(
           input,
           normalizedRelativePath,
           relativePathSegments,
-          Sequence.toReadonlyArray,
+          sequence.toReadonlyArray,
         ),
       ).toStrictEqual(expected);
     });

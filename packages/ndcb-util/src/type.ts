@@ -1,6 +1,6 @@
-import { pipe } from "fp-ts/function";
+import { function as fn } from "fp-ts";
 
-import * as Sequence from "./sequence";
+import * as sequence from "./sequence.js";
 
 export const isString = (element: unknown): element is string =>
   typeof element === "string";
@@ -22,7 +22,7 @@ export const isTypeIterable = <T>(
   element: unknown,
   isOfType: (element: unknown) => element is T,
 ): element is Iterable<T> =>
-  isIterable(element) && pipe(element, Sequence.every(isOfType));
+  isIterable(element) && fn.pipe(element, sequence.every(isOfType));
 
 export const isArray = (element: unknown): element is unknown[] =>
   Array.isArray(element);

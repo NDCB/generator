@@ -1,2 +1,2 @@
-export * from "./fileSystem";
-export * from "./rootedFileSystem";
+export * from "./fileSystem.js";
+export * from "./rootedFileSystem.js";

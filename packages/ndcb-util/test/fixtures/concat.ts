@@ -1,4 +1,6 @@
-module.exports = [
+import { sequence } from "@ndcb/util";
+
+export default [
   {
     input: [],
     rest: [],
@@ -30,4 +32,9 @@ module.exports = [
     expected: [1, 2, 3, 4, 5, 6, 7, 8, 9],
     description: "returns the input concatenated with the rest",
   },
-];
+] as sequence.Sequence<{
+  input: sequence.Sequence<unknown>;
+  rest: sequence.Sequence<sequence.Sequence<unknown>>;
+  expected: sequence.Sequence<unknown>;
+  description: string;
+}>;

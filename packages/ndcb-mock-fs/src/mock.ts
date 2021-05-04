@@ -1,9 +1,7 @@
-import * as IO from "fp-ts/IO";
-import * as Eq from "fp-ts/Eq";
-import * as TaskEither from "fp-ts/TaskEither";
-import { pipe } from "fp-ts/function";
+import { io, eq, taskEither, function as fn } from "fp-ts";
 
-import { join } from "upath";
+import upath from "upath";
+const { join } = upath;
 
 import {
   File,
@@ -22,8 +20,7 @@ import {
   directoryToString,
   fileToString,
 } from "@ndcb/fs-util";
-import { HashMap, hashMap } from "@ndcb/util/lib/hashMap";
-import * as Sequence from "@ndcb/util/lib/sequence";
+import { hashMap, sequence } from "@ndcb/util";
 
 export type MockFile = string;
 
@@ -87,17 +84,19 @@ const mockEntries = function* (
   yield* traverse(structure, "");
 };
 
-const fileHashMap = <T>(entries: Iterable<[File, T]>): HashMap<File, T> =>
-  hashMap(entries, hashFile, Eq.fromEquals(fileEquals));
+const fileHashMap = <T>(
+  entries: Iterable<[File, T]>,
+): hashMap.HashMap<File, T> =>
+  hashMap.hashMap(entries, hashFile, eq.fromEquals(fileEquals));
 
 const directoryHashMap = <T>(
   entries: Iterable<[Directory, T]>,
-): HashMap<Directory, T> =>
-  hashMap(entries, hashDirectory, Eq.fromEquals(directoryEquals));
+): hashMap.HashMap<Directory, T> =>
+  hashMap.hashMap(entries, hashDirectory, eq.fromEquals(directoryEquals));
 
 interface TransformedMockStructure {
-  readonly fileContents: HashMap<File, string>;
-  readonly directoryEntries: HashMap<Directory, Entry[]>;
+  readonly fileContents: hashMap.HashMap<File, string>;
+  readonly directoryEntries: hashMap.HashMap<Directory, Entry[]>;
 }
 
 const transformMockStructure = (
@@ -110,9 +109,9 @@ const transformMockStructure = (
     mock: [Entry, unknown],
   ): mock is [Directory, Entry[]] => entryIsDirectory(mock[0]);
   return {
-    fileContents: fileHashMap(pipe(entries, Sequence.filter(mockIsFile))),
+    fileContents: fileHashMap(fn.pipe(entries, sequence.filter(mockIsFile))),
     directoryEntries: directoryHashMap(
-      pipe(entries, Sequence.filter(mockIsDirectory)),
+      fn.pipe(entries, sequence.filter(mockIsDirectory)),
     ),
   };
 };
@@ -126,10 +125,10 @@ interface MockDirectoryReadError extends Error {
 }
 
 export interface MockFileSystem {
-  fileExists: (file: File) => IO.IO<TaskEither.TaskEither<never, boolean>>;
+  fileExists: (file: File) => io.IO<taskEither.TaskEither<never, boolean>>;
   directoryExists: (
     directory: Directory,
-  ) => IO.IO<TaskEither.TaskEither<never, boolean>>;
+  ) => io.IO<taskEither.TaskEither<never, boolean>>;
   readFile: FileReader<MockFileReadError>;
   readDirectory: DirectoryReader<MockDirectoryReadError>;
 }
@@ -137,22 +136,22 @@ export interface MockFileSystem {
 export const mockFileSystem = (structure: MockDirectory): MockFileSystem => {
   const { fileContents, directoryEntries } = transformMockStructure(structure);
   return {
-    fileExists: (file) => () => TaskEither.right(fileContents.has(file)),
+    fileExists: (file) => () => taskEither.right(fileContents.has(file)),
     directoryExists: (directory) => () =>
-      TaskEither.right(directoryEntries.has(directory)),
+      taskEither.right(directoryEntries.has(directory)),
     readFile: (file) => () =>
-      pipe(
+      fn.pipe(
         fileContents.get(file),
-        TaskEither.fromOption(() => ({
+        taskEither.fromOption(() => ({
           ...new Error(`Failed to read mocked file "${fileToString(file)}"`),
           file,
         })),
-        TaskEither.map((contents) => Buffer.from(contents)),
+        taskEither.map((contents) => Buffer.from(contents)),
       ),
     readDirectory: (directory: Directory) => () =>
-      pipe(
+      fn.pipe(
         directoryEntries.get(directory),
-        TaskEither.fromOption(() => ({
+        taskEither.fromOption(() => ({
           ...new Error(
             `Failed to read mocked directory "${directoryToString(directory)}"`,
           ),

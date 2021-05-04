@@ -1,1 +1,1 @@
-export * from "./textFileReader";
+export * from "./textFileReader.js";

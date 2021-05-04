@@ -1,7 +1,5 @@
 import { ValidationError } from "joi";
-import * as IO from "fp-ts/IO";
-import * as TaskEither from "fp-ts/TaskEither";
-import { pipe } from "fp-ts/function";
+import { io, taskEither, function as fn } from "fp-ts";
 
 import { TextFileDataReader } from "@ndcb/data";
 import { File, FileExistenceTester, normalizedFile } from "@ndcb/fs-util";
@@ -11,15 +9,15 @@ import {
   validate,
   fileSchema,
   configurationSchema,
-} from "./schemas";
+} from "./schemas.js";
 
 const coerceConfigurationFile = validate(
   fileSchema.default(normalizedFile("./siteconfig.yml")),
-) as (element?: unknown) => TaskEither.TaskEither<ValidationError, File>;
+) as (element?: unknown) => taskEither.TaskEither<ValidationError, File>;
 
 const coerceConfiguration = validate(configurationSchema) as (
   element?: unknown,
-) => TaskEither.TaskEither<ValidationError, Configuration>;
+) => taskEither.TaskEither<ValidationError, Configuration>;
 
 export const configurationFetcher = <
   TextFileReadError extends Error,
@@ -29,8 +27,8 @@ export const configurationFetcher = <
   fileExists: FileExistenceTester<TestFileExistenceError>,
 ) => (
   configurationPath?: string,
-): IO.IO<
-  TaskEither.TaskEither<
+): io.IO<
+  taskEither.TaskEither<
     TextFileReadError | ValidationError | TestFileExistenceError,
     Configuration
   >
@@ -38,12 +36,12 @@ export const configurationFetcher = <
   typeof configurationPath === "string"
     ? () =>
         // Configuration path supplied
-        pipe(
+        fn.pipe(
           coerceConfigurationFile(configurationPath),
-          TaskEither.chain<TextFileReadError | ValidationError, File, unknown>(
+          taskEither.chain<TextFileReadError | ValidationError, File, unknown>(
             (file) => readTextFileData(file)(),
           ),
-          TaskEither.chain<
+          taskEither.chain<
             TextFileReadError | ValidationError,
             unknown,
             Configuration
@@ -51,27 +49,27 @@ export const configurationFetcher = <
         )
     : () =>
         // Use default configuration path if it exists, or default configuration
-        pipe(
+        fn.pipe(
           coerceConfigurationFile(),
-          TaskEither.chain<
+          taskEither.chain<
             TextFileReadError | ValidationError | TestFileExistenceError,
             File,
             { exists: boolean; file: File }
           >((file) =>
-            pipe(
+            fn.pipe(
               fileExists(file)(),
-              TaskEither.map((exists) => ({ exists, file })),
+              taskEither.map((exists) => ({ exists, file })),
             ),
           ),
-          TaskEither.chain<
+          taskEither.chain<
             TextFileReadError | ValidationError | TestFileExistenceError,
             { exists: boolean; file: File },
             Configuration
           >(({ exists, file }) =>
             exists
-              ? pipe(
+              ? fn.pipe(
                   readTextFileData(file)(),
-                  TaskEither.chain<
+                  taskEither.chain<
                     TextFileReadError | ValidationError,
                     unknown,
                     Configuration

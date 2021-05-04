@@ -1,4 +1,13 @@
-module.exports = [
+import { sequence } from "@ndcb/util";
+
+export interface TestCase<T> {
+  input: sequence.Sequence<T>;
+  stringify?: (element: T) => string;
+  delimiter?: string;
+  expected: string;
+}
+
+export default [
   {
     input: [],
     delimiter: ", ",
@@ -6,13 +15,13 @@ module.exports = [
   },
   {
     input: [1],
-    stringify: (n: number): string => `${n}`,
+    stringify: (n) => `${n}`,
     delimiter: ", ",
     expected: "[1]",
   },
   {
     input: [1, 2],
-    stringify: (n: number): string => `${n}`,
+    stringify: (n) => `${n}`,
     expected: "[1, 2]",
   },
   {
@@ -22,8 +31,8 @@ module.exports = [
   },
   {
     input: [1, 2, 3, 4, 5],
-    stringify: (n: number): string => `'${n}'`,
+    stringify: (n) => `'${n}'`,
     delimiter: "; ",
     expected: "['1'; '2'; '3'; '4'; '5']",
   },
-];
+] as sequence.Sequence<TestCase<unknown>>;

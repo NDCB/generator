@@ -1,4 +1,13 @@
-module.exports = [
+import { sequence } from "@ndcb/util";
+
+export interface TestCase<T> {
+  input: sequence.Sequence<T>;
+  predicate: (element: T) => boolean;
+  expected: sequence.Sequence<T>;
+  description;
+}
+
+export default [
   {
     input: [],
     predicate: (n: number): boolean => n !== 2,
@@ -25,4 +34,4 @@ module.exports = [
     expected: [0, 1, 3, 4, 5, 6],
     description: "takes all elements if each of them satisfies the predicate",
   },
-];
+] as sequence.Sequence<TestCase<unknown>>;

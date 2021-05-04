@@ -1,7 +1,5 @@
 import * as Joi from "joi";
-import * as Option from "fp-ts/Option";
-import * as TaskEither from "fp-ts/TaskEither";
-import { pipe } from "fp-ts/function";
+import { option, taskEither, function as fn } from "fp-ts";
 
 import {
   normalizedFile,
@@ -10,7 +8,7 @@ import {
   Directory,
   directoryHasDescendent,
 } from "@ndcb/fs-util";
-import * as Sequence from "@ndcb/util/lib/sequence";
+import { sequence } from "@ndcb/util";
 import { ColorCode } from "@ndcb/logger";
 
 export const fileSchema = Joi.string().trim().custom(normalizedFile);
@@ -54,13 +52,13 @@ export const mutuallyDisjointSourceDirectoriesSchema = Joi.array()
   .items(directorySchema)
   .min(1)
   .custom((value: Directory[]) => {
-    const meetingSourceDirectories = pipe(
+    const meetingSourceDirectories = fn.pipe(
       value,
-      Sequence.orderedPairs,
-      Sequence.filter(([d1, d2]) => d1 !== d2),
-      Sequence.find(([d1, d2]) => directoryHasDescendent(d1, d2)),
+      sequence.orderedPairs,
+      sequence.filter(([d1, d2]) => d1 !== d2),
+      sequence.find(([d1, d2]) => directoryHasDescendent(d1, d2)),
     );
-    if (Option.isSome(meetingSourceDirectories)) {
+    if (option.isSome(meetingSourceDirectories)) {
       const [d1, d2] = meetingSourceDirectories.value;
       throw new Error(
         `Source directories must be mutually disjoint.
@@ -189,8 +187,8 @@ export const configurationSchema = Joi.object({
 
 export const validate = (schema: Joi.Schema) => (
   element?: unknown,
-): TaskEither.TaskEither<Joi.ValidationError, unknown> =>
-  TaskEither.tryCatch(
+): taskEither.TaskEither<Joi.ValidationError, unknown> =>
+  taskEither.tryCatch(
     () => schema.validateAsync(element),
     (error) => error as Joi.ValidationError,
   );

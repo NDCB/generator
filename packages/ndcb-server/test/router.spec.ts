@@ -1,12 +1,13 @@
-import * as Eq from "fp-ts/Eq";
-import * as Option from "fp-ts/Option";
-import * as ReadonlyArray from "fp-ts/ReadonlyArray";
-import * as Task from "fp-ts/Task";
-import * as TaskEither from "fp-ts/TaskEither";
-import { pipe } from "fp-ts/function";
+import {
+  eq,
+  option,
+  readonlyArray,
+  task,
+  taskEither,
+  function as fn,
+} from "fp-ts";
 
-import { enumerate } from "@ndcb/util/lib/sequence";
-import { mockFileSystem } from "@ndcb/mock-fs";
+import { MockDirectory, mockFileSystem } from "@ndcb/mock-fs";
 import {
   file,
   resolvedAbsolutePath,
@@ -17,7 +18,7 @@ import {
   normalizedRelativePath,
   Extension,
 } from "@ndcb/fs-util";
-import { inversedHashMap } from "@ndcb/util";
+import { hashMap, sequence } from "@ndcb/util";
 
 import {
   Pathname,
@@ -26,31 +27,32 @@ import {
   sourcePathname404,
 } from "../src/router";
 
+import sourcePathnameTestCases from "./fixtures/sourcePathname.json";
+import sourcePathname404TestCases from "./fixtures/sourcePathname404.json";
+
 describe("sourcePathname", () => {
   for (const {
     element: { fs, mapping, tests },
     index: suiteIndex,
-  } of enumerate(1)<{ fs; mapping; tests }>(
-    require("./fixtures/sourcePathname.json"),
-  )) {
-    const { fileExists } = mockFileSystem(fs);
+  } of sequence.enumerate(1)(sourcePathnameTestCases)) {
+    const { fileExists } = mockFileSystem(fs as MockDirectory);
     const sourceExists = (pathname: Pathname) =>
       fileExists(
         file(resolvedAbsolutePath(normalizedAbsolutePath("/"), pathname)),
       );
-    const sourceExtensionsMap = inversedHashMap<
-      Option.Option<Extension>,
-      Option.Option<Extension>
+    const sourceExtensionsMap = hashMap.inversedHashMap<
+      option.Option<Extension>,
+      option.Option<Extension>
     >(
-      pipe(
+      fn.pipe(
         mapping as [string, string][],
-        ReadonlyArray.map(([e1, e2]) => [
-          e1 ? Option.some(extension(e1)) : Option.none,
-          e2 ? Option.some(extension(e2)) : Option.none,
+        readonlyArray.map(([e1, e2]) => [
+          e1 ? option.some(extension(e1)) : option.none,
+          e2 ? option.some(extension(e2)) : option.none,
         ]),
       ),
-      Option.fold(() => 0, hashExtension),
-      Option.getEq(Eq.fromEquals(extensionEquals)),
+      option.fold(() => 0, hashExtension),
+      option.getEq(eq.fromEquals(extensionEquals)),
     );
     const source = sourcePathname(
       possibleSourcePathnames(sourceExtensionsMap),
@@ -59,24 +61,20 @@ describe("sourcePathname", () => {
     for (const {
       index: testIndex,
       element: { query, expected, description },
-    } of enumerate(1)<{
-      query: string;
-      expected: string | null;
-      description: string | undefined;
-    }>(tests)) {
+    } of sequence.enumerate(1)(tests)) {
       test(`case #${suiteIndex}:${testIndex}${
         description ? `: ${description}` : ""
       }`, async () => {
-        await pipe(
+        await fn.pipe(
           source(normalizedRelativePath(query))(),
-          TaskEither.getOrElse(() => {
+          taskEither.getOrElse(() => {
             throw new Error(`Unexpectedly failed to find query result.`);
           }),
-          Task.map((result) =>
+          task.map((result) =>
             expect(result).toStrictEqual(
               expected === null
-                ? Option.none
-                : Option.some(normalizedRelativePath(expected)),
+                ? option.none
+                : option.some(normalizedRelativePath(expected)),
             ),
           ),
         )();
@@ -89,27 +87,25 @@ describe("sourcePathname404", () => {
   for (const {
     element: { fs, mapping, tests },
     index: suiteIndex,
-  } of enumerate(1)<{ fs; mapping; tests }>(
-    require("./fixtures/sourcePathname404.json"),
-  )) {
-    const { fileExists } = mockFileSystem(fs);
+  } of sequence.enumerate(1)(sourcePathname404TestCases)) {
+    const { fileExists } = mockFileSystem(fs as MockDirectory);
     const sourceExists = (pathname: Pathname) =>
       fileExists(
         file(resolvedAbsolutePath(normalizedAbsolutePath("/"), pathname)),
       );
-    const sourceExtensionsMap = inversedHashMap<
-      Option.Option<Extension>,
-      Option.Option<Extension>
+    const sourceExtensionsMap = hashMap.inversedHashMap<
+      option.Option<Extension>,
+      option.Option<Extension>
     >(
-      pipe(
+      fn.pipe(
         mapping as [string, string][],
-        ReadonlyArray.map(([e1, e2]) => [
-          e1 ? Option.some(extension(e1)) : Option.none,
-          e2 ? Option.some(extension(e2)) : Option.none,
+        readonlyArray.map(([e1, e2]) => [
+          e1 ? option.some(extension(e1)) : option.none,
+          e2 ? option.some(extension(e2)) : option.none,
         ]),
       ),
-      Option.fold(() => 0, hashExtension),
-      Option.getEq(Eq.fromEquals(extensionEquals)),
+      option.fold(() => 0, hashExtension),
+      option.getEq(eq.fromEquals(extensionEquals)),
     );
     const source = sourcePathname(
       possibleSourcePathnames(sourceExtensionsMap),
@@ -119,7 +115,7 @@ describe("sourcePathname404", () => {
     for (const {
       index: testIndex,
       element: { query, expected, description },
-    } of enumerate(1)<{
+    } of sequence.enumerate(1)<{
       query: string;
       expected: string | null;
       description: string | undefined;
@@ -127,16 +123,16 @@ describe("sourcePathname404", () => {
       test(`case #${suiteIndex}:${testIndex}${
         description ? `: ${description}` : ""
       }`, async () => {
-        await pipe(
+        await fn.pipe(
           source404(normalizedRelativePath(query))(),
-          TaskEither.getOrElse(() => {
+          taskEither.getOrElse(() => {
             throw new Error(`Unexpectedly failed to find query result.`);
           }),
-          Task.map((result) =>
+          task.map((result) =>
             expect(result).toStrictEqual(
               expected === null
-                ? Option.none
-                : Option.some(normalizedRelativePath(expected)),
+                ? option.none
+                : option.some(normalizedRelativePath(expected)),
             ),
           ),
         )();

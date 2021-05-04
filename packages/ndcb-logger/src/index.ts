@@ -1,2 +1,2 @@
-export * from "./logger";
-export * from "./color";
+export * from "./logger.js";
+export * from "./color.js";

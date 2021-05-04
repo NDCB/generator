@@ -1,15 +1,17 @@
 import * as fse from "fs-extra";
 import * as fs from "fs";
-import { resolve, sep, basename, parse } from "upath";
-import * as Option from "fp-ts/Option";
-import * as IO from "fp-ts/IO";
-import * as Task from "fp-ts/Task";
-import * as TaskEither from "fp-ts/TaskEither";
-import * as ReadonlyArray from "fp-ts/ReadonlyArray";
-import { pipe } from "fp-ts/function";
+import upath from "upath";
+const { resolve, sep, basename, parse } = upath;
+import {
+  option,
+  io,
+  task,
+  taskEither,
+  readonlyArray,
+  function as fn,
+} from "fp-ts";
 
-import { hashString } from "@ndcb/util/lib/hash";
-import { isNotNull } from "@ndcb/util/lib/type";
+import { hash, type } from "@ndcb/util";
 
 export interface PathIOError extends Error {
   readonly code: string;
@@ -34,7 +36,7 @@ export const absolutePath = (value: string): AbsolutePath => ({
 
 export const isAbsolutePath = (element: unknown): element is AbsolutePath =>
   typeof element === "object" &&
-  isNotNull(element) &&
+  type.isNotNull(element) &&
   element["tag"] === "ABSOLUTE_PATH";
 
 export const absolutePathToString = (path: AbsolutePath): string => path.value;
@@ -45,33 +47,33 @@ export const absolutePathEquals = (
 ): boolean => p1.value === p2.value;
 
 export const hashAbsolutePath = (path: AbsolutePath): number =>
-  hashString(absolutePathToString(path));
+  hash.hashString(absolutePathToString(path));
 
 export const normalizedAbsolutePath = (value: string): AbsolutePath =>
   absolutePath(resolve(value));
 
 export type PathExistenceTester = (
   path: AbsolutePath,
-) => IO.IO<Task.Task<boolean>>;
+) => io.IO<task.Task<boolean>>;
 
 export const pathExists: PathExistenceTester = (path) => () =>
-  pipe(
-    TaskEither.tryCatch(
+  fn.pipe(
+    taskEither.tryCatch<unknown, boolean>(
       () => fse.pathExists(absolutePathToString(path)),
       (error) => error,
     ),
-    TaskEither.fold(
-      () => Task.of(false),
-      (exists) => Task.of(exists),
+    taskEither.fold(
+      () => task.of(false),
+      (exists) => task.of(exists),
     ),
   );
 
 export const rootPath = (path: AbsolutePath): AbsolutePath =>
   absolutePath(parse(absolutePathToString(path)).root);
 
-export const parentPath = (path: AbsolutePath): Option.Option<AbsolutePath> => {
+export const parentPath = (path: AbsolutePath): option.Option<AbsolutePath> => {
   const parent = absolutePath(resolve(absolutePathToString(path), ".."));
-  return absolutePathEquals(path, parent) ? Option.none : Option.some(parent);
+  return absolutePathEquals(path, parent) ? option.none : option.some(parent);
 };
 
 export const absolutePathSegments = (path: AbsolutePath): string[] => {
@@ -90,9 +92,9 @@ export const absolutePathSegments = (path: AbsolutePath): string[] => {
  */
 export const isUpwardPath = (up: AbsolutePath, down: AbsolutePath): boolean =>
   absolutePathToString(down).startsWith(absolutePathToString(up)) &&
-  pipe(
-    ReadonlyArray.zip(absolutePathSegments(up), absolutePathSegments(down)),
-    ReadonlyArray.every(([s1, s2]) => s1 === s2),
+  fn.pipe(
+    readonlyArray.zip(absolutePathSegments(up), absolutePathSegments(down)),
+    readonlyArray.every(([s1, s2]) => s1 === s2),
   );
 
 export const absolutePathBaseName = (path: AbsolutePath): string =>
@@ -100,10 +102,10 @@ export const absolutePathBaseName = (path: AbsolutePath): string =>
 
 export type PathStatusChecker<E extends Error> = (
   path: AbsolutePath,
-) => IO.IO<TaskEither.TaskEither<E, fs.StatsBase<BigInt>>>;
+) => io.IO<taskEither.TaskEither<E, fs.StatsBase<BigInt>>>;
 
 export const pathStatus: PathStatusChecker<PathIOError> = (path) => () =>
-  TaskEither.tryCatch(
+  taskEither.tryCatch(
     () =>
       ((fs.promises.stat as unknown) as (
         path: fs.PathLike,

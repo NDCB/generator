@@ -1,4 +1,4 @@
-import { createPlugin } from "./plugin";
+import { createPlugin } from "./plugin.js";
 export default createPlugin;
 
-export * from "./plugin";
+export * from "./plugin.js";

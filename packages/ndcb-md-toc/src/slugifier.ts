@@ -1,17 +1,16 @@
-import * as Tree from "fp-ts/Tree";
-import { pipe } from "fp-ts/function";
+import { tree, function as fn } from "fp-ts";
 
 export type Slugifier = (token: string) => string;
 
 export const slugifyTableOfContents = (slugify: Slugifier) => <T>(
-  toc: Tree.Tree<T & { heading: string }>,
-): Tree.Tree<
+  toc: tree.Tree<T & { heading: string }>,
+): tree.Tree<
   T & {
     heading: string;
     slug: string;
   }
 > =>
-  pipe(
+  fn.pipe(
     toc,
-    Tree.map((node) => ({ ...node, slug: slugify(node.heading) })),
+    tree.map((node) => ({ ...node, slug: slugify(node.heading) })),
   );

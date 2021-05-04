@@ -1,8 +1,6 @@
-import * as LRU from "lru-cache";
-import * as IO from "fp-ts/IO";
-import * as TaskEither from "fp-ts/TaskEither";
-import { pipe } from "fp-ts/function";
-import { StatsBase } from "fs";
+import LRU from "lru-cache";
+import { io, taskEither, function as fn } from "fp-ts";
+import { StatsBase } from "fs-extra";
 
 import {
   absolutePathToString,
@@ -30,14 +28,14 @@ export const cachingDirectoryReader = <
   );
   return (
     directory: Directory,
-  ): IO.IO<
-    TaskEither.TaskEither<DirectoryReadError | PathStatusError, Entry[]>
+  ): io.IO<
+    taskEither.TaskEither<DirectoryReadError | PathStatusError, Entry[]>
   > => () => {
     const path = directoryPath(directory);
     const key = absolutePathToString(path);
-    return pipe(
+    return fn.pipe(
       pathStatus(path)(),
-      TaskEither.chain<
+      taskEither.chain<
         DirectoryReadError | PathStatusError,
         StatsBase<BigInt>,
         Entry[]
@@ -45,12 +43,12 @@ export const cachingDirectoryReader = <
         cache.has(key) &&
         ((status as unknown) as { ctimeNs: BigInt }).ctimeNs ===
           (cache.get(key) as { ctimeNs: BigInt }).ctimeNs
-          ? TaskEither.right(
+          ? taskEither.right(
               ((cache.peek(key) as unknown) as { entries: Entry[] }).entries,
             )
-          : pipe(
+          : fn.pipe(
               readDirectory(directory)(),
-              TaskEither.map((entries) => {
+              taskEither.map((entries) => {
                 const entriesArray = [...entries];
                 cache.set(key, {
                   ctimeNs: ((status as unknown) as { ctimeNs: BigInt }).ctimeNs,

@@ -5,7 +5,9 @@
   "bin": {
     "generator": "./lib/index.js"
   },
+  "type": "module",
   "main": "./lib/index.js",
+  "exports": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "repository": "https://github.com/NDCB/generator/tree/master/packages/ndcb-logger",
   "author": "Marc-Antoine Ouimet",
@@ -14,9 +16,9 @@
     "lib"
   ],
   "dependencies": {
-    "consola": "^2.15.0",
-    "chalk": "^4.1.0",
-    "fp-ts": "^2.9.5"
+    "consola": "^2.15.3",
+    "chalk": "^4.1.1",
+    "fp-ts": "^2.10.5"
   },
   "publishConfig": {
     "access": "public"

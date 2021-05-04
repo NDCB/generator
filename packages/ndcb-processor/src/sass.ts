@@ -1,17 +1,14 @@
-import * as Option from "fp-ts/Option";
-import * as Either from "fp-ts/Either";
-import * as TaskEither from "fp-ts/TaskEither";
-import { pipe } from "fp-ts/function";
+import { option, either, taskEither, function as fn } from "fp-ts";
 
 import { renderSync } from "sass";
 
 import { extension, File, filePath, pathToString } from "@ndcb/fs-util";
 
-import { FileProcessor, Processor } from "./processor";
+import { FileProcessor, Processor } from "./processor.js";
 
 export const sassProcessor: Processor<Error> = (file: File) => () =>
-  pipe(
-    Either.tryCatch(
+  fn.pipe(
+    either.tryCatch(
       () =>
         renderSync({
           file: pathToString(filePath(file)),
@@ -19,14 +16,14 @@ export const sassProcessor: Processor<Error> = (file: File) => () =>
         }).css,
       (error) => error as Error,
     ),
-    Either.map<
+    either.map<
       Buffer,
       {
         contents: Buffer;
         encoding: BufferEncoding;
       }
     >((contents) => ({ contents, encoding: "utf8" })),
-    TaskEither.fromEither,
+    taskEither.fromEither,
   );
 
 export const sassFileProcessors = (
@@ -34,12 +31,12 @@ export const sassFileProcessors = (
 ): FileProcessor<Error>[] => [
   {
     processor,
-    sourceExtension: Option.some(extension(".sass")),
-    destinationExtension: Option.some(extension(".css")),
+    sourceExtension: option.some(extension(".sass")),
+    destinationExtension: option.some(extension(".css")),
   },
   {
     processor,
-    sourceExtension: Option.some(extension(".scss")),
-    destinationExtension: Option.some(extension(".css")),
+    sourceExtension: option.some(extension(".scss")),
+    destinationExtension: option.some(extension(".css")),
   },
 ];

@@ -1,34 +1,41 @@
 import { readFileSync } from "fs";
-import { resolve } from "path";
+import { resolve, dirname } from "path";
+import { fileURLToPath } from "url";
 
-import * as unified from "unified";
-import * as markdown from "remark-parse";
-import * as markdownToHtml from "remark-rehype";
-import * as htmlRaw from "rehype-raw";
-import * as htmlStringify from "rehype-stringify";
+import unified from "unified";
+import markdown from "remark-parse";
+import markdownToHtml from "remark-rehype";
+import htmlRaw from "rehype-raw";
+import htmlStringify from "rehype-stringify";
 
 import * as htmlMinifier from "html-minifier";
 
 import * as pug from "pug";
 
-import { enumerate } from "@ndcb/util";
+import { sequence } from "@ndcb/util";
 
-import { attacher as customElements } from "../src/plugin";
+import { attacher as customElements } from "@ndcb/rehype-custom-element";
+
+import pluginTestCases from "./fixtures/plugin.json";
 
 describe("rehype-custom-element", () => {
   const fixturePath = (fixturePathname) =>
-    resolve(__dirname, "./fixtures", fixturePathname);
+    resolve(
+      dirname(fileURLToPath(import.meta.url)),
+      "./fixtures",
+      fixturePathname,
+    );
   const normalize = (html) =>
     htmlMinifier.minify(html, { maxLineLength: 1, collapseWhitespace: true });
   for (const {
     index,
     element: { input, elements, description, expected },
-  } of enumerate(1)<{
+  } of sequence.enumerate(1)<{
     input;
     elements;
-    description;
+    description?;
     expected;
-  }>(require("./fixtures/plugin.json"))) {
+  }>(pluginTestCases)) {
     const markdownProcessor = unified()
       .use(markdown)
       .use(markdownToHtml, {

@@ -1,8 +1,4 @@
-import * as IO from "fp-ts/IO";
-import * as ReadonlyArray from "fp-ts/ReadonlyArray";
-import * as TaskEither from "fp-ts/TaskEither";
-import * as Option from "fp-ts/Option";
-import { pipe } from "fp-ts/function";
+import { io, readonlyArray, taskEither, option, function as fn } from "fp-ts";
 
 import {
   RelativePath,
@@ -17,8 +13,7 @@ import {
   upwardRelativePaths,
   relativePathToString,
 } from "@ndcb/fs-util";
-import { HashMap } from "@ndcb/util/lib/hashMap";
-import * as Sequence from "@ndcb/util/lib/sequence";
+import { sequence, hashMap } from "@ndcb/util";
 
 export type Pathname = RelativePath;
 
@@ -29,26 +24,26 @@ export const possibleHtmlSourcePathnames = function* (
 ): Iterable<Pathname> {
   yield query;
   if (!relativePathIsEmpty(query) && !pathHasExtension(query))
-    yield relativePathWithExtension(query, Option.some(extension(".html")));
+    yield relativePathWithExtension(query, option.some(extension(".html")));
   yield joinRelativePath(query, "index.html");
 };
 
 export const possibleSourcePathnames = (
-  sourceExtensionsMap: HashMap<
-    Option.Option<Extension>,
-    readonly Option.Option<Extension>[]
+  sourceExtensionsMap: hashMap.HashMap<
+    option.Option<Extension>,
+    readonly option.Option<Extension>[]
   >,
 ) => (query: Pathname): Iterable<Pathname> =>
-  pipe(
+  fn.pipe(
     possibleHtmlSourcePathnames(query),
-    Sequence.flatMap(function* (possibleSourcePathname) {
+    sequence.flatMap(function* (possibleSourcePathname) {
       yield possibleSourcePathname;
       if (!relativePathIsEmpty(possibleSourcePathname))
         yield* relativePathWithExtensions(
           possibleSourcePathname,
-          pipe(
+          fn.pipe(
             sourceExtensionsMap.get(pathExtension(possibleSourcePathname)),
-            Option.getOrElse<readonly Option.Option<Extension>[]>(() => []),
+            option.getOrElse<readonly option.Option<Extension>[]>(() => []),
           ),
         );
     }),
@@ -58,26 +53,26 @@ export const sourcePathname = <FileExistenceTestError extends Error>(
   possibleSourcePathnames: (query: Pathname) => Iterable<Pathname>,
   sourceExists: (
     pathname: Pathname,
-  ) => IO.IO<TaskEither.TaskEither<FileExistenceTestError, boolean>>,
+  ) => io.IO<taskEither.TaskEither<FileExistenceTestError, boolean>>,
 ) => (
   query: Pathname,
-): IO.IO<
-  TaskEither.TaskEither<FileExistenceTestError, Option.Option<Pathname>>
+): io.IO<
+  taskEither.TaskEither<FileExistenceTestError, option.Option<Pathname>>
 > => () =>
-  pipe(
+  fn.pipe(
     [...possibleSourcePathnames(query)],
-    ReadonlyArray.map((source) =>
-      pipe(
+    readonlyArray.map((source) =>
+      fn.pipe(
         sourceExists(source)(),
-        TaskEither.map((exists) => ({ source, exists })),
+        taskEither.map((exists) => ({ source, exists })),
       ),
     ),
-    TaskEither.sequenceSeqArray,
-    TaskEither.map((queries) =>
-      pipe(
+    taskEither.sequenceSeqArray,
+    taskEither.map((queries) =>
+      fn.pipe(
         queries,
-        ReadonlyArray.findFirst(({ exists }) => exists),
-        Option.map(({ source }) => source),
+        readonlyArray.findFirst(({ exists }) => exists),
+        option.map(({ source }) => source),
       ),
     ),
   );
@@ -85,37 +80,37 @@ export const sourcePathname = <FileExistenceTestError extends Error>(
 export const sourcePathname404 = <FileExistenceTestError extends Error>(
   sourcePathname: (
     query: Pathname,
-  ) => IO.IO<
-    TaskEither.TaskEither<FileExistenceTestError, Option.Option<Pathname>>
+  ) => io.IO<
+    taskEither.TaskEither<FileExistenceTestError, option.Option<Pathname>>
   >,
 ) => (
   query: Pathname,
-): IO.IO<
-  TaskEither.TaskEither<FileExistenceTestError, Option.Option<Pathname>>
+): io.IO<
+  taskEither.TaskEither<FileExistenceTestError, option.Option<Pathname>>
 > => () =>
-  pipe(
+  fn.pipe(
     [...upwardRelativePaths(query)],
-    ReadonlyArray.map((source) =>
+    readonlyArray.map((source) =>
       sourcePathname(joinRelativePath(source, "404.html"))(),
     ),
-    TaskEither.sequenceSeqArray,
-    TaskEither.map((queries) =>
-      pipe(queries, ReadonlyArray.findFirst(Option.isSome), Option.flatten),
+    taskEither.sequenceSeqArray,
+    taskEither.map((queries) =>
+      fn.pipe(queries, readonlyArray.findFirst(option.isSome), option.flatten),
     ),
   );
 
 export const destinationExtension = (
-  destinationExtensionMap: HashMap<
-    Option.Option<Extension>,
-    Option.Option<Extension>
+  destinationExtensionMap: hashMap.HashMap<
+    option.Option<Extension>,
+    option.Option<Extension>
   >,
-) => (sourceExtension: Option.Option<Extension>): Option.Option<Extension> =>
-  pipe(destinationExtensionMap.get(sourceExtension), Option.flatten);
+) => (sourceExtension: option.Option<Extension>): option.Option<Extension> =>
+  fn.pipe(destinationExtensionMap.get(sourceExtension), option.flatten);
 
 export const destinationPathname = (
   destinationExtension: (
-    sourceExtension: Option.Option<Extension>,
-  ) => Option.Option<Extension>,
+    sourceExtension: option.Option<Extension>,
+  ) => option.Option<Extension>,
 ) => (source: Pathname): Pathname =>
   relativePathWithExtension(
     source,
@@ -125,25 +120,31 @@ export const destinationPathname = (
 export interface PathnameRouter<FileExistenceTestError extends Error> {
   readonly sourcePathname: (
     query: Pathname,
-  ) => IO.IO<
-    TaskEither.TaskEither<FileExistenceTestError, Option.Option<Pathname>>
+  ) => io.IO<
+    taskEither.TaskEither<FileExistenceTestError, option.Option<Pathname>>
   >;
   readonly sourcePathname404: (
     query: Pathname,
-  ) => IO.IO<
-    TaskEither.TaskEither<FileExistenceTestError, Option.Option<Pathname>>
+  ) => io.IO<
+    taskEither.TaskEither<FileExistenceTestError, option.Option<Pathname>>
   >;
   readonly destinationPathname: (source: Pathname) => Pathname;
 }
 
 export const router = <FileExistenceTestError extends Error>(
   extensionsMap: {
-    source: HashMap<Option.Option<Extension>, Option.Option<Extension>[]>;
-    destination: HashMap<Option.Option<Extension>, Option.Option<Extension>>;
+    source: hashMap.HashMap<
+      option.Option<Extension>,
+      option.Option<Extension>[]
+    >;
+    destination: hashMap.HashMap<
+      option.Option<Extension>,
+      option.Option<Extension>
+    >;
   },
   fileExists: (
     path: RelativePath,
-  ) => IO.IO<TaskEither.TaskEither<FileExistenceTestError, boolean>>,
+  ) => io.IO<taskEither.TaskEither<FileExistenceTestError, boolean>>,
 ): PathnameRouter<FileExistenceTestError> => {
   const source = sourcePathname(
     possibleSourcePathnames(extensionsMap.source),

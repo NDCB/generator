@@ -1,15 +1,12 @@
-import * as IO from "fp-ts/IO";
-import * as Task from "fp-ts/Task";
-import * as TaskEither from "fp-ts/TaskEither";
-import { pipe } from "fp-ts/function";
+import { io, task, taskEither, function as fn } from "fp-ts";
 
 import { IncomingMessage, ServerResponse, RequestListener } from "http";
 import { URL } from "url";
 
 import { relativePath } from "@ndcb/fs-util";
 
-import { TimedServerProcessor } from "./processor";
-import { Pathname } from "./router";
+import { TimedServerProcessor } from "./processor.js";
+import { Pathname } from "./router.js";
 
 const requestPathname = (url: string) =>
   relativePath((new URL(url).pathname ?? "").replace(/^(\/)|(\/)$/g, ""));
@@ -21,35 +18,35 @@ export const siteFilesServerRequestListener = <
   ServerProcessorError extends Error
 >(
   processor: TimedServerProcessor<ServerProcessorError>,
-  onStart: (pathname: Pathname) => IO.IO<void> = () => () => {
+  onStart: (pathname: Pathname) => io.IO<void> = () => () => {
     /** no-op */
   },
   onEnd: (
     pathname: Pathname,
     elapsedTime: bigint,
-  ) => IO.IO<void> = () => () => {
+  ) => io.IO<void> = () => () => {
     /** no-op */
   },
-  onError: (error: Error, pathname: Pathname) => IO.IO<void> = () => () => {
+  onError: (error: Error, pathname: Pathname) => io.IO<void> = () => () => {
     /** no-op */
   },
 ): RequestListener => (
   request: IncomingMessage,
   response: ServerResponse,
-): Task.Task<void> => {
+): task.Task<void> => {
   const pathname = incomingMessagePathname(request);
   onStart(pathname)();
-  return pipe(
+  return fn.pipe(
     processor(pathname)(),
-    TaskEither.fold(
+    taskEither.fold(
       (error) =>
-        Task.of(
+        task.of(
           response
             .writeHead(500)
             .end(error.message, () => onError(error, pathname)()),
         ),
       ({ statusCode, contents, encoding, contentType, elapsedTime }) =>
-        Task.of(
+        task.of(
           response
             .writeHead(statusCode, {
               "Content-Length": Buffer.byteLength(contents, encoding),

@@ -1,9 +1,11 @@
-import * as IO from "fp-ts/IO";
-import * as Either from "fp-ts/Either";
-import * as Option from "fp-ts/Option";
-import * as ReadonlyArray from "fp-ts/ReadonlyArray";
-import * as TaskEither from "fp-ts/TaskEither";
-import { pipe } from "fp-ts/function";
+import {
+  io,
+  either,
+  taskEither,
+  option,
+  readonlyArray,
+  function as fn,
+} from "fp-ts";
 
 import {
   File,
@@ -26,10 +28,10 @@ export interface DataParsingError extends Error {
 
 export type TextDataParser<E extends DataParsingError> = (
   contents: string,
-) => Either.Either<E, unknown>;
+) => either.Either<E, unknown>;
 
 export interface DataParserByFileExtension<E extends DataParsingError> {
-  readonly handles: (extension: Option.Option<Extension>) => boolean;
+  readonly handles: (extension: option.Option<Extension>) => boolean;
   readonly parse: TextDataParser<E>;
 }
 
@@ -38,15 +40,15 @@ const dataParserByFileExtensions = (
   parse: (contents: string) => unknown,
 ): DataParserByFileExtension<DataParsingError> => ({
   handles: (extension) =>
-    Option.isSome(extension) &&
-    pipe(
+    option.isSome(extension) &&
+    fn.pipe(
       handledExtensions,
-      ReadonlyArray.some((handledExtension) =>
+      readonlyArray.some((handledExtension) =>
         extensionEquals(extension.value, handledExtension),
       ),
     ),
   parse: (contents) =>
-    Either.tryCatch(
+    either.tryCatch(
       () => parse(contents),
       (error) => ({ ...(error as Error), contents }),
     ),
@@ -57,7 +59,7 @@ const dataParserByExtensionTokens = (
   parse: (contents: string) => unknown,
 ): DataParserByFileExtension<DataParsingError> =>
   dataParserByFileExtensions(
-    pipe(extensionTokens, ReadonlyArray.map(extension)),
+    fn.pipe(extensionTokens, readonlyArray.map(extension)),
     parse,
   );
 
@@ -82,24 +84,24 @@ export const tomlParser: DataParserByFileExtension<DataParsingError> = dataParse
 );
 
 export interface CompositeDataParserByFileExtension<E extends Error> {
-  readonly handles: (extension: Option.Option<Extension>) => boolean;
+  readonly handles: (extension: option.Option<Extension>) => boolean;
   readonly parse: (
-    extension: Option.Option<Extension>,
+    extension: option.Option<Extension>,
     contents: string,
-  ) => Either.Either<E, unknown>;
+  ) => either.Either<E, unknown>;
 }
 
 export interface UnhandledExtensionError extends Error {
-  readonly extension: Option.Option<Extension>;
+  readonly extension: option.Option<Extension>;
 }
 
 const unhandledExtensionError = (
-  extension: Option.Option<Extension>,
+  extension: option.Option<Extension>,
 ): UnhandledExtensionError => ({
   ...new Error(
-    `Unhandled file extension "${pipe(
+    `Unhandled file extension "${fn.pipe(
       extension,
-      Option.fold(
+      option.fold(
         () => "",
         (extension) => extensionToString(extension),
       ),
@@ -112,27 +114,27 @@ export const compositeTextDataParser = (
   parsers: readonly DataParserByFileExtension<DataParsingError>[],
 ): CompositeDataParserByFileExtension<Error> => ({
   handles: (extension) =>
-    pipe(
+    fn.pipe(
       parsers,
-      ReadonlyArray.some((parser) => parser.handles(extension)),
+      readonlyArray.some((parser) => parser.handles(extension)),
     ),
   parse: (extension, contents) =>
-    pipe(
+    fn.pipe(
       parsers,
-      ReadonlyArray.findFirst((parser) => parser.handles(extension)),
-      Either.fromOption(() => unhandledExtensionError(extension)),
-      Either.map((parser) => parser.parse(contents)),
+      readonlyArray.findFirst((parser) => parser.handles(extension)),
+      either.fromOption(() => unhandledExtensionError(extension)),
+      either.map((parser) => parser.parse(contents)),
     ),
 });
 
 export interface TextFileContentsParser<E extends Error> {
   readonly handles: (file: File) => boolean;
-  readonly parse: (file: File, contents: string) => Either.Either<E, unknown>;
+  readonly parse: (file: File, contents: string) => either.Either<E, unknown>;
 }
 
 export const compositeTextDataParserToFileContentsParser = <E extends Error>(
   parser: CompositeDataParserByFileExtension<E>,
-  fileExtension: (file: File) => Option.Option<Extension>,
+  fileExtension: (file: File) => option.Option<Extension>,
 ): TextFileContentsParser<E> => ({
   handles: (file: File) => parser.handles(fileExtension(file)),
   parse: (file: File, contents: string) =>
@@ -141,7 +143,7 @@ export const compositeTextDataParserToFileContentsParser = <E extends Error>(
 
 export type TextFileDataReader<E extends Error> = (
   file: File,
-) => IO.IO<TaskEither.TaskEither<E, unknown>>;
+) => io.IO<taskEither.TaskEither<E, unknown>>;
 
 export interface UnhandledFileError extends Error {
   readonly file: File;
@@ -160,24 +162,26 @@ export const textFileDataReader = <
   parser: TextFileContentsParser<ParseError>,
 ): TextFileDataReader<ReadFileError | ParseError | UnhandledFileError> => (
   file: File,
-): IO.IO<
-  TaskEither.TaskEither<
+): io.IO<
+  taskEither.TaskEither<
     ReadFileError | ParseError | UnhandledFileError,
     unknown
   >
 > => () =>
-  pipe(
+  fn.pipe(
     parser.handles(file)
-      ? TaskEither.right(file)
-      : TaskEither.left(unhandledFileError(file)),
-    TaskEither.chain<
+      ? taskEither.right(file)
+      : taskEither.left(unhandledFileError(file)),
+    taskEither.chain<
       ReadFileError | ParseError | UnhandledFileError,
       File,
       string
     >((file) => readTextFile(file)()),
-    TaskEither.chain<
+    taskEither.chain<
       ReadFileError | ParseError | UnhandledFileError,
       string,
       unknown
-    >((contents) => pipe(parser.parse(file, contents), TaskEither.fromEither)),
+    >((contents) =>
+      fn.pipe(parser.parse(file, contents), taskEither.fromEither),
+    ),
   );

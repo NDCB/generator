@@ -1,8 +1,8 @@
-const consola = require("consola");
-import * as IO from "fp-ts/IO";
+import consola, { ConsolaOptions } from "consola";
+import { io } from "fp-ts";
 
-export type MessageLogger = (message: string) => IO.IO<void>;
-export type ErrorLogger = MessageLogger & ((error: Error) => IO.IO<void>);
+export type MessageLogger = (message: string) => io.IO<void>;
+export type ErrorLogger = MessageLogger & ((error: Error) => io.IO<void>);
 
 const messageLogger = (logger: (message: string) => void): MessageLogger => (
   message: string,
@@ -21,7 +21,7 @@ export interface Logger {
   readonly trace: MessageLogger;
 }
 
-export const scoppedLogger = (scope: string): Logger => {
+export const scoppedLogger = (tag: string): Logger => {
   const {
     fatal,
     error,
@@ -33,7 +33,7 @@ export const scoppedLogger = (scope: string): Logger => {
     ready,
     debug,
     trace,
-  } = consola.create({ scope, level: Infinity });
+  } = consola.create(({ tag, level: Infinity } as unknown) as ConsolaOptions);
   return {
     fatal: messageLogger(fatal),
     error: (message) => () => error(message),

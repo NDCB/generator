@@ -1,4 +1,4 @@
-export * from "./exclusionRule";
+export * from "./exclusionRule.js";
 
-export * from "./gitignore";
-export * from "./fs";
+export * from "./gitignore.js";
+export * from "./fs.js";

@@ -1,6 +1,13 @@
-import { normalizedFile, normalizedDirectory } from "@ndcb/fs-util";
+import {
+  normalizedFile,
+  normalizedDirectory,
+  Directory,
+  Entry,
+} from "@ndcb/fs-util";
+import { MockDirectory } from "@ndcb/mock-fs";
+import { sequence } from "@ndcb/util";
 
-module.exports = [
+export default [
   {
     fs: {
       "/": {
@@ -32,4 +39,12 @@ module.exports = [
       },
     ],
   },
-];
+] as sequence.Sequence<{
+  fs: MockDirectory;
+  rulesFilenames: readonly string[];
+  cases: sequence.Sequence<{
+    directory: Directory;
+    considered: sequence.Sequence<Entry>;
+    ignored: sequence.Sequence<Entry>;
+  }>;
+}>;

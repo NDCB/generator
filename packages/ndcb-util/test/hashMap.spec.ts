@@ -1,18 +1,13 @@
-import * as Option from "fp-ts/Option";
-import * as Eq from "fp-ts/Eq";
-import { pipe } from "fp-ts/function";
+import { option, eq, function as fn } from "fp-ts";
 
-import { hashMap, inversedHashMap } from "../src/hashMap";
+import { hashMap } from "@ndcb/util";
+
+import hashMapTestCases from "./fixtures/hashMap";
+import inversedHashMapTestCases from "./fixtures/inversedHashMap";
 
 describe("hashMap", () => {
-  for (const {
-    entries,
-    hash,
-    equals,
-    has,
-    get,
-  } of require("./fixtures/hashMap")) {
-    const map = hashMap(entries, hash, Eq.fromEquals(equals));
+  for (const { entries, hash, equals, has, get } of hashMapTestCases) {
+    const map = hashMap.hashMap(entries, hash, eq.fromEquals(equals));
     describe("has", () => {
       for (const { key, expected } of has || []) {
         test(
@@ -28,7 +23,7 @@ describe("hashMap", () => {
     describe("get", () => {
       for (const { key, expected } of get || []) {
         test(
-          Option.isSome(expected)
+          option.isSome(expected)
             ? "returns the value with the associated key"
             : "returns `none` if there is no value associated with the key",
           () => {
@@ -41,14 +36,8 @@ describe("hashMap", () => {
 });
 
 describe("inversedHashMap", () => {
-  for (const {
-    entries,
-    hash,
-    equals,
-    has,
-    get,
-  } of require("./fixtures/inversedHashMap")) {
-    const map = inversedHashMap(entries, hash, Eq.fromEquals(equals));
+  for (const { entries, hash, equals, has, get } of inversedHashMapTestCases) {
+    const map = hashMap.inversedHashMap(entries, hash, eq.fromEquals(equals));
     describe("has", () => {
       for (const { key, expected } of has || []) {
         test(
@@ -65,15 +54,15 @@ describe("inversedHashMap", () => {
       for (const { key, expected } of get || []) {
         test("returns the value with the associated key", () => {
           const actual = map.get(key);
-          pipe(
+          fn.pipe(
             actual,
-            Option.fold<unknown[], void>(
+            option.fold<unknown[], void>(
               () => {
                 expect(actual).toEqual(expected);
               },
               (actualValues) => {
                 const expectedValues: unknown[] =
-                  Option.toNullable<unknown[]>(expected) ?? [];
+                  option.toNullable<unknown[]>(expected) ?? [];
                 expect(actualValues).toEqual(
                   expect.arrayContaining(expectedValues),
                 );

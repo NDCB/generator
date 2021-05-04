@@ -1,17 +1,17 @@
-export * from "./absolutePath";
-export * from "./relativePath";
+export * from "./absolutePath.js";
+export * from "./relativePath.js";
 
-export * from "./path";
+export * from "./path.js";
 
-export * from "./extension";
+export * from "./extension.js";
 
-export * from "./file";
-export * from "./directory";
+export * from "./file.js";
+export * from "./directory.js";
 
-export * from "./entry";
+export * from "./entry.js";
 
-export * from "./fileExtension";
-export * from "./fileReader";
-export * from "./fileWriter";
+export * from "./fileExtension.js";
+export * from "./fileReader.js";
+export * from "./fileWriter.js";
 
-export * from "./directoryReader";
+export * from "./directoryReader.js";

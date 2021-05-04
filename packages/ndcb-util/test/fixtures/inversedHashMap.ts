@@ -1,6 +1,22 @@
-import * as Option from "fp-ts/Option";
+import { option } from "fp-ts";
 
-module.exports = [
+import { sequence } from "@ndcb/util";
+
+export interface TestCase<K, T> {
+  entries: sequence.Sequence<[K, T]>;
+  hash: (a: K) => number;
+  equals: (a: K, b: K) => boolean;
+  has: sequence.Sequence<{
+    key: K;
+    expected: boolean;
+  }>;
+  get: sequence.Sequence<{
+    key: K;
+    expected: option.Option<T[]>;
+  }>;
+}
+
+export default [
   {
     entries: [
       [0, 2],
@@ -36,16 +52,16 @@ module.exports = [
     get: [
       {
         key: 2,
-        expected: Option.some([0, 1, 2]),
+        expected: option.some([0, 1, 2]),
       },
       {
         key: 1,
-        expected: Option.some([-1, -2]),
+        expected: option.some([-1, -2]),
       },
       {
         key: 0,
-        expected: Option.none,
+        expected: option.none,
       },
     ],
   },
-];
+] as sequence.Sequence<TestCase<unknown, unknown>>;

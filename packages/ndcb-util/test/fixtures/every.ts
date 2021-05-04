@@ -1,4 +1,6 @@
-module.exports = [
+import { sequence } from "@ndcb/util";
+
+export default [
   {
     input: [],
     predicate: (n: number): boolean => n % 2 == 0,
@@ -19,4 +21,9 @@ module.exports = [
     description:
       'returns "true" if the predicate returns "true" for every element',
   },
-];
+] as sequence.Sequence<{
+  input: sequence.Sequence<unknown>;
+  predicate: (element: unknown) => boolean;
+  expected: boolean;
+  description: string;
+}>;

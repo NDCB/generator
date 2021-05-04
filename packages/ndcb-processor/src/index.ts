@@ -1,6 +1,6 @@
-export * from "./processor";
+export * from "./processor.js";
 
-export * from "./html";
-export * from "./sass";
-export * from "./pug";
-export * from "./md";
+export * from "./html.js";
+export * from "./sass.js";
+export * from "./pug.js";
+export * from "./md.js";

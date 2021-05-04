@@ -1,4 +1,5 @@
-import {
+import upath from "upath";
+const {
   extname,
   resolve,
   relative,
@@ -6,12 +7,10 @@ import {
   dirname,
   basename,
   trimExt,
-} from "upath";
-import * as Option from "fp-ts/Option";
-import * as ReadonlyArray from "fp-ts/ReadonlyArray";
-import { flow } from "fp-ts/function";
+} = upath;
+import { option, readonlyArray, function as fn } from "fp-ts";
 
-import * as Sequence from "@ndcb/util/lib/sequence";
+import { sequence } from "@ndcb/util";
 
 import {
   AbsolutePath,
@@ -19,16 +18,15 @@ import {
   absolutePathToString,
   absolutePathSegments,
   absolutePath,
-} from "./absolutePath";
-import { Extension, extension, extensionToString } from "./extension";
+} from "./absolutePath.js";
+import { Extension, extension, extensionToString } from "./extension.js";
 import {
   RelativePath,
   isRelativePath,
   relativePathToString,
   relativePathSegments,
   relativePath,
-} from "./relativePath";
-import { pipe } from "fp-ts/lib/pipeable";
+} from "./relativePath.js";
 
 export type Path = AbsolutePath | RelativePath; // Discriminated union
 
@@ -61,14 +59,14 @@ export const pathToString: (path: Path) => string = matchPath({
   relative: relativePathToString,
 });
 
-export const pathExtension = (path: Path): Option.Option<Extension> => {
+export const pathExtension = (path: Path): option.Option<Extension> => {
   const extensionName = extname(pathToString(path)).toLowerCase();
-  return !extensionName ? Option.none : Option.some(extension(extensionName));
+  return !extensionName ? option.none : option.some(extension(extensionName));
 };
 
 export const pathExtensions = function* (
   path: Path,
-): Sequence.Sequence<Extension> {
+): sequence.Sequence<Extension> {
   let pathString = pathToString(path);
   do {
     const extensionName = extname(pathString).toLowerCase();
@@ -78,9 +76,9 @@ export const pathExtensions = function* (
   } while (true);
 };
 
-export const pathHasExtension: (path: Path) => boolean = flow(
+export const pathHasExtension: (path: Path) => boolean = fn.flow(
   pathExtension,
-  Option.isSome,
+  option.isSome,
 );
 
 export const pathSegments: (path: Path) => Iterable<string> = matchPath({
@@ -105,9 +103,9 @@ const base = (path: string): string =>
 
 const baseWithExtension = (
   base: string,
-  extension: Option.Option<Extension>,
+  extension: option.Option<Extension>,
 ): string =>
-  Option.fold<Extension, string>(
+  option.fold<Extension, string>(
     () => base,
     (extension) => base + extensionToString(extension),
   )(extension);
@@ -130,7 +128,7 @@ const baseWithExtension = (
  */
 export const relativePathWithExtension = (
   path: RelativePath,
-  extension: Option.Option<Extension>,
+  extension: option.Option<Extension>,
 ): RelativePath =>
   relativePath(baseWithExtension(base(relativePathToString(path)), extension));
 
@@ -149,12 +147,12 @@ export const relativePathWithExtension = (
  */
 export const relativePathWithExtensions = (
   path: RelativePath,
-  extensions: readonly Option.Option<Extension>[],
+  extensions: readonly option.Option<Extension>[],
 ): readonly RelativePath[] => {
   const b = base(relativePathToString(path));
-  return pipe(
+  return fn.pipe(
     extensions,
-    ReadonlyArray.map((extension) =>
+    readonlyArray.map((extension) =>
       relativePath(baseWithExtension(b, extension)),
     ),
   );

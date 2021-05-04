@@ -6,10 +6,8 @@
     "eslint:recommended",
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:@typescript-eslint/recommended",
-    "prettier/@typescript-eslint",
+    "prettier",
     "plugin:jest/recommended",
-    "plugin:import/errors",
-    "plugin:import/warnings",
     "plugin:import/typescript"
   ],
   "ignorePatterns": ["lib"],

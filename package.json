@@ -24,7 +24,7 @@
     "clean:build": "lerna exec --stream -- rimraf lib",
     "clean:pack": "lerna exec --stream -- rimraf *.tgz",
     "version": "lerna version --conventional-commits --no-push",
-    "test": "jest",
+    "test": "NODE_OPTIONS=--experimental-vm-modules npx jest",
     "test:watch": "jest --watch",
     "test:silent": "jest --reporters jest-silent-reporter --collectCoverage=false",
     "coverage": "jest --coverage",
@@ -35,36 +35,48 @@
     "commit": "cz"
   },
   "devDependencies": {
-    "@types/jest": "^26.0.19",
+    "@types/jest": "^26.0.23",
     "@types/node": "^14.14.20",
-    "@typescript-eslint/eslint-plugin": "^4.12.0",
-    "@typescript-eslint/parser": "^4.12.0",
+    "@typescript-eslint/eslint-plugin": "^4.22.0",
+    "@typescript-eslint/parser": "^4.22.0",
+    "commitizen": "^4.2.3",
+    "cross-env": "^7.0.3",
     "cz-conventional-changelog": "^3.3.0",
-    "commitizen": "^4.2.1",
-    "eslint": "^7.17.0",
-    "eslint-config-prettier": "^7.1.0",
+    "eslint": "^7.25.0",
+    "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-jest": "^24.1.3",
-    "jest": "^26.6.3",
-    "jest-silent-reporter": "^0.4.0",
-    "lerna": "^3.22.1",
+    "eslint-plugin-jest": "^24.3.6",
+    "jest": "^27.0.0-next.8",
+    "jest-silent-reporter": "^0.5.0",
+    "lerna": "^4.0.0",
     "prettier": "^2.2.1",
     "rimraf": "^3.0.2",
-    "ts-jest": "^26.4.4",
-    "typedoc": "^0.20.13",
-    "typescript": "^4.1.3"
+    "ts-jest": "^27.0.0-next.11",
+    "typedoc": "^0.20.36",
+    "typescript": "^4.2.4"
   },
   "resolutions": {
     "shelljs": "^0.8.4"
   },
   "jest": {
+    "cache": false,
     "verbose": false,
     "testEnvironment": "node",
     "rootDir": "./packages",
+    "moduleDirectories": [
+      "node_modules",
+      "<rootDir>"
+    ],
+    "modulePaths": [
+      "<rootDir>"
+    ],
     "coverageDirectory": "./../coverage",
     "transform": {
-      "^.+\\.ts?$": "ts-jest"
+      "^.+\\.[tj]s?$": "ts-jest"
     },
+    "extensionsToTreatAsEsm": [
+      ".ts"
+    ],
     "collectCoverageFrom": [
       "**/src/**/*.ts",
       "!**/src/**/index.ts"
@@ -76,7 +88,12 @@
     "coveragePathIgnorePatterns": [
       "fixtures",
       "lib"
-    ]
+    ],
+    "globals": {
+      "ts-jest": {
+        "useESM": true
+      }
+    }
   },
   "workspaces": [
     "./packages/*"

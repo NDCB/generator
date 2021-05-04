@@ -1,6 +1,6 @@
-import * as Option from "fp-ts/Option";
+import { option } from "fp-ts";
 
-module.exports = [
+export default [
   {
     entries: [
       [-1, 1],
@@ -34,19 +34,19 @@ module.exports = [
     get: [
       {
         key: -1,
-        expected: Option.some(1),
+        expected: option.some(1),
       },
       {
         key: 0,
-        expected: Option.some(0),
+        expected: option.some(0),
       },
       {
         key: 1,
-        expected: Option.some(10),
+        expected: option.some(10),
       },
       {
         key: -2,
-        expected: Option.none,
+        expected: option.none,
       },
     ],
   },
@@ -60,8 +60,20 @@ module.exports = [
     get: [
       {
         key: 0,
-        expected: Option.some(1),
+        expected: option.some(1),
       },
     ],
   },
-];
+] as Array<{
+  entries: Array<[unknown, unknown]>;
+  hash: (a: unknown) => number;
+  equals: (a: unknown, b: unknown) => boolean;
+  has: Array<{
+    key: unknown;
+    expected: boolean;
+  }>;
+  get: Array<{
+    key: unknown;
+    expected: option.Option<unknown>;
+  }>;
+}>;

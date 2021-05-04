@@ -1,5 +1,4 @@
-import { hashString } from "@ndcb/util/lib/hash";
-import { isNotNull } from "@ndcb/util/lib/type";
+import { hash, type } from "@ndcb/util";
 
 export interface Extension {
   readonly value: string;
@@ -13,7 +12,7 @@ export const extension = (value: string): Extension => ({
 
 export const isExtension = (element: unknown): element is Extension =>
   typeof element === "object" &&
-  isNotNull(element) &&
+  type.isNotNull(element) &&
   element["tag"] === "EXTENSION";
 
 export const extensionToString = (extension: Extension): string =>
@@ -23,4 +22,4 @@ export const extensionEquals = (e1: Extension, e2: Extension): boolean =>
   e1.value === e2.value;
 
 export const hashExtension = (extension: Extension): number =>
-  hashString(extensionToString(extension));
+  hash.hashString(extensionToString(extension));

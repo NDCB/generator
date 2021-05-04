@@ -2,7 +2,9 @@
   "name": "@ndcb/util",
   "version": "0.9.1",
   "description": "Standard utilities",
+  "type": "module",
   "main": "./lib/index.js",
+  "exports": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "repository": "https://github.com/NDCB/generator/tree/master/packages/ndcb-util",
   "author": "Marc-Antoine Ouimet",
@@ -11,7 +13,7 @@
     "lib"
   ],
   "dependencies": {
-    "fp-ts": "^2.9.5"
+    "fp-ts": "^2.10.5"
   },
   "publishConfig": {
     "access": "public"

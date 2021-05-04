@@ -1,7 +1,4 @@
-import * as IO from "fp-ts/IO";
-import * as Either from "fp-ts/Either";
-import * as TaskEither from "fp-ts/TaskEither";
-import { pipe } from "fp-ts/function";
+import { io, either, taskEither, function as fn } from "fp-ts";
 
 import { File, TextFileReader } from "@ndcb/fs-util";
 
@@ -10,21 +7,21 @@ import { Locals, Processor, contentsToProcessorResult } from "./processor";
 export type Transformer = (
   contents: string,
   locals: Locals,
-) => Either.Either<Error, string>;
+) => either.Either<Error, string>;
 
 export const compositeTransformer = (
   transformers: readonly Transformer[],
 ): Transformer => (
   contents: string,
   locals: Locals,
-): Either.Either<Error, string> => {
-  let result: Either.Either<Error, string> | null = null;
+): either.Either<Error, string> => {
+  let result: either.Either<Error, string> | null = null;
   for (const transformer of transformers) {
     result = transformer(contents, locals);
-    if (Either.isRight(result)) contents = result.right;
+    if (either.isRight(result)) contents = result.right;
     else return result;
   }
-  return result ?? Either.right(contents);
+  return result ?? either.right(contents);
 };
 
 export const templatingProcessor = <
@@ -35,28 +32,28 @@ export const templatingProcessor = <
   readTextFile: TextFileReader<TextFileReadError>,
   dataSupplier: (
     file: File,
-  ) => IO.IO<TaskEither.TaskEither<DataFetchError, Locals>>,
+  ) => io.IO<taskEither.TaskEither<DataFetchError, Locals>>,
   transformerSupplier: (
     data: Locals,
-  ) => IO.IO<TaskEither.TaskEither<TransformerFetchError, Transformer>>,
+  ) => io.IO<taskEither.TaskEither<TransformerFetchError, Transformer>>,
 ): Processor<
   TextFileReadError | DataFetchError | TransformerFetchError | Error
 > => (file) => () =>
-  pipe(
+  fn.pipe(
     readTextFile(file)(),
-    TaskEither.chainW((contents) =>
-      pipe(
+    taskEither.chainW((contents) =>
+      fn.pipe(
         dataSupplier(file)(),
-        TaskEither.map((data) => ({ contents, data })),
+        taskEither.map((data) => ({ contents, data })),
       ),
     ),
-    TaskEither.chainW(({ contents, data }) =>
-      pipe(
+    taskEither.chainW(({ contents, data }) =>
+      fn.pipe(
         transformerSupplier(data)(),
-        TaskEither.chain((transformer) =>
-          pipe(transformer(contents, data), TaskEither.fromEither),
+        taskEither.chain((transformer) =>
+          fn.pipe(transformer(contents, data), taskEither.fromEither),
         ),
       ),
     ),
-    TaskEither.map(contentsToProcessorResult),
+    taskEither.map(contentsToProcessorResult),
   );

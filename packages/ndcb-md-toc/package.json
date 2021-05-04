@@ -2,7 +2,9 @@
   "name": "@ndcb/md-toc",
   "version": "0.2.0",
   "description": "Markdown table of contents parser and manipulation",
+  "type": "module",
   "main": "./lib/index.js",
+  "exports": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "repository": "https://github.com/NDCB/generator/tree/master/packages/ndcb-md-toc",
   "author": "Marc-Antoine Ouimet",
@@ -14,15 +16,15 @@
     "access": "public"
   },
   "dependencies": {
-    "mdast-util-to-string": "^2.0.0",
-    "unist-util-visit": "^2.0.3",
-    "fp-ts": "^2.9.5"
+    "mdast-util-to-string": "^3.1.0",
+    "unist-util-visit": "^3.0.0",
+    "fp-ts": "^2.10.5"
   },
   "devDependencies": {
     "@ndcb/fs-util": "^0.3.0",
-    "@types/unist": "^2.0.0",
+    "@types/unist": "^2.0.3",
     "remark-frontmatter": "^3.0.0",
     "remark-parse": "^9.0.0",
-    "unified": "^9.2.0"
+    "unified": "^9.2.1"
   }
 }

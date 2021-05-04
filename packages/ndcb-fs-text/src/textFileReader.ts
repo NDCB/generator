@@ -1,6 +1,4 @@
-import * as IO from "fp-ts/IO";
-import * as TaskEither from "fp-ts/TaskEither";
-import { pipe } from "fp-ts/function";
+import { io, taskEither, function as fn } from "fp-ts";
 
 import { detect } from "jschardet";
 import { decode } from "iconv-lite";
@@ -11,8 +9,8 @@ export const textFileReader = <FileReadError extends Error>(
   readFile: FileReader<FileReadError>,
 ): TextFileReader<FileReadError> => (
   file: File,
-): IO.IO<TaskEither.TaskEither<FileReadError, string>> => () =>
-  pipe(
+): io.IO<taskEither.TaskEither<FileReadError, string>> => () =>
+  fn.pipe(
     readFile(file)(),
-    TaskEither.map((contents) => decode(contents, detect(contents).encoding)),
+    taskEither.map((contents) => decode(contents, detect(contents).encoding)),
   );

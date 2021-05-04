@@ -2,7 +2,9 @@
   "name": "@ndcb/mock-fs",
   "version": "0.1.1",
   "description": "File system mocking utility",
+  "type": "module",
   "main": "./lib/index.js",
+  "exports": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "repository": "https://github.com/NDCB/generator/tree/master/packages/ndcb-mock-fs",
   "author": "Marc-Antoine Ouimet",
@@ -13,7 +15,7 @@
   "dependencies": {
     "@ndcb/fs-util": "^0.3.0",
     "@ndcb/util": "^0.9.1",
-    "fp-ts": "^2.9.5",
+    "fp-ts": "^2.10.5",
     "upath": "^2.0.1"
   },
   "publishConfig": {

@@ -1,20 +1,16 @@
-import * as Option from "fp-ts/Option";
-import * as ReadonlyArray from "fp-ts/ReadonlyArray";
-import * as Tree from "fp-ts/Tree";
-import { pipe } from "fp-ts/function";
+import { option, readonlyArray, tree, function as fn } from "fp-ts";
 
-// eslint-disable-next-line import/no-unresolved
-import * as unist from "unist";
-import * as visit from "unist-util-visit";
+import { Node } from "unist";
+import { visit } from "unist-util-visit";
 
-import * as toString from "mdast-util-to-string";
+import { toString } from "mdast-util-to-string";
 
 export type TableOfContentsNode = {
   heading: string;
   children: TableOfContentsNode[];
 };
 
-const parse = (astRoot: unist.Node): Option.Option<TableOfContentsNode> => {
+const parse = (astRoot: Node): option.Option<TableOfContentsNode> => {
   // Traversed headings stack
   const stack: Array<{
     node: TableOfContentsNode;
@@ -33,19 +29,19 @@ const parse = (astRoot: unist.Node): Option.Option<TableOfContentsNode> => {
     if (stack.length > 0) stack[stack.length - 1].node.children.push(node);
     stack.push({ node, depth });
   });
-  return stack.length > 0 ? Option.some(stack[0].node) : Option.none;
+  return stack.length > 0 ? option.some(stack[0].node) : option.none;
 };
 
 const makeTree = ({
   heading,
   children,
-}: TableOfContentsNode): Tree.Tree<{ heading: string }> =>
-  Tree.make(
+}: TableOfContentsNode): tree.Tree<{ heading: string }> =>
+  tree.make(
     { heading },
-    pipe(children, ReadonlyArray.map(makeTree), ReadonlyArray.toArray),
+    fn.pipe(children, readonlyArray.map(makeTree), readonlyArray.toArray),
   );
 
 export const mdastTableOfContentsTree = (
-  astRoot: unist.Node,
-): Option.Option<Tree.Tree<{ heading: string }>> =>
-  pipe(parse(astRoot), Option.map(makeTree));
+  astRoot: Node,
+): option.Option<tree.Tree<{ heading: string }>> =>
+  fn.pipe(parse(astRoot), option.map(makeTree));

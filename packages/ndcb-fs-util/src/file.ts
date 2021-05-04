@@ -1,9 +1,7 @@
 import * as fse from "fs-extra";
-import * as IO from "fp-ts/IO";
-import * as TaskEither from "fp-ts/TaskEither";
-import { pipe, flow } from "fp-ts/function";
+import { io, taskEither, function as fn } from "fp-ts";
 
-import { isNotNull } from "@ndcb/util/lib/type";
+import { type } from "@ndcb/util";
 
 import {
   AbsolutePath,
@@ -15,7 +13,7 @@ import {
   normalizedAbsolutePath,
   PathIOError,
   hashAbsolutePath,
-} from "./absolutePath";
+} from "./absolutePath.js";
 
 /**
  * A file representation in the file system.
@@ -29,7 +27,7 @@ export interface File {
 
 export const isFile = (element: unknown): element is File =>
   typeof element === "object" &&
-  isNotNull(element) &&
+  type.isNotNull(element) &&
   element["tag"] === "FILE";
 
 export const file = (path: AbsolutePath): File => ({
@@ -37,14 +35,14 @@ export const file = (path: AbsolutePath): File => ({
   tag: "FILE",
 });
 
-export const normalizedFile: (path: string) => File = flow(
+export const normalizedFile: (path: string) => File = fn.flow(
   normalizedAbsolutePath,
   file,
 );
 
 export const filePath = (file: File): AbsolutePath => file.path;
 
-export const fileToString: (file: File) => string = flow(
+export const fileToString: (file: File) => string = fn.flow(
   filePath,
   absolutePathToString,
 );
@@ -52,26 +50,26 @@ export const fileToString: (file: File) => string = flow(
 export const fileEquals = (f1: File, f2: File): boolean =>
   absolutePathEquals(filePath(f1), filePath(f2));
 
-export const hashFile: (file: File) => number = flow(
+export const hashFile: (file: File) => number = fn.flow(
   filePath,
   hashAbsolutePath,
 );
 
 export type FileExistenceTester<E extends Error> = (
   file: File,
-) => IO.IO<TaskEither.TaskEither<E, boolean>>;
+) => io.IO<taskEither.TaskEither<E, boolean>>;
 
 export const fileExists: FileExistenceTester<PathIOError> = (file) => () =>
-  pipe(
+  fn.pipe(
     pathExists(filePath(file))(),
-    TaskEither.fromTask,
-    TaskEither.chainFirst((exists) =>
+    taskEither.fromTask,
+    taskEither.chainFirst((exists) =>
       exists
-        ? pipe(
+        ? fn.pipe(
             pathStatus(filePath(file))(),
-            TaskEither.map((status) => status.isFile()),
+            taskEither.map((status) => status.isFile()),
           )
-        : TaskEither.right(false),
+        : taskEither.right(false),
     ),
   );
 
@@ -82,13 +80,13 @@ export interface FileIOError extends Error {
 
 export const ensureFile = (
   file: File,
-): IO.IO<TaskEither.TaskEither<FileIOError, void>> => () =>
-  TaskEither.tryCatch(
+): io.IO<taskEither.TaskEither<FileIOError, void>> => () =>
+  taskEither.tryCatch(
     () => fse.ensureFile(absolutePathToString(filePath(file))),
     (error) => ({ ...(error as Error & { code: string }), file }),
   );
 
-export const fileName: (file: File) => string = flow(
+export const fileName: (file: File) => string = fn.flow(
   filePath,
   absolutePathBaseName,
 );

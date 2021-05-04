@@ -1,26 +1,23 @@
-import * as IO from "fp-ts/IO";
-import * as Either from "fp-ts/Either";
-import * as ReadonlyArray from "fp-ts/ReadonlyArray";
-import { pipe } from "fp-ts/function";
+import { io, either, readonlyArray, function as fn } from "fp-ts";
 
-import * as LRU from "lru-cache";
+import LRU from "lru-cache";
 import * as pug from "pug";
 
 import { absolutePathToString, File, filePath } from "@ndcb/fs-util";
 
-import { Locals } from "./processor";
-import { compositeTransformer, Transformer } from "./html";
+import { Locals } from "./processor.js";
+import { compositeTransformer, Transformer } from "./html.js";
 
-export type PugTransformer = (locals: Locals) => Either.Either<Error, string>;
+export type PugTransformer = (locals: Locals) => either.Either<Error, string>;
 
 export const pugProcessor = (
   template: File,
-): IO.IO<Either.Either<Error, PugTransformer>> => () =>
-  Either.tryCatch(
+): io.IO<either.Either<Error, PugTransformer>> => () =>
+  either.tryCatch(
     () => {
       const fn = pug.compileFile(absolutePathToString(filePath(template)));
       return (locals: Locals) =>
-        Either.tryCatch(
+        either.tryCatch(
           () => fn(locals),
           (error) => error as Error,
         );
@@ -30,17 +27,17 @@ export const pugProcessor = (
 
 export const pugBuildProcessor = (
   cacheSize = 15,
-): ((template: File) => IO.IO<Either.Either<Error, PugTransformer>>) => {
+): ((template: File) => io.IO<either.Either<Error, PugTransformer>>) => {
   const cache = new LRU<string, PugTransformer>({
     max: cacheSize,
   });
   return (template: File) => () => {
     const key = absolutePathToString(filePath(template));
     return cache.has(key)
-      ? Either.right(cache.get(key) as PugTransformer)
-      : pipe(
+      ? either.right(cache.get(key) as PugTransformer)
+      : fn.pipe(
           pugProcessor(template)(),
-          Either.map((fn) => {
+          either.map((fn) => {
             cache.set(key, fn);
             return fn;
           }),
@@ -52,9 +49,9 @@ export const compositePugTemplatingTransformer = (contentsKey = "yield") => (
   transformers: readonly PugTransformer[],
 ): Transformer =>
   compositeTransformer(
-    pipe(
+    fn.pipe(
       transformers,
-      ReadonlyArray.map<PugTransformer, Transformer>(
+      readonlyArray.map<PugTransformer, Transformer>(
         (transformer) => (contents, locals) =>
           transformer({ ...locals, [contentsKey]: contents }),
       ),
@@ -64,10 +61,10 @@ export const compositePugTemplatingTransformer = (contentsKey = "yield") => (
 export const templatingAndLayoutTransformer = (
   template: File,
   layout: File,
-): IO.IO<Either.Either<Error, Transformer>> => () =>
-  pipe(
+): io.IO<either.Either<Error, Transformer>> => () =>
+  fn.pipe(
     [template, layout],
-    ReadonlyArray.map((file) => pugProcessor(file)()),
-    Either.sequenceArray,
-    Either.map(compositePugTemplatingTransformer()),
+    readonlyArray.map((file) => pugProcessor(file)()),
+    either.sequenceArray,
+    either.map(compositePugTemplatingTransformer()),
   );

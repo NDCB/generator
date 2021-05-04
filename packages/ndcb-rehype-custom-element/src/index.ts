@@ -1,4 +1,4 @@
-import { attacher } from "./plugin";
+import { attacher } from "./plugin.js";
 export default attacher;
 
-export * from "./plugin";
+export * from "./plugin.js";

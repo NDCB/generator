@@ -1,6 +1,4 @@
-import * as IO from "fp-ts/IO";
-import * as TaskEither from "fp-ts/TaskEither";
-import * as Option from "fp-ts/Option";
+import { io, taskEither, option } from "fp-ts";
 
 import {
   File,
@@ -9,10 +7,11 @@ import {
   relativePath,
   relativePathToString,
 } from "@ndcb/fs-util";
+import { sequence } from "@ndcb/util";
 
 import { Pathname, PathnameRouter } from "../../src/router";
 
-module.exports = [
+export default [
   {
     routerSupplier: () => {
       const sourcePathnameMap = new Map([
@@ -33,24 +32,24 @@ module.exports = [
       return {
         sourcePathname: (query) => () => {
           const key = relativePathToString(query);
-          return TaskEither.right(
+          return taskEither.right(
             sourcePathnameMap.has(key)
-              ? Option.some(
+              ? option.some(
                   normalizedRelativePath(sourcePathnameMap.get(key) as string),
                 )
-              : Option.none,
+              : option.none,
           );
         },
         sourcePathname404: (query) => () => {
           const key = relativePathToString(query);
-          return TaskEither.right(
+          return taskEither.right(
             sourcePathname404Map.has(key)
-              ? Option.some(
+              ? option.some(
                   normalizedRelativePath(
                     sourcePathname404Map.get(key) as string,
                   ),
                 )
-              : Option.none,
+              : option.none,
           );
         },
         destinationPathname: (query) => {
@@ -70,17 +69,17 @@ module.exports = [
       ]);
       return (query) => () => {
         const key = relativePathToString(query);
-        return TaskEither.right(
+        return taskEither.right(
           map.has(key)
-            ? Option.some(normalizedFile(map.get(key) as string))
-            : Option.none,
+            ? option.some(normalizedFile(map.get(key) as string))
+            : option.none,
         );
       };
     },
     cases: [
       {
         query: relativePath(""),
-        expected: Option.some({
+        expected: option.some({
           file: normalizedFile("/content/index.md"),
           destination: normalizedRelativePath("index.html"),
           statusCode: 200,
@@ -89,7 +88,7 @@ module.exports = [
       },
       {
         query: relativePath("404"),
-        expected: Option.some({
+        expected: option.some({
           file: normalizedFile("/content/404.md"),
           destination: normalizedRelativePath("404.html"),
           statusCode: 200,
@@ -98,7 +97,7 @@ module.exports = [
       },
       {
         query: relativePath("fr-CA"),
-        expected: Option.some({
+        expected: option.some({
           file: normalizedFile("/content/fr-CA/index.md"),
           destination: normalizedRelativePath("fr-CA/index.html"),
           statusCode: 200,
@@ -107,7 +106,7 @@ module.exports = [
       },
       {
         query: relativePath("inexistent"),
-        expected: Option.some({
+        expected: option.some({
           file: normalizedFile("/content/404.md"),
           destination: normalizedRelativePath("404.html"),
           statusCode: 404,
@@ -116,7 +115,7 @@ module.exports = [
       },
       {
         query: relativePath("fr-CA/inexistent"),
-        expected: Option.some({
+        expected: option.some({
           file: normalizedFile("/content/fr-CA/404.md"),
           destination: normalizedRelativePath("fr-CA/404.html"),
           statusCode: 404,
@@ -125,20 +124,20 @@ module.exports = [
       },
       {
         query: relativePath("not-found-by-server"),
-        expected: Option.none,
+        expected: option.none,
         description:
           "routes files without corresponding source or 404 pathnames to none",
       },
     ],
   },
-] as Array<{
+] as sequence.Sequence<{
   routerSupplier: () => PathnameRouter<never>;
   correspondingFileSupplier: () => (
     query: Pathname,
-  ) => IO.IO<TaskEither.TaskEither<never, Option.Option<File>>>;
+  ) => io.IO<taskEither.TaskEither<never, option.Option<File>>>;
   cases: Array<{
     query: Pathname;
-    expected: Option.Option<{
+    expected: option.Option<{
       file: File;
       destination: Pathname;
       statusCode: 200 | 404;

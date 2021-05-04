@@ -1,11 +1,8 @@
-import * as IO from "fp-ts/IO";
-import * as TaskEither from "fp-ts/TaskEither";
-import * as ReadonlyArray from "fp-ts/ReadonlyArray";
-import { pipe } from "fp-ts/function";
+import { io, taskEither, readonlyArray, function as fn } from "fp-ts";
 
 import * as fse from "fs-extra";
 
-import { absolutePathToString } from "./absolutePath";
+import { absolutePathToString } from "./absolutePath.js";
 import {
   Directory,
   directoryPath,
@@ -13,10 +10,10 @@ import {
   fileFromDirectory,
   directoryFromDirectory,
   DirectoryIOError,
-} from "./directory";
-import { Entry, entryIsDirectory, entryIsFile } from "./entry";
-import { File } from "./file";
-import { relativePath } from "./relativePath";
+} from "./directory.js";
+import { Entry, entryIsDirectory, entryIsFile } from "./entry.js";
+import { File } from "./file.js";
+import { relativePath } from "./relativePath.js";
 
 /**
  * Constructs a function that coerces `Dirent` instances into entries.
@@ -52,7 +49,7 @@ const directoryEntryAsEntry = (
  */
 export type DirectoryReader<DirectoryReadError extends Error> = (
   directory: Directory,
-) => IO.IO<TaskEither.TaskEither<DirectoryReadError, readonly Entry[]>>;
+) => io.IO<taskEither.TaskEither<DirectoryReadError, readonly Entry[]>>;
 
 /**
  * Constructs a directory reader.
@@ -63,8 +60,8 @@ export const directoryReader = (
   encoding: BufferEncoding,
 ): DirectoryReader<DirectoryIOError> => (directory) => () => {
   const direntAsEntry = directoryEntryAsEntry(directory);
-  return pipe(
-    TaskEither.tryCatch<DirectoryIOError, readonly fse.Dirent[]>(
+  return fn.pipe(
+    taskEither.tryCatch<DirectoryIOError, readonly fse.Dirent[]>(
       () =>
         fse.readdir(absolutePathToString(directoryPath(directory)), {
           withFileTypes: true,
@@ -72,13 +69,13 @@ export const directoryReader = (
         }),
       (error) => ({ ...(error as Error & { code: string }), directory }),
     ),
-    TaskEither.map((dirents) =>
-      pipe(
+    taskEither.map((dirents) =>
+      fn.pipe(
         dirents,
-        ReadonlyArray.filter(
+        readonlyArray.filter(
           (dirent) => dirent.isFile() || dirent.isDirectory(),
         ),
-        ReadonlyArray.map((entry) => direntAsEntry(entry)),
+        readonlyArray.map((entry) => direntAsEntry(entry)),
       ),
     ),
   );
@@ -86,24 +83,24 @@ export const directoryReader = (
 
 export type DirectoryFilesReader<DirectoryReadError extends Error> = (
   directory: Directory,
-) => IO.IO<TaskEither.TaskEither<DirectoryReadError, readonly File[]>>;
+) => io.IO<taskEither.TaskEither<DirectoryReadError, readonly File[]>>;
 
 export const directoryFilesReader = <DirectoryReadError extends Error>(
   readDirectory: DirectoryReader<DirectoryReadError>,
 ): DirectoryFilesReader<DirectoryReadError> => (
   directory: Directory,
-): IO.IO<TaskEither.TaskEither<DirectoryReadError, readonly File[]>> => () =>
-  pipe(
+): io.IO<taskEither.TaskEither<DirectoryReadError, readonly File[]>> => () =>
+  fn.pipe(
     readDirectory(directory)(),
-    TaskEither.map((entries) =>
-      pipe(entries, ReadonlyArray.filter(entryIsFile)),
+    taskEither.map((entries) =>
+      fn.pipe(entries, readonlyArray.filter(entryIsFile)),
     ),
   );
 
 export type DirectoryWalker<DirectoryWalkError extends Error> = (
   directory: Directory,
 ) => AsyncIterable<
-  IO.IO<TaskEither.TaskEither<DirectoryWalkError, readonly Entry[]>>
+  io.IO<taskEither.TaskEither<DirectoryWalkError, readonly Entry[]>>
 >;
 
 /**
@@ -123,14 +120,14 @@ export const downwardEntries = <DirectoryReadError extends Error>(
   readDirectory: DirectoryReader<DirectoryReadError>,
 ): DirectoryWalker<DirectoryReadError> =>
   async function* (directory) {
-    yield () => TaskEither.right([directory]);
+    yield () => taskEither.right([directory]);
     const stack: Directory[] = [directory]; // Directories to read
     while (stack.length > 0) {
       const directory = stack.pop() as Directory;
       yield () =>
-        pipe(
+        fn.pipe(
           readDirectory(directory)(),
-          TaskEither.map((entries) => {
+          taskEither.map((entries) => {
             for (const entry of entries)
               if (entryIsDirectory(entry)) stack.push(entry);
             return entries;
@@ -145,14 +142,14 @@ export const downwardFiles = <DirectoryWalkerError extends Error>(
   async function* (
     directory: Directory,
   ): AsyncIterable<
-    IO.IO<TaskEither.TaskEither<DirectoryWalkerError, readonly File[]>>
+    io.IO<taskEither.TaskEither<DirectoryWalkerError, readonly File[]>>
   > {
     for await (const readEntries of walk(directory)) {
       yield () =>
-        pipe(
+        fn.pipe(
           readEntries(),
-          TaskEither.map((entries) =>
-            pipe(entries, ReadonlyArray.filter(entryIsFile)),
+          taskEither.map((entries) =>
+            fn.pipe(entries, readonlyArray.filter(entryIsFile)),
           ),
         );
     }

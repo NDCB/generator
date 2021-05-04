@@ -1,7 +1,4 @@
-import * as Task from "fp-ts/Task";
-import * as TaskEither from "fp-ts/TaskEither";
-import * as ReadonlyArray from "fp-ts/ReadonlyArray";
-import { pipe } from "fp-ts/function";
+import { task, taskEither, readonlyArray, function as fn } from "fp-ts";
 
 import {
   normalizedFile,
@@ -10,25 +7,30 @@ import {
   fileToString,
   directoryToString,
 } from "@ndcb/fs-util";
-import { isIterable } from "@ndcb/util";
+import { type } from "@ndcb/util";
 
 import { mockFileSystem } from "../src/mock";
 
+import fileExistsTestCases from "./fixtures/fileExists.json";
+import directoryExistsTestCases from "./fixtures/directoryExists.json";
+import readFileTestCases from "./fixtures/readFile.json";
+import readDirectoryTestCases from "./fixtures/readDirectory.json";
+
 describe("fileExists", () => {
-  for (const { fs, cases } of require("./fixtures/fileExists")) {
+  for (const { fs, cases } of fileExistsTestCases) {
     const { fileExists } = mockFileSystem(fs);
     for (const { file, expected, description } of cases) {
       test(description, async () => {
-        await pipe(
+        await fn.pipe(
           fileExists(normalizedFile(file))(),
-          TaskEither.getOrElse(() => {
+          taskEither.getOrElse(() => {
             throw new Error(
               `Unexpectedly failed to test for the existence of file "${fileToString(
-                file,
+                normalizedFile(file),
               )}"`,
             );
           }),
-          Task.map((exists) => expect(exists).toBe(expected)),
+          task.map((exists) => expect(exists).toBe(expected)),
         )();
       });
     }
@@ -36,20 +38,20 @@ describe("fileExists", () => {
 });
 
 describe("directoryExists", () => {
-  for (const { fs, cases } of require("./fixtures/directoryExists")) {
+  for (const { fs, cases } of directoryExistsTestCases) {
     const { directoryExists } = mockFileSystem(fs);
     for (const { directory, expected, description } of cases) {
       test(description, async () => {
-        await pipe(
+        await fn.pipe(
           directoryExists(normalizedDirectory(directory))(),
-          TaskEither.getOrElse(() => {
+          taskEither.getOrElse(() => {
             throw new Error(
               `Unexpectedly failed to test for the existence of directory "${directoryToString(
-                directory,
+                normalizedDirectory(directory),
               )}"`,
             );
           }),
-          Task.map((exists) => expect(exists).toBe(expected)),
+          task.map((exists) => expect(exists).toBe(expected)),
         )();
       });
     }
@@ -57,36 +59,38 @@ describe("directoryExists", () => {
 });
 
 describe("readFile", () => {
-  for (const { fs, cases } of require("./fixtures/readFile")) {
+  for (const { fs, cases } of readFileTestCases) {
     const { readFile } = mockFileSystem(fs);
     for (const { file, expected, description } of cases) {
       if (typeof expected === "string")
         test(description, async () => {
-          await pipe(
+          await fn.pipe(
             readFile(normalizedFile(file))(),
-            TaskEither.getOrElse(() => {
+            taskEither.getOrElse(() => {
               throw new Error(
-                `Unexpectedly failed to read file "${fileToString(file)}"`,
+                `Unexpectedly failed to read file "${fileToString(
+                  normalizedFile(file),
+                )}"`,
               );
             }),
-            Task.map((contents) =>
+            task.map((contents) =>
               expect(contents).toEqual(Buffer.from(expected)),
             ),
           )();
         });
       else
         test(description, async () => {
-          await pipe(
+          await fn.pipe(
             readFile(normalizedFile(file))(),
-            TaskEither.swap,
-            TaskEither.getOrElse(() => {
+            taskEither.swap,
+            taskEither.getOrElse(() => {
               throw new Error(
                 `Unexpectedly succeeded in reading file "${fileToString(
-                  file,
+                  normalizedFile(file),
                 )}"`,
               );
             }),
-            Task.map((error) => expect(error).toEqual(expect.anything())),
+            task.map((error) => expect(error).toEqual(expect.anything())),
           )();
         });
     }
@@ -94,13 +98,13 @@ describe("readFile", () => {
 });
 
 describe("readDirectory", () => {
-  for (const { fs, cases } of require("./fixtures/readDirectory")) {
+  for (const { fs, cases } of readDirectoryTestCases) {
     const { readDirectory } = mockFileSystem(fs);
     for (const { directory, expected, description } of cases) {
-      if (isIterable(expected)) {
-        const expectedEntries: Entry[] = pipe(
+      if (type.isIterable(expected)) {
+        const expectedEntries: Entry[] = fn.pipe(
           expected as readonly { type: string; path: string }[],
-          ReadonlyArray.map(({ type, path }) => {
+          readonlyArray.map(({ type, path }) => {
             if (type === "file") return normalizedFile(path);
             else if (type === "directory") return normalizedDirectory(path);
             else
@@ -110,20 +114,20 @@ describe("readDirectory", () => {
                 )}"`,
               );
           }),
-          ReadonlyArray.toArray,
+          readonlyArray.toArray,
         );
         test(description, async () => {
-          await pipe(
+          await fn.pipe(
             readDirectory(normalizedDirectory(directory))(),
-            TaskEither.getOrElse(() => {
+            taskEither.getOrElse(() => {
               throw new Error(
                 `Unexpectedly failed to read directory "${directoryToString(
-                  directory,
+                  normalizedDirectory(directory),
                 )}"`,
               );
             }),
-            Task.map(ReadonlyArray.toArray),
-            Task.map((actualEntries) => {
+            task.map(readonlyArray.toArray),
+            task.map((actualEntries) => {
               expect(actualEntries).toEqual(
                 expect.arrayContaining(expectedEntries),
               );
@@ -135,17 +139,17 @@ describe("readDirectory", () => {
         });
       } else
         test(description, async () => {
-          await pipe(
+          await fn.pipe(
             readDirectory(normalizedDirectory(directory))(),
-            TaskEither.swap,
-            TaskEither.getOrElse(() => {
+            taskEither.swap,
+            taskEither.getOrElse(() => {
               throw new Error(
                 `Unexpectedly succeeded to read directory "${directoryToString(
-                  directory,
+                  normalizedDirectory(directory),
                 )}"`,
               );
             }),
-            Task.map((error) => expect(error).toEqual(expect.anything())),
+            task.map((error) => expect(error).toEqual(expect.anything())),
           )();
         });
     }

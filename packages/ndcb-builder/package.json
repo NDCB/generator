@@ -2,7 +2,9 @@
   "name": "@ndcb/builder",
   "version": "0.1.1",
   "description": "Website builder",
+  "type": "module",
   "main": "./lib/index.js",
+  "exports": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "repository": "https://github.com/NDCB/generator/tree/master/packages/ndcb-builder",
   "author": "Marc-Antoine Ouimet",
@@ -13,7 +15,7 @@
   "dependencies": {
     "@ndcb/config": "^0.2.0",
     "@ndcb/logger": "^0.1.1",
-    "fp-ts": "^2.9.5"
+    "fp-ts": "^2.10.5"
   },
   "publishConfig": {
     "access": "public"

@@ -1,8 +1,6 @@
-import * as LRU from "lru-cache";
-import * as IO from "fp-ts/IO";
-import * as TaskEither from "fp-ts/TaskEither";
-import { pipe } from "fp-ts/function";
-import { StatsBase } from "fs";
+import LRU from "lru-cache";
+import { io, taskEither, function as fn } from "fp-ts";
+import { StatsBase } from "fs-extra";
 
 import {
   FileReader,
@@ -27,14 +25,14 @@ export const cachingFileReader = <
   });
   return (
     file: File,
-  ): IO.IO<
-    TaskEither.TaskEither<FileReadError | PathStatusError, Buffer>
+  ): io.IO<
+    taskEither.TaskEither<FileReadError | PathStatusError, Buffer>
   > => () => {
     const path = filePath(file);
     const key = absolutePathToString(path);
-    return pipe(
+    return fn.pipe(
       pathStatus(path)(),
-      TaskEither.chain<
+      taskEither.chain<
         FileReadError | PathStatusError,
         StatsBase<BigInt>,
         Buffer
@@ -42,12 +40,12 @@ export const cachingFileReader = <
         cache.has(key) &&
         ((status as unknown) as { ctimeNs: BigInt }).ctimeNs ===
           (cache.get(key) as { ctimeNs: BigInt }).ctimeNs
-          ? TaskEither.right(
+          ? taskEither.right(
               ((cache.peek(key) as unknown) as { contents: Buffer }).contents,
             )
-          : pipe(
+          : fn.pipe(
               readFile(file)(),
-              TaskEither.map((contents) => {
+              taskEither.map((contents) => {
                 cache.set(key, {
                   ctimeNs: ((status as unknown) as { ctimeNs: BigInt }).ctimeNs,
                   contents,

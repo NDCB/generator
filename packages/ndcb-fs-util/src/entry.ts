@@ -1,10 +1,6 @@
-import * as IO from "fp-ts/IO";
-import * as Option from "fp-ts/Option";
-import * as TaskEither from "fp-ts/TaskEither";
-import * as ReadonlyArray from "fp-ts/ReadonlyArray";
-import { pipe, flow, Refinement } from "fp-ts/function";
+import { io, option, taskEither, readonlyArray, function as fn } from "fp-ts";
 
-import * as Sequence from "@ndcb/util/lib/sequence";
+import { sequence } from "@ndcb/util";
 
 import {
   AbsolutePath,
@@ -12,7 +8,7 @@ import {
   parentPath,
   isUpwardPath,
   PathIOError,
-} from "./absolutePath";
+} from "./absolutePath.js";
 import {
   Directory,
   directory,
@@ -24,7 +20,7 @@ import {
   ensureDirectory,
   directoryName,
   DirectoryIOError,
-} from "./directory";
+} from "./directory.js";
 import {
   ensureFile,
   File,
@@ -35,9 +31,9 @@ import {
   fileName,
   fileEquals,
   FileIOError,
-} from "./file";
-import { relativePathFromAbsolutePaths } from "./path";
-import { RelativePath } from "./relativePath";
+} from "./file.js";
+import { relativePathFromAbsolutePaths } from "./path.js";
+import { RelativePath } from "./relativePath.js";
 
 /**
  * A file system entry representation in the file system.
@@ -51,9 +47,9 @@ export interface EntryPattern<T> {
   readonly directory: (directory: Directory) => T;
 }
 
-export const entryIsFile: Refinement<Entry, File> = isFile;
+export const entryIsFile: fn.Refinement<Entry, File> = isFile;
 
-export const entryIsDirectory: Refinement<Entry, Directory> = isDirectory;
+export const entryIsDirectory: fn.Refinement<Entry, Directory> = isDirectory;
 
 export const matchEntry = <T>(pattern: EntryPattern<T>) => (
   entry: Entry,
@@ -70,12 +66,12 @@ export const matchEntry = <T>(pattern: EntryPattern<T>) => (
 };
 
 export const filterFiles = (entries: readonly Entry[]): readonly File[] =>
-  pipe(entries, ReadonlyArray.filter(entryIsFile));
+  fn.pipe(entries, readonlyArray.filter(entryIsFile));
 
 export const filterDirectories = (
   entries: readonly Entry[],
 ): readonly Directory[] =>
-  pipe(entries, ReadonlyArray.filter(entryIsDirectory));
+  fn.pipe(entries, readonlyArray.filter(entryIsDirectory));
 
 export const entryPath: (entry: Entry) => AbsolutePath = matchEntry({
   file: filePath,
@@ -93,17 +89,17 @@ export const entryEquals = (e1: Entry, e2: Entry): boolean =>
 
 export const entryExists: (
   entry: Entry,
-) => IO.IO<TaskEither.TaskEither<PathIOError, boolean>> = matchEntry({
+) => io.IO<taskEither.TaskEither<PathIOError, boolean>> = matchEntry({
   file: fileExists,
   directory: directoryExists,
 });
 
 export const ensureEntry: (
   entry: Entry,
-) => IO.IO<
-  TaskEither.TaskEither<FileIOError | DirectoryIOError, void>
+) => io.IO<
+  taskEither.TaskEither<FileIOError | DirectoryIOError, void>
 > = matchEntry<
-  IO.IO<TaskEither.TaskEither<FileIOError | DirectoryIOError, void>>
+  io.IO<taskEither.TaskEither<FileIOError | DirectoryIOError, void>>
 >({
   file: ensureFile,
   directory: ensureDirectory,
@@ -114,20 +110,20 @@ export const entryName: (entry: Entry) => string = matchEntry({
   directory: directoryName,
 });
 
-export const topmostDirectory: (entry: Entry) => Directory = flow(
+export const topmostDirectory: (entry: Entry) => Directory = fn.flow(
   entryPath,
   rootPath,
   directory,
 );
 
-export function parentDirectory(file: File): Option.Some<Directory>;
-export function parentDirectory(directory: Directory): Option.Option<Directory>;
-export function parentDirectory(entry: Entry): Option.Option<Directory> {
-  return pipe(
+export function parentDirectory(file: File): option.Some<Directory>;
+export function parentDirectory(directory: Directory): option.Option<Directory>;
+export function parentDirectory(entry: Entry): option.Option<Directory> {
+  return fn.pipe(
     entry,
     entryPath,
     parentPath,
-    Option.map((path) => directory(path)),
+    option.map((path) => directory(path)),
   );
 }
 
@@ -137,8 +133,8 @@ export const fileDirectory = (file: File): Directory =>
 const upwardDirectoriesFromDirectory = function* (
   directory: Directory,
 ): Iterable<Directory> {
-  let current: Option.Option<Directory> = Option.some(directory);
-  while (Option.isSome(current)) {
+  let current: option.Option<Directory> = option.some(directory);
+  while (option.isSome(current)) {
     const value = current.value;
     yield value;
     current = parentDirectory(value);
@@ -162,9 +158,9 @@ export const directoryHasDescendent = (
 
 export const upwardDirectoriesUntil = (root: Directory) =>
   function* (entry: Entry): Iterable<Directory> {
-    yield* pipe(
+    yield* fn.pipe(
       upwardDirectories(entry),
-      Sequence.takeWhile((directory) => !directoryEquals(directory, root)),
+      sequence.takeWhile((directory) => !directoryEquals(directory, root)),
     );
     if (directoryHasDescendent(root, entry)) yield root;
   };

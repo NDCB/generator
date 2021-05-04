@@ -1,6 +1,4 @@
-import * as ReadonlyArray from "fp-ts/ReadonlyArray";
-import * as Option from "fp-ts/Option";
-import { pipe } from "fp-ts/function";
+import { readonlyArray, option, function as fn } from "fp-ts";
 
 import { Configuration } from "@ndcb/config";
 import { colorize } from "@ndcb/logger";
@@ -25,10 +23,10 @@ export const tieredColorizeElapsedTime = (
     a < b ? 1 : a > b ? -1 : 0,
   );
   return (elapsed: bigint): string =>
-    pipe(
+    fn.pipe(
       thresholds,
-      ReadonlyArray.findFirst(({ lower }) => elapsed >= lower),
-      Option.fold(
+      readonlyArray.findFirst(({ lower }) => elapsed >= lower),
+      option.fold(
         () => formatter(elapsed),
         ({ colorize }) => colorize(formatter(elapsed)),
       ),

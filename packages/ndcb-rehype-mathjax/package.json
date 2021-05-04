@@ -2,7 +2,9 @@
   "name": "@ndcb/rehype-mathjax",
   "version": "0.0.0",
   "description": "Rehype plugin to transform inline and block math with MathJax",
+  "type": "module",
   "main": "./lib/index.js",
+  "exports": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "repository": "https://github.com/NDCB/generator/tree/master/packages/ndcb-rehype-mathjax",
   "author": "Marc-Antoine Ouimet",
@@ -11,16 +13,16 @@
     "lib"
   ],
   "dependencies": {
-    "hast-util-from-dom": "^3.0.0",
-    "hast-util-to-text": "^2.0.1",
-    "jsdom": "^16.4.0",
-    "mathjax-full": "^3.1.2",
-    "unist-util-visit": "^2.0.3",
-    "lodash.defaultsdeep": "^4.6.1"
+    "hast-util-from-dom": "^4.0.0",
+    "hast-util-to-text": "^3.0.0",
+    "jsdom": "^16.5.3",
+    "mathjax-full": "^3.1.4",
+    "unist-util-visit": "^3.0.0",
+    "lodash-es": "^4.17.21"
   },
   "devDependencies": {
-    "unified": "^9.2.0",
-    "typescript": "^3.9.7"
+    "@types/lodash-es": "^4.17.4",
+    "unified": "^9.2.1"
   },
   "publishConfig": {
     "access": "public"

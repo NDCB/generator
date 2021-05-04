@@ -1,9 +1,7 @@
 import * as fse from "fs-extra";
-import * as IO from "fp-ts/IO";
-import * as TaskEither from "fp-ts/TaskEither";
-import { pipe, flow } from "fp-ts/lib/function";
+import { io, taskEither, function as fn } from "fp-ts";
 
-import { isNotNull } from "@ndcb/util/lib/type";
+import { type } from "@ndcb/util";
 
 import {
   AbsolutePath,
@@ -15,10 +13,10 @@ import {
   pathStatus,
   PathIOError,
   hashAbsolutePath,
-} from "./absolutePath";
-import { file, File } from "./file";
-import { RelativePath } from "./relativePath";
-import { resolvedAbsolutePath } from "./path";
+} from "./absolutePath.js";
+import { file, File } from "./file.js";
+import { RelativePath } from "./relativePath.js";
+import { resolvedAbsolutePath } from "./path.js";
 
 /**
  * A directory representation in the file system.
@@ -37,10 +35,10 @@ export const directory = (path: AbsolutePath): Directory => ({
 
 export const isDirectory = (element: unknown): element is Directory =>
   typeof element === "object" &&
-  isNotNull(element) &&
+  type.isNotNull(element) &&
   element["tag"] === "DIRECTORY";
 
-export const normalizedDirectory: (path: string) => Directory = flow(
+export const normalizedDirectory: (path: string) => Directory = fn.flow(
   normalizedAbsolutePath,
   directory,
 );
@@ -48,7 +46,7 @@ export const normalizedDirectory: (path: string) => Directory = flow(
 export const directoryPath = (directory: Directory): AbsolutePath =>
   directory.path;
 
-export const directoryToString: (directory: Directory) => string = flow(
+export const directoryToString: (directory: Directory) => string = fn.flow(
   directoryPath,
   absolutePathToString,
 );
@@ -56,33 +54,33 @@ export const directoryToString: (directory: Directory) => string = flow(
 export const directoryEquals = (d1: Directory, d2: Directory): boolean =>
   absolutePathEquals(directoryPath(d1), directoryPath(d2));
 
-export const hashDirectory: (directory: Directory) => number = flow(
+export const hashDirectory: (directory: Directory) => number = fn.flow(
   directoryPath,
   hashAbsolutePath,
 );
 
 export type DirectoryExistenceTester<E extends Error> = (
   directory: Directory,
-) => IO.IO<TaskEither.TaskEither<E, boolean>>;
+) => io.IO<taskEither.TaskEither<E, boolean>>;
 
 export const directoryExists: DirectoryExistenceTester<PathIOError> = (
   directory,
 ) => () =>
-  pipe(
+  fn.pipe(
     pathExists(directoryPath(directory))(),
-    TaskEither.fromTask,
-    TaskEither.chainFirst((exists) =>
+    taskEither.fromTask,
+    taskEither.chainFirst((exists) =>
       exists
-        ? pipe(
+        ? fn.pipe(
             pathStatus(directoryPath(directory))(),
-            TaskEither.map((status) => status.isDirectory()),
+            taskEither.map((status) => status.isDirectory()),
           )
-        : TaskEither.right(false),
+        : taskEither.right(false),
     ),
   );
 
-export const currentWorkingDirectory: IO.IO<Directory> = () =>
-  pipe(process.cwd(), normalizedDirectory);
+export const currentWorkingDirectory: io.IO<Directory> = () =>
+  fn.pipe(process.cwd(), normalizedDirectory);
 
 export const fileFromDirectory = (from: Directory) => (
   to: RelativePath,
@@ -99,27 +97,27 @@ export interface DirectoryIOError extends Error {
 
 export const ensureDirectory = (
   directory: Directory,
-): IO.IO<TaskEither.TaskEither<DirectoryIOError, void>> => () =>
-  TaskEither.tryCatch(
+): io.IO<taskEither.TaskEither<DirectoryIOError, void>> => () =>
+  taskEither.tryCatch(
     () => fse.ensureDir(absolutePathToString(directoryPath(directory))),
     (error) => ({ ...(error as Error & { code: string }), directory }),
   );
 
 export const isDirectoryEmpty = (
   directory: Directory,
-): IO.IO<TaskEither.TaskEither<DirectoryIOError, boolean>> => () =>
-  pipe(
-    TaskEither.tryCatch(
+): io.IO<taskEither.TaskEither<DirectoryIOError, boolean>> => () =>
+  fn.pipe(
+    taskEither.tryCatch<DirectoryIOError, string[]>(
       () => fse.readdir(absolutePathToString(directoryPath(directory))),
       (error) => ({ ...(error as Error & { code: string }), directory }),
     ),
-    TaskEither.map((filenames) => !(filenames.length > 0)),
+    taskEither.map((filenames) => !(filenames.length > 0)),
   );
 
 export const emptyDirectory = (
   directory: Directory,
-): IO.IO<TaskEither.TaskEither<DirectoryIOError, void>> => () =>
-  TaskEither.tryCatch(
+): io.IO<taskEither.TaskEither<DirectoryIOError, void>> => () =>
+  taskEither.tryCatch(
     () => fse.emptyDir(absolutePathToString(directoryPath(directory))),
     (error) => ({ ...(error as Error & { code: string }), directory }),
   );

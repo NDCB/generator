@@ -1,11 +1,10 @@
-import * as IO from "fp-ts/IO";
-import * as Task from "fp-ts/Task";
+import { io, task } from "fp-ts";
 
 import { scoppedLogger } from "@ndcb/logger";
 
 const LOGGER = scoppedLogger("builder");
 
-export const build = (config?: string): IO.IO<Task.Task<void>> => () => () =>
+export const build = (config?: string): io.IO<task.Task<void>> => () => () =>
   new Promise(() => {
     LOGGER.error("Not implemented yet")();
     LOGGER.info(`Config: ${config}`)();

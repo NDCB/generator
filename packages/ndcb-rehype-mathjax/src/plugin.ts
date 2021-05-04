@@ -1,4 +1,4 @@
-import deepMerge = require("lodash.defaultsdeep");
+import { defaultsDeep } from "lodash-es";
 
 import { JSDOM } from "jsdom";
 
@@ -16,13 +16,10 @@ import { mathjax as MathJax } from "mathjax-full/js/mathjax";
 import { RegisterHTMLHandler } from "mathjax-full/js/handlers/html";
 import { AssistiveMmlHandler } from "mathjax-full/js/a11y/assistive-mml";
 
-import * as unified from "unified";
-import visit from "unist-util-visit";
-import hastFromDom from "hast-util-from-dom";
-import hastToText from "hast-util-to-text";
-
-// eslint-disable-next-line import/no-unresolved
-import { Node } from "unist";
+import unified from "unified";
+import { visit, SKIP } from "unist-util-visit";
+import { fromDom as hastFromDom } from "hast-util-from-dom";
+import { HastNode, toText as hastToText } from "hast-util-to-text";
 
 export type InputJaxType = "MathML" | "AsciiMath" | "TeX";
 
@@ -77,7 +74,7 @@ export const createPlugin: unified.Attacher<
       ? AssistiveMmlHandler(RegisterHTMLHandler(adaptor))
       : RegisterHTMLHandler(adaptor);
 
-    const options = deepMerge(
+    const options = defaultsDeep(
       {},
       (data as Record<string, unknown>)?.mathjax,
       mathjax,
@@ -94,7 +91,7 @@ export const createPlugin: unified.Attacher<
     let context = tree;
     let found = false;
 
-    visit(tree, "element", (node: Node) => {
+    visit(tree, "element", (node: HastNode) => {
       const classes =
         ((node?.properties as Record<string, unknown>)
           ?.className as string[]) ?? [];
@@ -110,11 +107,11 @@ export const createPlugin: unified.Attacher<
         hastFromDom(document.convert(hastToText(node), { display })),
       ];
 
-      return visit.SKIP;
+      return SKIP;
     });
 
     if (found)
-      (context.children as Node[]).push({
+      (context.children as unknown[]).push({
         type: "element",
         tagName: "style",
         properties: {},

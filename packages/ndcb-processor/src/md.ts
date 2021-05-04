@@ -1,18 +1,17 @@
-import * as Either from "fp-ts/Either";
-import * as Option from "fp-ts/Option";
+import { either, option } from "fp-ts";
 
-import * as unified from "unified";
-import * as markdown from "remark-parse";
-import * as markdownFrontmatter from "remark-frontmatter";
-import * as mardownNormalizeHeadings from "remark-normalize-headings";
-import * as mardownSectionize from "remark-sectionize";
-import * as markdownMath from "remark-math";
-import * as markdownToHtml from "remark-rehype";
-import * as htmlRaw from "rehype-raw";
-import * as htmlSlug from "rehype-slug";
-import * as htmlHeadings from "rehype-autolink-headings";
-import * as htmlCode from "rehype-highlight";
-import * as htmlStringify from "rehype-stringify";
+import unified from "unified";
+import markdown from "remark-parse";
+import markdownFrontmatter from "remark-frontmatter";
+import mardownNormalizeHeadings from "remark-normalize-headings";
+import mardownSectionize from "remark-sectionize";
+import markdownMath from "remark-math";
+import markdownToHtml from "remark-rehype";
+import htmlRaw from "rehype-raw";
+import htmlSlug from "rehype-slug";
+import htmlHeadings from "rehype-autolink-headings";
+import htmlCode from "rehype-highlight";
+import htmlStringify from "rehype-stringify";
 
 import htmlMathjax from "@ndcb/rehype-mathjax";
 import htmlCustomElement, {
@@ -20,8 +19,8 @@ import htmlCustomElement, {
 } from "@ndcb/rehype-custom-element";
 import { extension } from "@ndcb/fs-util";
 
-import { FileProcessor, Processor } from "./processor";
-import { Transformer } from "./html";
+import { FileProcessor, Processor } from "./processor.js";
+import { Transformer } from "./html.js";
 
 export const markdownTransformer = ({
   mathjax = { tex: { tags: "ams" } },
@@ -50,7 +49,7 @@ export const markdownTransformer = ({
     .use(htmlCustomElement, customElements)
     .use(htmlStringify);
   return (contents, data) =>
-    Either.tryCatch(
+    either.tryCatch(
       () => processor.processSync({ contents, data }).contents as string,
       (error) => error as Error,
     );
@@ -61,12 +60,12 @@ export const markdownFileProcessors = (
 ): FileProcessor<Error>[] => [
   {
     processor,
-    sourceExtension: Option.some(extension(".md")),
-    destinationExtension: Option.some(extension(".html")),
+    sourceExtension: option.some(extension(".md")),
+    destinationExtension: option.some(extension(".html")),
   },
   {
     processor,
-    sourceExtension: Option.some(extension(".markdown")),
-    destinationExtension: Option.some(extension(".html")),
+    sourceExtension: option.some(extension(".markdown")),
+    destinationExtension: option.some(extension(".html")),
   },
 ];

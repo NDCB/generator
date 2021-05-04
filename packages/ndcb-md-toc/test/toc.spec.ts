@@ -1,13 +1,17 @@
-import * as Tree from "fp-ts/Tree";
-import * as ReadonlyArray from "fp-ts/ReadonlyArray";
-import * as Task from "fp-ts/Task";
-import * as TaskEither from "fp-ts/TaskEither";
-import * as Option from "fp-ts/Option";
-import { pipe } from "fp-ts/function";
+import {
+  tree,
+  readonlyArray,
+  task,
+  taskEither,
+  option,
+  function as fn,
+} from "fp-ts";
+import { resolve, dirname } from "path";
+import { fileURLToPath } from "url";
 
-import * as unified from "unified";
-import * as markdown from "remark-parse";
-import * as frontmatter from "remark-frontmatter";
+import unified from "unified";
+import markdown from "remark-parse";
+import frontmatter from "remark-frontmatter";
 
 import {
   normalizedDirectory,
@@ -19,12 +23,16 @@ import {
 
 import { mdastTableOfContentsTree } from "../src/toc";
 
+import mdastTableOfContentsTreeTestCases from "./fixtures/mdastTableOfContentsTree.json";
+
 const { parse } = unified()
   .use(markdown, { commonmark: true } as Record<string, unknown>)
   .use(frontmatter);
 
 describe("mdastTableOfContentsTree", () => {
-  const fixturesDirectory = normalizedDirectory(`${__dirname}/fixtures`);
+  const fixturesDirectory = normalizedDirectory(
+    resolve(dirname(fileURLToPath(import.meta.url)), "./fixtures"),
+  );
   const fileInFixtures = fileFromDirectory(fixturesDirectory);
   const readTextFile = textFileReader(readFile, "utf8");
   const readContents = (path: string) =>
@@ -33,22 +41,26 @@ describe("mdastTableOfContentsTree", () => {
     file,
     description,
     expected,
-  } of require("./fixtures/mdastTableOfContentsTree")) {
+  } of mdastTableOfContentsTreeTestCases) {
     const makeTree = (node) =>
-      Tree.make(
+      tree.make(
         node.node,
-        pipe(node.children, ReadonlyArray.map(makeTree), ReadonlyArray.toArray),
+        fn.pipe(
+          node.children,
+          readonlyArray.map(makeTree),
+          readonlyArray.toArray,
+        ),
       );
     test(description, async () => {
-      await pipe(
+      await fn.pipe(
         readContents(file)(),
-        TaskEither.getOrElse(() => {
+        taskEither.getOrElse(() => {
           throw new Error(`Failed to read fixtures file "${file}"`);
         }),
-        Task.map((contents) =>
-          pipe(
+        task.map((contents) =>
+          fn.pipe(
             mdastTableOfContentsTree(parse(contents)),
-            Option.fold(
+            option.fold(
               () => {
                 if (expected)
                   throw new Error(`Unexpectedly parsed a non-empty tree`);

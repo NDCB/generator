@@ -1,15 +1,16 @@
-import * as Option from "fp-ts/Option";
-import * as ReadonlyArray from "fp-ts/ReadonlyArray";
-import { pipe } from "fp-ts/function";
+import { option, readonlyArray, function as fn } from "fp-ts";
 
-import * as Sequence from "@ndcb/util/lib/sequence";
+import { sequence } from "@ndcb/util";
 
-import { extension } from "../src/extension";
-import { normalizedRelativePath } from "../src/relativePath";
 import {
+  extension,
+  normalizedRelativePath,
   relativePathWithExtension,
   relativePathWithExtensions,
-} from "../src/path";
+} from "@ndcb/fs-util";
+
+import relativePathWIthExtensionTestCases from "./fixtures/relativePathWithExtension.json";
+import relativePathWithExtensionsTestCases from "./fixtures/relativePathWithExtensions.json";
 
 describe("relativePathWithExtension", () => {
   for (const {
@@ -17,12 +18,12 @@ describe("relativePathWithExtension", () => {
     target,
     expected,
     description,
-  } of require("./fixtures/relativePathWithExtension")) {
+  } of relativePathWIthExtensionTestCases) {
     test(description, () => {
       expect(
         relativePathWithExtension(
           normalizedRelativePath(input),
-          Option.some(extension(target)),
+          option.some(extension(target)),
         ),
       ).toStrictEqual(normalizedRelativePath(expected));
     });
@@ -35,21 +36,21 @@ describe("relativePathWithExtensions", () => {
     targets,
     expected,
     description,
-  } of require("./fixtures/relativePathWithExtensions")) {
+  } of relativePathWithExtensionsTestCases) {
     test(description, () => {
       expect(
         relativePathWithExtensions(
           normalizedRelativePath(input),
-          pipe(
+          fn.pipe(
             targets as readonly string[],
-            ReadonlyArray.map((target) => Option.some(extension(target))),
+            readonlyArray.map((target) => option.some(extension(target))),
           ),
         ),
       ).toStrictEqual(
-        pipe(
+        fn.pipe(
           expected,
-          Sequence.map(normalizedRelativePath),
-          Sequence.toReadonlyArray,
+          sequence.map(normalizedRelativePath),
+          sequence.toReadonlyArray,
         ),
       );
     });

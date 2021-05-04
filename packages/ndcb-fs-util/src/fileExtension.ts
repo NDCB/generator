@@ -1,40 +1,38 @@
-import * as Option from "fp-ts/Option";
-import * as ReadonlyArray from "fp-ts/ReadonlyArray";
-import { pipe, flow } from "fp-ts/function";
+import { option, readonlyArray, function as fn } from "fp-ts";
 
-import * as Sequence from "@ndcb/util/lib/sequence";
+import { sequence } from "@ndcb/util";
 
-import { Extension, extensionEquals } from "./extension";
-import { filePath, File } from "./file";
-import { pathExtension, pathExtensions } from "./path";
+import { Extension, extensionEquals } from "./extension.js";
+import { filePath, File } from "./file.js";
+import { pathExtension, pathExtensions } from "./path.js";
 
-export const fileExtension: (file: File) => Option.Option<Extension> = flow(
+export const fileExtension: (file: File) => option.Option<Extension> = fn.flow(
   filePath,
   pathExtension,
 );
 
 export const fileExtensions: (
   file: File,
-) => Sequence.Sequence<Extension> = flow(filePath, pathExtensions);
+) => sequence.Sequence<Extension> = fn.flow(filePath, pathExtensions);
 
 export const fileHasExtension = (target: Extension) => (
   file: File,
 ): boolean => {
   const extension = fileExtension(file);
-  return Option.isSome(extension) && extensionEquals(target, extension.value);
+  return option.isSome(extension) && extensionEquals(target, extension.value);
 };
 
 export const fileHasSomeExtensionFrom = (
   targets: readonly Extension[],
 ): ((file: File) => boolean) => (file: File): boolean =>
-  pipe(
+  fn.pipe(
     fileExtension(file),
-    Option.fold(
+    option.fold(
       () => false,
       (extension) =>
-        pipe(
+        fn.pipe(
           targets,
-          ReadonlyArray.some((target) => extensionEquals(extension, target)),
+          readonlyArray.some((target) => extensionEquals(extension, target)),
         ),
     ),
   );

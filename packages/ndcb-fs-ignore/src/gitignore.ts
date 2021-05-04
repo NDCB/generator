@@ -1,6 +1,4 @@
-import * as Either from "fp-ts/Either";
-import * as TaskEither from "fp-ts/TaskEither";
-import { pipe } from "fp-ts/function";
+import { either, taskEither, function as fn } from "fp-ts";
 
 import gitignore from "ignore";
 
@@ -16,7 +14,7 @@ import {
   fileName,
 } from "@ndcb/fs-util";
 
-import { ExclusionRule, ExclusionRuleReader } from "./exclusionRule";
+import { ExclusionRule, ExclusionRuleReader } from "./exclusionRule.js";
 
 export interface GitignoreParseError extends Error {
   readonly file: File;
@@ -25,13 +23,13 @@ export interface GitignoreParseError extends Error {
 const parseGitignoreToPathnameExcluder = (
   file: File,
   contents: string,
-): Either.Either<GitignoreParseError, (pathname: string) => boolean> =>
-  pipe(
-    Either.tryCatch(
+): either.Either<GitignoreParseError, (pathname: string) => boolean> =>
+  fn.pipe(
+    either.tryCatch(
       () => gitignore().add(contents).add(fileName(file)),
       (reason) => ({ ...(reason as Error), file }),
     ),
-    Either.map((ignore) => (pathname) =>
+    either.map((ignore) => (pathname) =>
       pathname.length > 0 && ignore.ignores(pathname),
     ),
   );
@@ -48,22 +46,22 @@ export const gitignoreExclusionRule = <TextFileReadEror extends Error>(
 ): ExclusionRuleReader<TextFileReadEror | GitignoreParseError> => (
   rulesFile,
 ) => () =>
-  pipe(
+  fn.pipe(
     readTextFile(rulesFile)(),
-    TaskEither.chain<
+    taskEither.chain<
       TextFileReadEror | GitignoreParseError,
       string,
       ExclusionRule
     >((contents) =>
-      pipe(
+      fn.pipe(
         parseGitignoreToPathnameExcluder(rulesFile, contents),
-        Either.map((pathnameExcluder) =>
+        either.map((pathnameExcluder) =>
           parseGitignoreToExclusionRule(
             fileDirectory(rulesFile),
             pathnameExcluder,
           ),
         ),
-        TaskEither.fromEither,
+        taskEither.fromEither,
       ),
     ),
   );

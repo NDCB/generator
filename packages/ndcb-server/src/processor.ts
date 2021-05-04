@@ -1,7 +1,4 @@
-import * as IO from "fp-ts/IO";
-import * as Option from "fp-ts/Option";
-import * as TaskEither from "fp-ts/TaskEither";
-import { pipe } from "fp-ts/function";
+import { io, option, taskEither, function as fn } from "fp-ts";
 
 import { lookup } from "mime-types";
 
@@ -13,15 +10,15 @@ import {
   pathExtension,
   RelativePath,
 } from "@ndcb/fs-util";
-import { Timed } from "@ndcb/util";
+import { time } from "@ndcb/util";
 import { Processor } from "@ndcb/processor";
 
-import { Pathname, PathnameRouter } from "./router";
+import { Pathname, PathnameRouter } from "./router.js";
 
-const contentType = (ext: Option.Option<Extension>): string =>
-  pipe(
+const contentType = (ext: option.Option<Extension>): string =>
+  fn.pipe(
     ext,
-    Option.getOrElse(() => extension(".txt")),
+    option.getOrElse(() => extension(".txt")),
     extensionToString,
     (ext) => lookup(ext) as string,
   );
@@ -35,27 +32,27 @@ export type ServerProcessorResult = {
 
 export type ServerProcessor<ServerProcessorError extends Error> = (
   pathname: Pathname,
-) => IO.IO<TaskEither.TaskEither<ServerProcessorError, ServerProcessorResult>>;
+) => io.IO<taskEither.TaskEither<ServerProcessorError, ServerProcessorResult>>;
 
 export type FileServerProcessor<FileServerProcessorError extends Error> = (
   file: File,
-) => IO.IO<
-  TaskEither.TaskEither<FileServerProcessorError, ServerProcessorResult>
+) => io.IO<
+  taskEither.TaskEither<FileServerProcessorError, ServerProcessorResult>
 >;
 
 export type TimedServerProcessor<ServerProcessorError extends Error> = (
   pathname: Pathname,
-) => IO.IO<
-  TaskEither.TaskEither<ServerProcessorError, Timed<ServerProcessorResult>>
+) => io.IO<
+  taskEither.TaskEither<ServerProcessorError, time.Timed<ServerProcessorResult>>
 >;
 
 export const processorAsTimedProcessor = <ServerProcessorError extends Error>(
   processor: ServerProcessor<ServerProcessorError>,
 ): TimedServerProcessor<ServerProcessorError> => (pathname: Pathname) => () => {
   const startTime = process.hrtime.bigint();
-  return pipe(
+  return fn.pipe(
     processor(pathname)(),
-    TaskEither.map((result) => ({
+    taskEither.map((result) => ({
       ...result,
       elapsedTime: process.hrtime.bigint() - startTime,
     })),
@@ -64,10 +61,10 @@ export const processorAsTimedProcessor = <ServerProcessorError extends Error>(
 
 export type FileRouter<FileRouterError extends Error> = (
   query: Pathname,
-) => IO.IO<
-  TaskEither.TaskEither<
+) => io.IO<
+  taskEither.TaskEither<
     FileRouterError,
-    Option.Option<{ file: File; destination: Pathname; statusCode: 200 | 404 }>
+    option.Option<{ file: File; destination: Pathname; statusCode: 200 | 404 }>
   >
 >;
 
@@ -78,67 +75,67 @@ export const fileRouter = <
   router: PathnameRouter<PathnameRouterError>,
   correspondingFile: (
     query: Pathname,
-  ) => IO.IO<
-    TaskEither.TaskEither<CorrespondingFileError, Option.Option<File>>
+  ) => io.IO<
+    taskEither.TaskEither<CorrespondingFileError, option.Option<File>>
   >,
 ): FileRouter<PathnameRouterError | CorrespondingFileError> => (
   query: Pathname,
 ) => () =>
-  pipe(
+  fn.pipe(
     router.sourcePathname(query)(),
-    TaskEither.chain<
+    taskEither.chain<
       PathnameRouterError,
-      Option.Option<RelativePath>,
+      option.Option<RelativePath>,
       {
-        routedPathname: Option.Option<RelativePath>;
+        routedPathname: option.Option<RelativePath>;
         statusCode: 200 | 404;
       }
     >(
-      Option.fold<
+      option.fold<
         RelativePath,
-        TaskEither.TaskEither<
+        taskEither.TaskEither<
           PathnameRouterError,
           {
-            routedPathname: Option.Option<RelativePath>;
+            routedPathname: option.Option<RelativePath>;
             statusCode: 200 | 404;
           }
         >
       >(
         () =>
-          pipe(
+          fn.pipe(
             router.sourcePathname404(query)(),
-            TaskEither.map((routedPathname) => ({
+            taskEither.map((routedPathname) => ({
               routedPathname,
               statusCode: 404,
             })),
           ),
         (routedPathname) =>
-          TaskEither.right({
-            routedPathname: Option.some(routedPathname),
+          taskEither.right({
+            routedPathname: option.some(routedPathname),
             statusCode: 200,
           }),
       ),
     ),
-    TaskEither.chain(({ routedPathname, statusCode }) =>
-      pipe(
+    taskEither.chain(({ routedPathname, statusCode }) =>
+      fn.pipe(
         routedPathname,
-        Option.fold<
+        option.fold<
           RelativePath,
-          TaskEither.TaskEither<
+          taskEither.TaskEither<
             PathnameRouterError | CorrespondingFileError,
-            Option.Option<{
+            option.Option<{
               file: File;
               destination: Pathname;
               statusCode: 200 | 404;
             }>
           >
         >(
-          () => TaskEither.right(Option.none),
+          () => taskEither.right(option.none),
           (routedPathname) =>
-            pipe(
+            fn.pipe(
               correspondingFile(routedPathname)(),
-              TaskEither.map(
-                Option.map((file) => ({
+              taskEither.map(
+                option.map((file) => ({
                   file,
                   destination: router.destinationPathname(routedPathname),
                   statusCode,
@@ -159,29 +156,29 @@ export const processor = <
   processor: Processor<ProcessorError>,
   generator404: (
     query: Pathname,
-  ) => IO.IO<TaskEither.TaskEither<Generator404Error, ServerProcessorResult>>,
+  ) => io.IO<taskEither.TaskEither<Generator404Error, ServerProcessorResult>>,
 ): ServerProcessor<FileRouterError | ProcessorError | Generator404Error> => (
   pathname: Pathname,
 ) => () =>
-  pipe(
+  fn.pipe(
     router(pathname)(),
-    TaskEither.chain(
-      Option.fold<
+    taskEither.chain(
+      option.fold<
         {
           file: File;
           destination: Pathname;
           statusCode: 200 | 404;
         },
-        TaskEither.TaskEither<
+        taskEither.TaskEither<
           FileRouterError | ProcessorError | Generator404Error,
           ServerProcessorResult
         >
       >(
         () => generator404(pathname)(),
         ({ file, destination, statusCode }) =>
-          pipe(
+          fn.pipe(
             processor(file)(),
-            TaskEither.map(({ contents, encoding }) => ({
+            taskEither.map(({ contents, encoding }) => ({
               statusCode,
               contents,
               encoding,
@@ -191,59 +188,3 @@ export const processor = <
       ),
     ),
   );
-
-/*
-export const serverProcessor = (
-  configuration: Configuration,
-): ServerProcessor<Error> => {
-  const { readFile, readTextFile, readDirectory } = fileSystemReaders(
-    configuration,
-  );
-  const safeFs = fileSystem(
-    configuration,
-    readFile,
-    readTextFile,
-    readDirectory,
-    fileExists,
-  );
-  const unsafeFs = unsafeFileSystem(
-    configuration,
-    readFile,
-    readDirectory,
-    fileExists,
-  );
-  const processors: FileProcessor<Error>[] = [
-    ...markdownFileProcessors(
-      templatingProcessor(
-        readTextFile,
-        () => () => TaskEither.right({}), // TODO: Data supplier
-        (data) => () => {
-          // TODO: Read components directory and map to component handlers
-          // TODO: Read layouts directory and map to configured selected handlers
-          // TODO: Read pages directory and map to configured selected handlers
-          return right(
-            markdownTransformer({
-              customElements: {
-                transformers: [
-                  // TODO: {h1, theorem, proof, definition, example, figure, exercise, reminder, solution} transformers by reading "/components" folder using the unsafe file system
-                ],
-              },
-            }),
-          );
-        },
-      ),
-    ),
-    ...sassFileProcessors(sassProcessor),
-  ];
-  return processor(
-    fileRouter(
-      router(fileProcessorExtensionMaps(processors), safeFs.fileExists),
-      unsafeFs.file,
-    ),
-    compositeFileProcessor(processors, (file) => () =>
-      mapRight(readFile(file)(), bufferToProcessorResult),
-    ),
-    () => () => left(new Error()), // TODO: No routed 404
-  );
-};
-*/

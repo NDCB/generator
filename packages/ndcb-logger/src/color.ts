@@ -1,4 +1,5 @@
-import { keyword } from "chalk";
+import chalk from "chalk";
+const { keyword } = chalk;
 
 export type ColorCode =
   | "black"
