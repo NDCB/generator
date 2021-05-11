@@ -48,11 +48,7 @@ export const gitignoreExclusionRule = <TextFileReadEror extends Error>(
 ) => () =>
   fn.pipe(
     readTextFile(rulesFile)(),
-    taskEither.chain<
-      TextFileReadEror | GitignoreParseError,
-      string,
-      ExclusionRule
-    >((contents) =>
+    taskEither.chainW((contents) =>
       fn.pipe(
         parseGitignoreToPathnameExcluder(rulesFile, contents),
         either.map((pathnameExcluder) =>

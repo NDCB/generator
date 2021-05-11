@@ -169,19 +169,14 @@ export const textFileDataReader = <
   >
 > => () =>
   fn.pipe(
-    parser.handles(file)
+    (parser.handles(file)
       ? taskEither.right(file)
-      : taskEither.left(unhandledFileError(file)),
-    taskEither.chain<
+      : taskEither.left(unhandledFileError(file))) as taskEither.TaskEither<
       ReadFileError | ParseError | UnhandledFileError,
-      File,
-      string
-    >((file) => readTextFile(file)()),
-    taskEither.chain<
-      ReadFileError | ParseError | UnhandledFileError,
-      string,
-      unknown
-    >((contents) =>
+      File
+    >,
+    taskEither.chainW((file) => readTextFile(file)()),
+    taskEither.chainW((contents) =>
       fn.pipe(parser.parse(file, contents), taskEither.fromEither),
     ),
   );

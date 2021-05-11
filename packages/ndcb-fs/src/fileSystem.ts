@@ -129,71 +129,19 @@ export const compositeFileSystem = <
       ),
       taskEither.sequenceSeqArray,
       taskEither.map(readonlyArray.findFirst(({ fileExists }) => fileExists)),
-      taskEither.chain<
-        FileExistenceTestError | FileNotFoundError,
-        option.Option<{
-          system: FileSystem<
-            FileRetrievalError,
-            FileExistenceTestError,
-            DirectoryExistenceTestError,
-            FileReadError,
-            DirectoryReadError
-          >;
-          fileExists: boolean;
-        }>,
-        FileSystem<
-          FileRetrievalError,
-          FileExistenceTestError,
-          DirectoryExistenceTestError,
-          FileReadError,
-          DirectoryReadError
-        >
-      >((option) =>
+      taskEither.chainW((option) =>
         fn.pipe(
           option,
           taskEither.fromOption(() => fileNotFoundError(path)),
           taskEither.map(({ system }) => system),
         ),
       ),
-      taskEither.chain<
-        FileReadError | FileExistenceTestError | FileNotFoundError,
-        FileSystem<
-          FileRetrievalError,
-          FileExistenceTestError,
-          DirectoryExistenceTestError,
-          FileReadError,
-          DirectoryReadError
-        >,
-        Buffer
-      >((system) => system.readFile(path)()),
+      taskEither.chainW((system) => system.readFile(path)()),
     ),
   readDirectory: (path) => () =>
     fn.pipe(
       systems,
-      readonlyArray.map<
-        FileSystem<
-          FileRetrievalError,
-          FileExistenceTestError,
-          DirectoryExistenceTestError,
-          FileReadError,
-          DirectoryReadError
-        >,
-        taskEither.TaskEither<
-          | DirectoryNotFoundError
-          | DirectoryExistenceTestError
-          | DirectoryReadError,
-          {
-            system: FileSystem<
-              FileRetrievalError,
-              FileExistenceTestError,
-              DirectoryExistenceTestError,
-              FileReadError,
-              DirectoryReadError
-            >;
-            directoryExists: boolean;
-          }
-        >
-      >((system) =>
+      readonlyArray.map((system) =>
         fn.pipe(
           system.directoryExists(path)(),
           taskEither.map((directoryExists) => ({ system, directoryExists })),
@@ -207,24 +155,12 @@ export const compositeFileSystem = <
           readonlyArray.map(({ system }) => system),
         ),
       ),
-      taskEither.chain((systems) =>
+      taskEither.chainW((systems) =>
         systems.length > 0
           ? taskEither.right(systems)
           : taskEither.left(directoryNotFoundError(path)),
       ),
-      taskEither.chain<
-        | DirectoryNotFoundError
-        | DirectoryExistenceTestError
-        | DirectoryReadError,
-        readonly FileSystem<
-          FileRetrievalError,
-          FileExistenceTestError,
-          DirectoryExistenceTestError,
-          FileReadError,
-          DirectoryReadError
-        >[],
-        readonly (readonly Entry[])[]
-      >((systems) =>
+      taskEither.chainW((systems) =>
         fn.pipe(
           systems,
           readonlyArray.map((system) => system.readDirectory(path)()),

@@ -52,11 +52,7 @@ export const exclusionRuleReaderFromDirectory = <
 > => (directory) => () =>
   fn.pipe(
     readDirectory(directory)(),
-    taskEither.chain<
-      DirectoryReadError | ExclusionRuleReadError,
-      readonly File[],
-      ExclusionRule
-    >((files) =>
+    taskEither.chainW((files) =>
       fn.pipe(
         files,
         readonlyArray.map(readOptionalExculsionRule),
@@ -88,16 +84,7 @@ export const downwardNotIgnoredEntries = <
   readDirectory: DirectoryReader<DirectoryReadError>,
   directoryExclusionRule: DirectoryExclusionRuleReader<ExclusionRuleReadError>,
 ): DirectoryWalker<DirectoryReadError | ExclusionRuleReadError> =>
-  async function* (
-    directory: Directory,
-  ): AsyncIterable<
-    io.IO<
-      taskEither.TaskEither<
-        DirectoryReadError | ExclusionRuleReadError,
-        readonly Entry[]
-      >
-    >
-  > {
+  async function* (directory) {
     yield () => taskEither.right([directory]);
     const stack: Array<{
       directory: Directory;
@@ -114,11 +101,7 @@ export const downwardNotIgnoredEntries = <
           taskEither.map((currentExclusionRule) =>
             compositeExclusionRule([parentExclusionRule, currentExclusionRule]),
           ),
-          taskEither.chain<
-            DirectoryReadError | ExclusionRuleReadError,
-            ExclusionRule,
-            readonly Entry[]
-          >((exclude) =>
+          taskEither.chainW((exclude) =>
             fn.pipe(
               readDirectory(directory)(),
               taskEither.map((entries) =>

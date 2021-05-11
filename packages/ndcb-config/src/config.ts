@@ -38,42 +38,24 @@ export const configurationFetcher = <
         // Configuration path supplied
         fn.pipe(
           coerceConfigurationFile(configurationPath),
-          taskEither.chain<TextFileReadError | ValidationError, File, unknown>(
-            (file) => readTextFileData(file)(),
-          ),
-          taskEither.chain<
-            TextFileReadError | ValidationError,
-            unknown,
-            Configuration
-          >((data) => coerceConfiguration(data)),
+          taskEither.chainW((file) => readTextFileData(file)()),
+          taskEither.chainW((data) => coerceConfiguration(data)),
         )
     : () =>
         // Use default configuration path if it exists, or default configuration
         fn.pipe(
           coerceConfigurationFile(),
-          taskEither.chain<
-            TextFileReadError | ValidationError | TestFileExistenceError,
-            File,
-            { exists: boolean; file: File }
-          >((file) =>
+          taskEither.chainW((file) =>
             fn.pipe(
               fileExists(file)(),
               taskEither.map((exists) => ({ exists, file })),
             ),
           ),
-          taskEither.chain<
-            TextFileReadError | ValidationError | TestFileExistenceError,
-            { exists: boolean; file: File },
-            Configuration
-          >(({ exists, file }) =>
+          taskEither.chainW(({ exists, file }) =>
             exists
               ? fn.pipe(
                   readTextFileData(file)(),
-                  taskEither.chain<
-                    TextFileReadError | ValidationError,
-                    unknown,
-                    Configuration
-                  >((data) => coerceConfiguration(data)),
+                  taskEither.chainW((data) => coerceConfiguration(data)),
                 )
               : coerceConfiguration(),
           ),

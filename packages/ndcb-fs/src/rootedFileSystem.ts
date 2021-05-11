@@ -4,7 +4,6 @@ import {
   deepEntryExclusionRule,
   DirectoryExclusionRuleReader,
   downwardNotIgnoredEntries,
-  ExclusionRule,
   exclusionRuleAsFilter,
 } from "@ndcb/fs-ignore";
 import {
@@ -197,14 +196,7 @@ export const excludedRootedFileSystem = <
           file: system.fileFromRoot(path),
           exists,
         })),
-        taskEither.chain<
-          FileExistenceTestError | ExclusionRuleReadError,
-          {
-            exists: boolean;
-            file: File;
-          },
-          boolean
-        >(({ exists, file }) =>
+        taskEither.chainW(({ exists, file }) =>
           exists
             ? fn.pipe(
                 exclusionRuleAt(file)(),
@@ -220,14 +212,7 @@ export const excludedRootedFileSystem = <
           exists,
           directory: system.directoryFromRoot(path),
         })),
-        taskEither.chain<
-          DirectoryExistenceTestError | ExclusionRuleReadError,
-          {
-            exists: boolean;
-            directory: Directory;
-          },
-          boolean
-        >(({ exists, directory }) =>
+        taskEither.chainW(({ exists, directory }) =>
           exists
             ? fn.pipe(
                 exclusionRuleAt(directory)(),
@@ -240,40 +225,24 @@ export const excludedRootedFileSystem = <
       const file = system.fileFromRoot(path);
       return fn.pipe(
         exclusionRuleAt(file)(),
-        taskEither.chain<
-          ExclusionRuleReadError | FileNotFoundError,
-          ExclusionRule,
-          File
-        >((excludes) =>
+        taskEither.chainW((excludes) =>
           excludes(file)
             ? taskEither.left(fileNotFoundError(path))
             : taskEither.right(file),
         ),
-        taskEither.chain<
-          FileReadError | ExclusionRuleReadError | FileNotFoundError,
-          File,
-          Buffer
-        >(() => system.readFile(path)()),
+        taskEither.chainW(() => system.readFile(path)()),
       );
     },
     readDirectory: (path) => () => {
       const directory = system.directoryFromRoot(path);
       return fn.pipe(
         exclusionRuleAt(directory)(),
-        taskEither.chain<
-          ExclusionRuleReadError | DirectoryNotFoundError,
-          ExclusionRule,
-          ExclusionRule
-        >((excludes) =>
+        taskEither.chainW((excludes) =>
           excludes(directory)
             ? taskEither.left(directoryNotFoundError(path))
             : taskEither.right(excludes),
         ),
-        taskEither.chain<
-          DirectoryReadError | ExclusionRuleReadError | DirectoryNotFoundError,
-          ExclusionRule,
-          readonly Entry[]
-        >((excludes) =>
+        taskEither.chainW((excludes) =>
           fn.pipe(
             system.readDirectory(path)(),
             taskEither.map(
