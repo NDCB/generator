@@ -9,7 +9,7 @@ export interface HashMap<K, V> {
 }
 
 export const hashMap = <K, V>(
-  entries: Iterable<[K, V]>,
+  entries: sequence.Sequence<[K, V]>,
   hash: (key: K) => number,
   keyEquality: eq.Eq<K>,
 ): HashMap<K, V> => {
@@ -50,11 +50,11 @@ export const hashMap = <K, V>(
 };
 
 export const inversedHashMap = <K, V>(
-  entries: Iterable<[K, V]>,
+  entries: sequence.Sequence<[K, V]>,
   hash: (value: V) => number,
   valueEquality: eq.Eq<V>,
 ): HashMap<V, K[]> => {
-  const inversedEntries = function* (): Iterable<[V, K[]]> {
+  const inversedEntries = function* (): sequence.Sequence<[V, K[]]> {
     let remainingEntries: Array<[K, V]> = [...entries];
     let ignoredEntries: Array<[K, V]> = [];
     while (remainingEntries.length > 0) {
@@ -75,7 +75,7 @@ export const inversedHashMap = <K, V>(
 };
 
 export const stringHashMap = <V>(
-  entries: Iterable<[string, V]>,
+  entries: sequence.Sequence<[string, V]>,
 ): HashMap<string, V> =>
   hashMap(
     entries,
