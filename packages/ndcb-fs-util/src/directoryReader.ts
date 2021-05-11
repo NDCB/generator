@@ -136,21 +136,19 @@ export const downwardEntries = <DirectoryReadError extends Error>(
     }
   };
 
-export const downwardFiles = <DirectoryWalkerError extends Error>(
-  walk: DirectoryWalker<DirectoryWalkerError>,
-) =>
-  async function* (
-    directory: Directory,
-  ): AsyncIterable<
-    io.IO<taskEither.TaskEither<DirectoryWalkerError, readonly File[]>>
-  > {
+export type FileWalker<WalkError extends Error> = (
+  directory: Directory,
+) => AsyncIterable<io.IO<taskEither.TaskEither<WalkError, readonly File[]>>>;
+
+export const downwardFiles = <WalkError extends Error>(
+  walk: DirectoryWalker<WalkError>,
+): FileWalker<WalkError> =>
+  async function* (directory) {
     for await (const readEntries of walk(directory)) {
       yield () =>
         fn.pipe(
           readEntries(),
-          taskEither.map((entries) =>
-            fn.pipe(entries, readonlyArray.filter(entryIsFile)),
-          ),
+          taskEither.map(readonlyArray.filter(entryIsFile)),
         );
     }
   };
