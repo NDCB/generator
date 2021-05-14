@@ -101,17 +101,18 @@ export const rootedFileSystem = <
   const directoryFromRoot = pathnameToDirectory;
   return {
     root,
-    pathname: (entry) =>
-      fn.pipe(
-        entry,
-        option.fromPredicate(systemIncludes),
-        option.map((entry) => entryRelativePath(root, entry)),
-      ),
+    pathname: fn.flow(
+      option.fromPredicate(systemIncludes),
+      option.map((entry) => entryRelativePath(root, entry)),
+    ),
     file: (pathname) => () =>
       fn.pipe(
         fileExistsInSystem(pathname)(),
-        taskEither.map((exists) =>
-          exists ? option.some(fileFromRoot(pathname)) : option.none,
+        taskEither.map(
+          fn.flow(
+            option.fromPredicate((exists) => exists),
+            option.map(() => fileFromRoot(pathname)),
+          ),
         ),
       ),
     fileFromRoot,
@@ -181,7 +182,11 @@ export const excludedRootedFileSystem = <
                 fn.pipe(
                   exclusionRuleAt(file)(),
                   taskEither.map((excludes) =>
-                    excludes(file) ? option.none : fileQuery,
+                    fn.pipe(
+                      file,
+                      option.fromPredicate((file) => !excludes(file)),
+                      option.chain(() => fileQuery),
+                    ),
                   ),
                 ),
             ),

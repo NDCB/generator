@@ -2,7 +2,7 @@ import upath from "upath";
 const { dirname, join, normalizeTrim, sep } = upath;
 import { function as fn } from "fp-ts";
 
-import { hash, type } from "@ndcb/util";
+import { hash, type, sequence } from "@ndcb/util";
 
 /**
  * A relative path between entries in the file system.
@@ -68,7 +68,7 @@ export const normalizedRelativePath: (value: string) => RelativePath = fn.flow(
  */
 export const upwardRelativePaths = function* (
   path: RelativePath,
-): Iterable<RelativePath> {
+): sequence.Sequence<RelativePath> {
   let current: string = relativePathToString(path);
   let previous: string;
   do {
@@ -103,7 +103,7 @@ export const relativePathIsEmpty = (path: RelativePath): boolean =>
 
 export const relativePathSegments = function* (
   path: RelativePath,
-): Iterable<string> {
+): sequence.Sequence<string> {
   const segments = relativePathToString(path).split(sep);
   for (let i = segments[0] === "." ? 1 : 0; i < segments.length; i++)
     yield segments[i];

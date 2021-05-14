@@ -81,7 +81,9 @@ export const pathHasExtension: (path: Path) => boolean = fn.flow(
   option.isSome,
 );
 
-export const pathSegments: (path: Path) => Iterable<string> = matchPath({
+export const pathSegments: (
+  path: Path,
+) => sequence.Sequence<string> = matchPath({
   absolute: absolutePathSegments,
   relative: relativePathSegments,
 });

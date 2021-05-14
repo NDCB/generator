@@ -45,7 +45,7 @@ const mockEntryPatternMatchingError = (entry: unknown): Error =>
 const mockDirectoryEntries = function* (
   directory: MockDirectory,
   base: string,
-): Iterable<Entry> {
+): sequence.Sequence<Entry> {
   for (const segment in directory) {
     const entry = directory[segment];
     const entryPathString = join(base, segment);
@@ -59,11 +59,11 @@ const mockDirectoryEntries = function* (
 
 const mockEntries = function* (
   structure: MockDirectory,
-): Iterable<[File, string] | [Directory, Entry[]]> {
+): sequence.Sequence<[File, string] | [Directory, Entry[]]> {
   const traverse = function* (
     root: MockDirectory,
     base: string,
-  ): Iterable<[File, string] | [Directory, Entry[]]> {
+  ): sequence.Sequence<[File, string] | [Directory, Entry[]]> {
     for (const segment in root) {
       const entry: MockEntry = root[segment];
       /* istanbul ignore else: unexpected branch */
@@ -85,12 +85,12 @@ const mockEntries = function* (
 };
 
 const fileHashMap = <T>(
-  entries: Iterable<[File, T]>,
+  entries: sequence.Sequence<[File, T]>,
 ): hashMap.HashMap<File, T> =>
   hashMap.hashMap(entries, hashFile, eq.fromEquals(fileEquals));
 
 const directoryHashMap = <T>(
-  entries: Iterable<[Directory, T]>,
+  entries: sequence.Sequence<[Directory, T]>,
 ): hashMap.HashMap<Directory, T> =>
   hashMap.hashMap(entries, hashDirectory, eq.fromEquals(directoryEquals));
 

@@ -127,9 +127,14 @@ export const fileSystem = <
   const exclusionRuleRetriever = exclusionRuleReaderFromDirectory(
     readDirectoryFiles,
     (file) =>
-      exclusionRulesFileNames.includes(fileName(file))
-        ? option.some(readExclusionRule(file))
-        : option.none,
+      fn.pipe(
+        file,
+        fileName,
+        option.fromPredicate((fileName) =>
+          exclusionRulesFileNames.includes(fileName),
+        ),
+        option.map(() => readExclusionRule(file)),
+      ),
   );
   return compositeFileSystem(
     fn.pipe(

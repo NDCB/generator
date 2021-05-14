@@ -132,7 +132,7 @@ export const fileDirectory = (file: File): Directory =>
 
 const upwardDirectoriesFromDirectory = function* (
   directory: Directory,
-): Iterable<Directory> {
+): sequence.Sequence<Directory> {
   let current: option.Option<Directory> = option.some(directory);
   while (option.isSome(current)) {
     const value = current.value;
@@ -141,12 +141,12 @@ const upwardDirectoriesFromDirectory = function* (
   }
 };
 
-const upwardDirectoriesFromFile = (file: File): Iterable<Directory> =>
+const upwardDirectoriesFromFile = (file: File): sequence.Sequence<Directory> =>
   upwardDirectoriesFromDirectory(parentDirectory(file).value);
 
 export const upwardDirectories: (
   entry: Entry,
-) => Iterable<Directory> = matchEntry({
+) => sequence.Sequence<Directory> = matchEntry({
   file: upwardDirectoriesFromFile,
   directory: upwardDirectoriesFromDirectory,
 });
@@ -157,7 +157,7 @@ export const directoryHasDescendent = (
 ): boolean => isUpwardPath(directoryPath(directory), entryPath(entry));
 
 export const upwardDirectoriesUntil = (root: Directory) =>
-  function* (entry: Entry): Iterable<Directory> {
+  function* (entry: Entry): sequence.Sequence<Directory> {
     yield* fn.pipe(
       upwardDirectories(entry),
       sequence.takeWhile((directory) => !directoryEquals(directory, root)),
