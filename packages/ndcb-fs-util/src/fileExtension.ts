@@ -3,7 +3,7 @@ import { option, readonlyArray, function as fn } from "fp-ts";
 import { sequence } from "@ndcb/util";
 
 import { Extension, extensionEquals } from "./extension.js";
-import { filePath, File } from "./file.js";
+import { filePath, File, fileName } from "./file.js";
 import { pathExtension, pathExtensions } from "./path.js";
 
 export const fileExtension: (file: File) => option.Option<Extension> = fn.flow(
@@ -36,3 +36,10 @@ export const fileHasSomeExtensionFrom = (
         ),
     ),
   );
+
+export const fileNameWithoutExtensions = (file: File): string => {
+  const name = fileName(file);
+  const firstPeriodIndex = name.indexOf(".");
+  if (firstPeriodIndex > 0) return name.substring(0, firstPeriodIndex);
+  return name;
+};
