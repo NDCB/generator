@@ -1,0 +1,26 @@
+{
+  "name": "@ndcb/front-matter",
+  "version": "0.0.0",
+  "description": "Front-matter parsing",
+  "type": "module",
+  "main": "./lib/index.js",
+  "exports": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "repository": "https://github.com/NDCB/generator/tree/master/packages/ndcb-front-matter",
+  "author": "Marc-Antoine Ouimet",
+  "license": "MIT",
+  "dependencies": {
+    "fp-ts": "^2.10.5"
+  },
+  "devDependencies": {
+    "yaml": "^1.10.2",
+    "@ndcb/fs-util": "^0.3.0",
+    "@ndcb/util": "^0.9.1"
+  },
+  "files": [
+    "lib"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

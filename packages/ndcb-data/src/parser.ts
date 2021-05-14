@@ -19,7 +19,7 @@ import {
 
 const parseJson = (contents: string): unknown => JSON.parse(contents);
 import { parse as parseJson5 } from "json5";
-import { parse as parseYaml } from "yaml";
+import YAML from "yaml";
 import { parse as parseToml } from "toml";
 
 export interface DataParsingError extends Error {
@@ -75,7 +75,7 @@ export const json5Parser: DataParserByFileExtension<DataParsingError> = dataPars
 
 export const yamlParser: DataParserByFileExtension<DataParsingError> = dataParserByExtensionTokens(
   [".yml", ".yaml"],
-  parseYaml,
+  YAML.parse,
 );
 
 export const tomlParser: DataParserByFileExtension<DataParsingError> = dataParserByExtensionTokens(
