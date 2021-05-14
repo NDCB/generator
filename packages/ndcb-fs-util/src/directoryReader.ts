@@ -1,6 +1,7 @@
 import { io, taskEither, readonlyArray, function as fn } from "fp-ts";
 
 import * as fse from "fs-extra";
+import { promises } from "fs";
 
 import { absolutePathToString } from "./absolutePath.js";
 import {
@@ -63,7 +64,7 @@ export const directoryReader = (
   return fn.pipe(
     taskEither.tryCatch<DirectoryIOError, readonly fse.Dirent[]>(
       () =>
-        fse.readdir(absolutePathToString(directoryPath(directory)), {
+        promises.readdir(absolutePathToString(directoryPath(directory)), {
           withFileTypes: true,
           encoding,
         }),
@@ -92,9 +93,7 @@ export const directoryFilesReader = <DirectoryReadError extends Error>(
 ): io.IO<taskEither.TaskEither<DirectoryReadError, readonly File[]>> => () =>
   fn.pipe(
     readDirectory(directory)(),
-    taskEither.map((entries) =>
-      fn.pipe(entries, readonlyArray.filter(entryIsFile)),
-    ),
+    taskEither.map(readonlyArray.filter(entryIsFile)),
   );
 
 export type DirectoryWalker<DirectoryWalkError extends Error> = (

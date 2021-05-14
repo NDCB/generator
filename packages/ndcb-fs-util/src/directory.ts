@@ -1,4 +1,5 @@
 import * as fse from "fs-extra";
+import { promises } from "fs";
 import { io, taskEither, function as fn } from "fp-ts";
 
 import { type } from "@ndcb/util";
@@ -108,7 +109,7 @@ export const isDirectoryEmpty = (
 ): io.IO<taskEither.TaskEither<DirectoryIOError, boolean>> => () =>
   fn.pipe(
     taskEither.tryCatch<DirectoryIOError, string[]>(
-      () => fse.readdir(absolutePathToString(directoryPath(directory))),
+      () => promises.readdir(absolutePathToString(directoryPath(directory))),
       (error) => ({ ...(error as Error & { code: string }), directory }),
     ),
     taskEither.map((filenames) => !(filenames.length > 0)),
