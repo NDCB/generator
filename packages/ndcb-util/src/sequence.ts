@@ -35,6 +35,19 @@ export const first = <T>(sequence: Sequence<T>): option.Option<T> => {
   return option.none;
 };
 
+export const last = <T>(sequence: Sequence<T>): option.Option<T> => {
+  let last: T | null = null;
+  let isEmpty = true;
+  for (const element of sequence) {
+    isEmpty = false;
+    last = element;
+  }
+  return fn.pipe(
+    last,
+    option.fromPredicate((element): element is T => !isEmpty),
+  );
+};
+
 export const rest = function* <T>(sequence: Sequence<T>): Sequence<T> {
   let firstSkipped = false;
   for (const element of sequence) {
