@@ -1,63 +1,57 @@
-import { either, taskEither, function as fn } from "fp-ts";
+import { either, taskEither, function as fn, io } from "fp-ts";
+import type { Either } from "fp-ts/Either";
 
 import gitignore from "ignore";
 
-import {
-  File,
-  TextFileReader,
-  directoryHasDescendent,
-  relativePathToString,
-  entryRelativePath,
-  Entry,
-  fileDirectory,
-  Directory,
-  fileName,
-} from "@ndcb/fs-util";
+import { file, entry, relativePath } from "@ndcb/fs-util";
+import type { File, TextFileReader, Entry, Directory } from "@ndcb/fs-util";
 
-import { ExclusionRule, ExclusionRuleReader } from "./exclusionRule.js";
+import type { ExclusionRule, ExclusionRuleReader } from "./exclusionRule.js";
 
 export interface GitignoreParseError extends Error {
   readonly file: File;
 }
 
-const parseGitignoreToPathnameExcluder = (
-  file: File,
-  contents: string,
-): either.Either<GitignoreParseError, (pathname: string) => boolean> =>
-  fn.pipe(
-    either.tryCatch(
-      () => gitignore().add(contents).add(fileName(file)),
-      (reason) => ({ ...(reason as Error), file }),
-    ),
-    either.map((ignore) => (pathname) =>
-      pathname.length > 0 && ignore.ignores(pathname),
-    ),
-  );
+const parseGitignoreToPathnameExcluder =
+  (f: File) =>
+  (
+    contents: string,
+  ): Either<GitignoreParseError, (pathname: string) => boolean> =>
+    fn.pipe(
+      either.tryCatch(
+        () => gitignore().add(contents).add(file.name(f)),
+        (reason) => ({ ...(reason as Error), file: f }),
+      ),
+      either.map(
+        (ignore) => (pathname) =>
+          pathname.length > 0 && pathname !== "." && ignore.ignores(pathname),
+      ),
+    );
 
-const parseGitignoreToExclusionRule = (
-  directory: Directory,
-  excludesPathname: (pathname: string) => boolean,
-): ExclusionRule => (entry: Entry): boolean =>
-  directoryHasDescendent(directory, entry) &&
-  excludesPathname(relativePathToString(entryRelativePath(directory, entry)));
+const parseGitignoreToExclusionRule =
+  (d: Directory) =>
+  (excludesPathname: (pathname: string) => boolean): ExclusionRule =>
+  (e: Entry): boolean =>
+    entry.isDescendentFrom(d)(e) &&
+    excludesPathname(relativePath.toString(entry.relativePathFrom(d)(e)));
 
-export const gitignoreExclusionRule = <TextFileReadEror extends Error>(
-  readTextFile: TextFileReader<TextFileReadEror>,
-): ExclusionRuleReader<TextFileReadEror | GitignoreParseError> => (
-  rulesFile,
-) => () =>
-  fn.pipe(
-    readTextFile(rulesFile)(),
-    taskEither.chainW((contents) =>
-      fn.pipe(
-        parseGitignoreToPathnameExcluder(rulesFile, contents),
-        either.map((pathnameExcluder) =>
-          parseGitignoreToExclusionRule(
-            fileDirectory(rulesFile),
-            pathnameExcluder,
+export const gitignoreExclusionRule =
+  <TextFileReadEror extends Error>(
+    readTextFile: TextFileReader<TextFileReadEror>,
+  ): ExclusionRuleReader<TextFileReadEror | GitignoreParseError> =>
+  (rulesFile) =>
+    fn.pipe(
+      rulesFile,
+      readTextFile,
+      io.map(
+        taskEither.chainW(
+          fn.flow(
+            parseGitignoreToPathnameExcluder(rulesFile),
+            either.map(
+              parseGitignoreToExclusionRule(entry.fileDirectory(rulesFile)),
+            ),
+            taskEither.fromEither,
           ),
         ),
-        taskEither.fromEither,
       ),
-    ),
-  );
+    );

@@ -1,21 +1,24 @@
-import { io, taskEither, readonlyArray, function as fn } from "fp-ts";
+import { readonlyArray, function as fn } from "fp-ts";
+import type { IO } from "fp-ts/IO";
+import type { TaskEither } from "fp-ts/TaskEither";
 
-import { Entry, File } from "@ndcb/fs-util";
+import type { Entry, File } from "@ndcb/fs-util";
 
 export type ExclusionRule = (entry: Entry) => boolean;
 
-export const compositeExclusionRule = (
-  rules: readonly ExclusionRule[],
-): ExclusionRule => (entry: Entry): boolean =>
-  fn.pipe(
-    rules,
-    readonlyArray.some((excludes) => excludes(entry)),
-  );
+export const compose =
+  (rules: readonly ExclusionRule[]): ExclusionRule =>
+  (entry: Entry): boolean =>
+    fn.pipe(
+      rules,
+      readonlyArray.some((excludes) => excludes(entry)),
+    );
 
-export const exclusionRuleAsFilter = (rule: ExclusionRule): ExclusionRule => (
-  entry: Entry,
-): boolean => !rule(entry);
+export const toFilter =
+  (rule: ExclusionRule): ExclusionRule =>
+  (entry: Entry): boolean =>
+    !rule(entry);
 
 export type ExclusionRuleReader<ExclusionRuleReadError extends Error> = (
   file: File,
-) => io.IO<taskEither.TaskEither<ExclusionRuleReadError, ExclusionRule>>;
+) => IO<TaskEither<ExclusionRuleReadError, ExclusionRule>>;

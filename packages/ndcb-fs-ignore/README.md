@@ -13,9 +13,9 @@ npm install @ndcb/fs-ignore
 
 ## Usage
 
-A file exclusion rule has type `(file : File) => boolean` and returns `true` if and only if `file` is excluded by it.
+A file exclusion rule has type `(file : File) => boolean` and returns `true` if and only if `file` is excluded by test.
 
-Use the `compositeExclusionRule` function to compose exclusion rules together, such that a file is excluded if and only if any of the rules excludes it.
+Use the `compositeExclusionRule` function to compose exclusion rules together, such that a file is excluded if and only if any of the rules excludes test.
 
 Use the `exclusionRuleAsFilter` function to convert an exclusion rule into a filter for use when filtering over iterables.
 

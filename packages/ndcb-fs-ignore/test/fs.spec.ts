@@ -1,81 +1,123 @@
-import { option, task, taskEither, function as fn } from "fp-ts";
+import { describe, expect, test } from "@jest/globals";
 
-import { mockFileSystem } from "@ndcb/mock-fs";
 import {
-  textFileReader,
-  fileName,
-  entryToString,
-  directoryFilesReader,
-  directoryToString,
-} from "@ndcb/fs-util";
+  io,
+  option,
+  taskEither,
+  function as fn,
+  string,
+  readonlySet,
+} from "fp-ts";
+
+import * as mockFs from "@ndcb/mock-fs";
+import { file, entry, directory } from "@ndcb/fs-util";
+import type { File, Directory } from "@ndcb/fs-util";
 
 import {
   exclusionRuleReaderFromDirectory,
   gitignoreExclusionRule,
 } from "@ndcb/fs-ignore";
 
-import exclusionRuleReaderFromDirectoryTestCases from "./fixtures/exclusionRuleReaderFromDirectory";
-
 describe("exclusionRuleReaderFromDirectory", () => {
-  let scenario = 0;
-  for (const {
-    fs,
-    rulesFilenames,
-    cases,
-  } of exclusionRuleReaderFromDirectoryTestCases) {
-    describe(`scenario #${++scenario}`, () => {
-      const { readDirectory, readFile } = mockFileSystem(fs);
-      const readDirectoryFiles = directoryFilesReader(readDirectory);
-      const readTextFile = textFileReader(readFile, "utf8");
-      const exclusion = exclusionRuleReaderFromDirectory(
-        readDirectoryFiles,
-        (file) =>
-          fn.pipe(
-            file,
-            option.fromPredicate((file) =>
-              rulesFilenames.includes(fileName(file)),
-            ),
-            option.map((file) => () =>
-              gitignoreExclusionRule(readTextFile)(file)(),
+  const { readDirectory, readFile } = mockFs.make({
+    "/": {
+      content: {
+        ".gitignore": "node_modules",
+        ".siteignore": "*.py",
+        "index.md": "",
+        "figure.png": "",
+        "figure.py": "",
+        "fr-CA": {
+          "index.md": "",
+        },
+        node_modules: {},
+      },
+    },
+  });
+  const rulesFilenames = [".gitignore", ".siteignore"];
+  const readDirectoryExclusionRules = exclusionRuleReaderFromDirectory(
+    directory.filesReader(readDirectory),
+    fn.flow(
+      option.fromPredicate(
+        fn.pipe(
+          rulesFilenames,
+          readonlySet.fromReadonlyArray(string.Eq),
+          (set) => (filename) => readonlySet.elem(string.Eq)(filename)(set),
+          (test) => fn.flow(file.name, test),
+        ),
+      ),
+      option.map(gitignoreExclusionRule(file.textReader(readFile, "utf8"))),
+    ),
+  );
+  test.concurrent.each(
+    ["/content/index.md", "/content/figure.png", "/content/fr-CA/index.md"].map(
+      file.makeNormalized,
+    ),
+  )("case $#: does not exclude included files", async (file: File) => {
+    expect(
+      await fn.pipe(
+        file,
+        entry.fileDirectory,
+        readDirectoryExclusionRules,
+        io.map(
+          fn.flow(
+            taskEither.map((excludes) => excludes(file)),
+            taskEither.getOrElse(() => {
+              throw new Error(
+                "Unexpectedly failed to read exclusion rule for mocked directory",
+              );
+            }),
+          ),
+        ),
+      )()(),
+    ).toBe(false);
+  });
+  test.concurrent.each(
+    ["/content/.gitignore", "/content/.siteignore", "/content/figure.py"].map(
+      file.makeNormalized,
+    ),
+  )("case $#: excludes excluded files", async (file: File) => {
+    expect(
+      await fn.pipe(
+        file,
+        entry.fileDirectory,
+        readDirectoryExclusionRules,
+        io.map(
+          fn.flow(
+            taskEither.map((excludes) => excludes(file)),
+            taskEither.getOrElse(() => {
+              throw new Error(
+                "Unexpectedly failed to read exclusion rule for mocked directory",
+              );
+            }),
+          ),
+        ),
+      )()(),
+    ).toBe(true);
+  });
+  test.concurrent.each(["/content/node_modules"].map(directory.makeNormalized))(
+    "case $#: excludes excluded directories",
+    async (directory: Directory) => {
+      expect(
+        await fn.pipe(
+          directory,
+          entry.parentDirectory,
+          option.getOrElseW(() => {
+            throw new Error("Unexpectedly failed to get parent directory");
+          }),
+          readDirectoryExclusionRules,
+          io.map(
+            fn.flow(
+              taskEither.map((excludes) => excludes(directory)),
+              taskEither.getOrElse(() => {
+                throw new Error(
+                  "Unexpectedly failed to read exclusion rule for mocked directory",
+                );
+              }),
             ),
           ),
-      );
-      for (const { directory, considered, ignored } of cases) {
-        for (const entry of considered) {
-          test(`considers "${entryToString(entry)}"`, async () => {
-            await fn.pipe(
-              exclusion(directory)(),
-              taskEither.getOrElse(() => {
-                throw new Error(
-                  `Unexpectedly failed to read exclusion rule for directory "${directoryToString(
-                    directory,
-                  )}"`,
-                );
-              }),
-              task.map((ignores) => {
-                expect(ignores(entry)).toBe(false);
-              }),
-            )();
-          });
-        }
-        for (const entry of ignored) {
-          test(`ignores "${entryToString(entry)}"`, async () => {
-            await fn.pipe(
-              exclusion(directory)(),
-              taskEither.getOrElse(() => {
-                throw new Error(
-                  `Unexpectedly failed to read exclusion rule for directory "${directoryToString(
-                    directory,
-                  )}"`,
-                );
-              }),
-              task.map((ignores) => {
-                expect(ignores(entry)).toBe(true);
-              }),
-            )();
-          });
-        }
-      }
-    });
-  }
+        )()(),
+      ).toBe(true);
+    },
+  );
 });
