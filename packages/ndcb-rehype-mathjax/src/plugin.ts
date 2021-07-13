@@ -63,68 +63,67 @@ export interface RehypeMathJaxOptions {
   }>;
 }
 
-export const createPlugin: unified.Attacher<
-  [Partial<RehypeMathJaxOptions>?]
-> = ({ input, output, mathjax, a11y } = {}): unified.Transformer => {
-  const createInputJax = inputJaxBuilderSupplier(input);
-  const createOutputJax = outputJaxBuilderSupplier(output);
-  const adaptor = jsdomAdaptor(JSDOM);
-  return (tree, { data }) => {
-    const handler = a11y?.assistiveMml
-      ? AssistiveMmlHandler(RegisterHTMLHandler(adaptor))
-      : RegisterHTMLHandler(adaptor);
+export const createPlugin: unified.Attacher<[Partial<RehypeMathJaxOptions>?]> =
+  ({ input, output, mathjax, a11y } = {}): unified.Transformer => {
+    const createInputJax = inputJaxBuilderSupplier(input);
+    const createOutputJax = outputJaxBuilderSupplier(output);
+    const adaptor = jsdomAdaptor(JSDOM);
+    return (tree, { data }) => {
+      const handler = a11y?.assistiveMml
+        ? AssistiveMmlHandler(RegisterHTMLHandler(adaptor))
+        : RegisterHTMLHandler(adaptor);
 
-    const options = defaultsDeep(
-      {},
-      (data as Record<string, unknown>)?.mathjax,
-      mathjax,
-    );
+      const options = defaultsDeep(
+        {},
+        (data as Record<string, unknown>)?.mathjax,
+        mathjax,
+      );
 
-    const input = createInputJax(options);
-    const output = createOutputJax(options);
+      const input = createInputJax(options);
+      const output = createOutputJax(options);
 
-    const document = MathJax.document("", {
-      InputJax: input,
-      OutputJax: output,
-    });
-
-    let context = tree;
-    let found = false;
-
-    visit(tree, "element", (node: HastNode) => {
-      const classes =
-        ((node?.properties as Record<string, unknown>)
-          ?.className as string[]) ?? [];
-      const inline = classes.includes("math-inline");
-      const display = classes.includes("math-display");
-
-      if (node.tagName === "head") context = node;
-
-      if (!inline && !display) return;
-
-      found = true;
-      node.children = [
-        hastFromDom(document.convert(hastToText(node), { display })),
-      ];
-
-      return SKIP;
-    });
-
-    if (found)
-      (context.children as unknown[]).push({
-        type: "element",
-        tagName: "style",
-        properties: {},
-        children: [
-          {
-            value: adaptor.textContent(
-              output.styleSheet(document) as HTMLElement,
-            ),
-            type: "text",
-          },
-        ],
+      const document = MathJax.document("", {
+        InputJax: input,
+        OutputJax: output,
       });
 
-    MathJax.handlers.unregister(handler);
+      let context = tree;
+      let found = false;
+
+      visit(tree, "element", (node: HastNode) => {
+        const classes =
+          ((node?.properties as Record<string, unknown>)
+            ?.className as string[]) ?? [];
+        const inline = classes.includes("math-inline");
+        const display = classes.includes("math-display");
+
+        if (node.tagName === "head") context = node;
+
+        if (!inline && !display) return;
+
+        found = true;
+        node.children = [
+          hastFromDom(document.convert(hastToText(node), { display })),
+        ];
+
+        return SKIP;
+      });
+
+      if (found)
+        (context.children as unknown[]).push({
+          type: "element",
+          tagName: "style",
+          properties: {},
+          children: [
+            {
+              value: adaptor.textContent(
+                output.styleSheet(document) as HTMLElement,
+              ),
+              type: "text",
+            },
+          ],
+        });
+
+      MathJax.handlers.unregister(handler);
+    };
   };
-};

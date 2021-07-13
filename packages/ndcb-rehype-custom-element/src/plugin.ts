@@ -30,26 +30,28 @@ export interface CustomElementPluginOptions {
 
 export const attacher: unified.Attacher<
   [Partial<CustomElementPluginOptions>?]
-> = ({ transformers } = {}): unified.Transformer => (tree, { data }) => {
-  for (const { tagName, transformer } of transformers ?? []) {
-    let elementNumber = 0;
-    visit(tree, convertElement(tagName), (node, index, parent) => {
-      const innerHtml = hastToHtml(node.children ?? []);
-      const { properties } = (node as HastNode) ?? {};
-      const transformedNode = hastFromParse5(
-        parse5.parseFragment(
-          transformer(
-            innerHtml,
-            defaultsDeep(
-              { [`${tagName}Number`]: ++elementNumber },
-              properties,
-              data,
+> =
+  ({ transformers } = {}): unified.Transformer =>
+  (tree, { data }) => {
+    for (const { tagName, transformer } of transformers ?? []) {
+      let elementNumber = 0;
+      visit(tree, convertElement(tagName), (node, index, parent) => {
+        const innerHtml = hastToHtml(node.children ?? []);
+        const { properties } = (node as HastNode) ?? {};
+        const transformedNode = hastFromParse5(
+          parse5.parseFragment(
+            transformer(
+              innerHtml,
+              defaultsDeep(
+                { [`${tagName}Number`]: ++elementNumber },
+                properties,
+                data,
+              ),
             ),
           ),
-        ),
-      );
-      (parent as HastNode).children[index as number] = transformedNode;
-      return [CONTINUE, index];
-    });
-  }
-};
+        );
+        (parent as HastNode).children[index as number] = transformedNode;
+        return [CONTINUE, index];
+      });
+    }
+  };

@@ -1,4 +1,6 @@
-import { readFileSync } from "fs";
+import { describe, expect, test } from "@jest/globals";
+
+import fse from "fs-extra";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -19,6 +21,7 @@ import { attacher as customElements } from "@ndcb/rehype-custom-element";
 import pluginTestCases from "./fixtures/plugin.json";
 
 describe("rehype-custom-element", () => {
+  // TODO: Revise
   const fixturePath = (fixturePathname) =>
     resolve(
       dirname(fileURLToPath(import.meta.url)),
@@ -56,8 +59,8 @@ describe("rehype-custom-element", () => {
         })),
       })
       .use(htmlStringify);
-    const contents = readFileSync(fixturePath(input), "utf8");
-    const expectedContents = readFileSync(fixturePath(expected), "utf8");
+    const contents = fse.readFileSync(fixturePath(input), "utf8");
+    const expectedContents = fse.readFileSync(fixturePath(expected), "utf8");
     test(description ?? `Case #${index}`, () => {
       expect(normalize(markdownProcessor.processSync(contents).contents)).toBe(
         normalize(expectedContents),
