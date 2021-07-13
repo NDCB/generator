@@ -1,18 +1,15 @@
-import LRU from "lru-cache";
-import { io, taskEither, function as fn } from "fp-ts";
-import { StatsBase } from "fs-extra";
+import { taskEither, function as fn } from "fp-ts";
+import type { IO } from "fp-ts/IO";
+import type { TaskEither } from "fp-ts/TaskEither";
 
-import {
-  FileReader,
-  File,
-  absolutePathToString,
-  filePath,
-  PathStatusChecker,
-} from "@ndcb/fs-util";
+import LRU from "lru-cache";
+
+import { absolutePath, file } from "@ndcb/fs-util";
+import type { FileReader, File, PathStatusChecker } from "@ndcb/fs-util";
 
 export const cachingFileReader = <
   FileReadError extends Error,
-  PathStatusError extends Error
+  PathStatusError extends Error,
 >(
   readFile: FileReader<FileReadError>,
   pathStatus: PathStatusChecker<PathStatusError>,
@@ -23,37 +20,30 @@ export const cachingFileReader = <
     max: cacheSize * 1024 ** 2,
     length: ({ contents }) => contents.byteLength,
   });
-  return (
-    file: File,
-  ): io.IO<
-    taskEither.TaskEither<FileReadError | PathStatusError, Buffer>
-  > => () => {
-    const path = filePath(file);
-    const key = absolutePathToString(path);
-    return fn.pipe(
-      pathStatus(path)(),
-      taskEither.chain<
-        FileReadError | PathStatusError,
-        StatsBase<BigInt>,
-        Buffer
-      >((status) =>
-        cache.has(key) &&
-        ((status as unknown) as { ctimeNs: BigInt }).ctimeNs ===
-          (cache.get(key) as { ctimeNs: BigInt }).ctimeNs
-          ? taskEither.right(
-              ((cache.peek(key) as unknown) as { contents: Buffer }).contents,
-            )
-          : fn.pipe(
-              readFile(file)(),
-              taskEither.map((contents) => {
-                cache.set(key, {
-                  ctimeNs: ((status as unknown) as { ctimeNs: BigInt }).ctimeNs,
-                  contents,
-                });
-                return contents;
-              }),
-            ),
-      ),
-    );
-  };
+  return (f: File): IO<TaskEither<FileReadError | PathStatusError, Buffer>> =>
+    () => {
+      const path = file.path(f);
+      const key = absolutePath.toString(path);
+      return fn.pipe(
+        pathStatus(path)(),
+        taskEither.chainW((status) =>
+          cache.has(key) &&
+          (status as unknown as { ctimeNs: BigInt }).ctimeNs ===
+            (cache.get(key) as { ctimeNs: BigInt }).ctimeNs
+            ? taskEither.right(
+                (cache.peek(key) as unknown as { contents: Buffer }).contents,
+              )
+            : fn.pipe(
+                readFile(f)(),
+                taskEither.map((contents) => {
+                  cache.set(key, {
+                    ctimeNs: (status as unknown as { ctimeNs: BigInt }).ctimeNs,
+                    contents,
+                  });
+                  return contents;
+                }),
+              ),
+        ),
+      );
+    };
 };

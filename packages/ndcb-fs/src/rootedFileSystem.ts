@@ -1,29 +1,28 @@
-import { readonlyArray, taskEither, option, function as fn } from "fp-ts";
+import { io, readonlyArray, taskEither, option, function as fn } from "fp-ts";
+import type { TaskEither } from "fp-ts/TaskEither";
+import type { Option } from "fp-ts/Option";
 
 import {
   deepEntryExclusionRule,
   DirectoryExclusionRuleReader,
   downwardNotIgnoredEntries,
-  exclusionRuleAsFilter,
+  exclusionRule,
 } from "@ndcb/fs-ignore";
-import {
+
+import { directory, entry } from "@ndcb/fs-util";
+import type {
   Entry,
   File,
   Directory,
-  fileFromDirectory,
-  directoryFromDirectory,
   FileReader,
   DirectoryReader,
-  downwardEntries,
-  upwardDirectoriesUntil,
   RelativePath,
-  downwardFiles,
   DirectoryWalker,
-  directoryHasDescendent,
-  entryRelativePath,
   FileExistenceTester,
   DirectoryExistenceTester,
 } from "@ndcb/fs-util";
+
+import { sequence } from "@ndcb/util";
 
 import {
   FileSystem,
@@ -39,7 +38,7 @@ export interface RootedFileSystem<
   DirectoryExistenceTestError extends Error,
   FileReadError extends Error,
   DirectoryReadError extends Error,
-  DirectoryWalkError extends Error
+  DirectoryWalkError extends Error,
 > extends FileSystem<
     FileRetrievalError,
     FileExistenceTestError,
@@ -56,78 +55,88 @@ export interface RootedFileSystem<
   readonly upwardDirectories: (entry: Entry) => readonly Directory[];
 }
 
-export const rootedFileSystem = <
-  FileExistenceTestError extends Error,
-  DirectoryExistenceTestError extends Error,
-  FileReadError extends Error,
-  DirectoryReadError extends Error
->({
-  fileExists,
-  directoryExists,
-  readFile,
-  readDirectory,
-}: {
-  fileExists: FileExistenceTester<FileExistenceTestError>;
-  directoryExists: DirectoryExistenceTester<DirectoryExistenceTestError>;
-  readFile: FileReader<FileReadError>;
-  readDirectory: DirectoryReader<DirectoryReadError>;
-}) => (
-  root: Directory,
-): RootedFileSystem<
-  FileExistenceTestError,
-  FileExistenceTestError,
-  DirectoryExistenceTestError,
-  FileReadError,
-  DirectoryReadError,
-  DirectoryReadError
-> => {
-  const pathnameToFile = fileFromDirectory(root);
-  const pathnameToDirectory = directoryFromDirectory(root);
-  const walker = downwardEntries(readDirectory);
-  const files = downwardFiles(walker);
-  const systemIncludes = (entry: Entry): boolean =>
-    directoryHasDescendent(root, entry);
-  const fileExistsInSystem = (path) => () => {
-    const file = pathnameToFile(path);
-    return systemIncludes(file) ? fileExists(file)() : taskEither.right(false);
-  };
-  const directoryExistsInSystem = (path) => () => {
-    const directory = pathnameToDirectory(path);
-    return systemIncludes(directory)
-      ? directoryExists(directory)()
-      : taskEither.right(false);
-  };
-  const fileFromRoot = pathnameToFile;
-  const directoryFromRoot = pathnameToDirectory;
-  return {
-    root,
-    pathname: fn.flow(
-      option.fromPredicate(systemIncludes),
-      option.map((entry) => entryRelativePath(root, entry)),
-    ),
-    file: (pathname) => () =>
-      fn.pipe(
-        fileExistsInSystem(pathname)(),
-        taskEither.map(
-          fn.flow(
-            option.fromPredicate((exists) => exists),
-            option.map(() => fileFromRoot(pathname)),
+export const rootedFileSystem =
+  <
+    FileExistenceTestError extends Error,
+    DirectoryExistenceTestError extends Error,
+    FileReadError extends Error,
+    DirectoryReadError extends Error,
+  >({
+    fileExists,
+    directoryExists,
+    readFile,
+    readDirectory,
+  }: {
+    fileExists: FileExistenceTester<FileExistenceTestError>;
+    directoryExists: DirectoryExistenceTester<DirectoryExistenceTestError>;
+    readFile: FileReader<FileReadError>;
+    readDirectory: DirectoryReader<DirectoryReadError>;
+  }) =>
+  (
+    root: Directory,
+  ): RootedFileSystem<
+    FileExistenceTestError,
+    FileExistenceTestError,
+    DirectoryExistenceTestError,
+    FileReadError,
+    DirectoryReadError,
+    DirectoryReadError
+  > => {
+    const pathnameToFile = directory.fileFrom(root);
+    const pathnameToDirectory = directory.directoryFrom(root);
+    const walker = directory.downwardsWalker(readDirectory);
+    const files = directory.downwardFilesWalker(walker);
+    const systemIncludes: (entry: Entry) => boolean =
+      entry.isDescendentFrom(root);
+    const fileExistsInSystem = fn.flow(
+      pathnameToFile,
+      option.fromPredicate<File>(systemIncludes),
+      option.fold(() => io.of(taskEither.right(fn.constFalse())), fileExists),
+    );
+    const directoryExistsInSystem = fn.flow(
+      pathnameToDirectory,
+      option.fromPredicate<Directory>(systemIncludes),
+      option.fold(
+        () => io.of(taskEither.right(fn.constFalse())),
+        directoryExists,
+      ),
+    );
+    const fileFromRoot = pathnameToFile;
+    const directoryFromRoot = pathnameToDirectory;
+    return {
+      root,
+      pathname: fn.flow(
+        option.fromPredicate(systemIncludes),
+        option.map(entry.relativePathFrom(root)),
+      ),
+      file: (pathname) =>
+        fn.pipe(
+          fileExistsInSystem(pathname),
+          io.map(
+            taskEither.map(
+              fn.flow(
+                option.fromPredicate(fn.identity),
+                option.map(() => fileFromRoot(pathname)),
+              ),
+            ),
           ),
         ),
+      fileFromRoot,
+      directoryFromRoot,
+      fileReader: readFile,
+      directoryReader: readDirectory,
+      upwardDirectories: fn.flow(
+        entry.upwardDirectoriesUntil(root),
+        sequence.toReadonlyArray,
       ),
-    fileFromRoot,
-    directoryFromRoot,
-    fileReader: readFile,
-    directoryReader: readDirectory,
-    upwardDirectories: (entry) => [...upwardDirectoriesUntil(root)(entry)],
-    walker,
-    files: () => files(root),
-    fileExists: fileExistsInSystem,
-    directoryExists: directoryExistsInSystem,
-    readFile: (path) => readFile(pathnameToFile(path)),
-    readDirectory: (path) => readDirectory(pathnameToDirectory(path)),
+      walker,
+      files: () => files(root),
+      fileExists: fileExistsInSystem,
+      directoryExists: directoryExistsInSystem,
+      readFile: fn.flow(pathnameToFile, readFile),
+      readDirectory: fn.flow(pathnameToDirectory, readDirectory),
+    };
   };
-};
 
 export const excludedRootedFileSystem = <
   FileRetrievalError extends Error,
@@ -136,7 +145,7 @@ export const excludedRootedFileSystem = <
   FileReadError extends Error,
   DirectoryReadError extends Error,
   DirectoryWalkError extends Error,
-  ExclusionRuleReadError extends Error
+  ExclusionRuleReadError extends Error,
 >(
   system: RootedFileSystem<
     FileRetrievalError,
@@ -159,7 +168,7 @@ export const excludedRootedFileSystem = <
     system.upwardDirectories,
     exclusionRuleRetriever,
   );
-  const files = downwardFiles(
+  const files = directory.downwardFilesWalker(
     downwardNotIgnoredEntries(system.directoryReader, exclusionRuleRetriever),
   );
   return {
@@ -172,9 +181,9 @@ export const excludedRootedFileSystem = <
             fileQuery,
             option.fold<
               File,
-              taskEither.TaskEither<
+              TaskEither<
                 FileRetrievalError | ExclusionRuleReadError,
-                option.Option<File>
+                Option<File>
               >
             >(
               () => taskEither.right(option.none),
@@ -251,7 +260,7 @@ export const excludedRootedFileSystem = <
           fn.pipe(
             system.readDirectory(path)(),
             taskEither.map(
-              readonlyArray.filter(exclusionRuleAsFilter(excludes)),
+              readonlyArray.filter(exclusionRule.toFilter(excludes)),
             ),
           ),
         ),

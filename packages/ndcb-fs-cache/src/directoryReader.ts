@@ -1,19 +1,20 @@
-import LRU from "lru-cache";
-import { io, taskEither, function as fn } from "fp-ts";
-import { StatsBase } from "fs-extra";
+import { taskEither, function as fn } from "fp-ts";
+import type { IO } from "fp-ts/IO";
+import type { TaskEither } from "fp-ts/TaskEither";
 
-import {
-  absolutePathToString,
+import LRU from "lru-cache";
+
+import { absolutePath, directory } from "@ndcb/fs-util";
+import type {
   Entry,
   Directory,
   DirectoryReader,
-  directoryPath,
   PathStatusChecker,
 } from "@ndcb/fs-util";
 
 export const cachingDirectoryReader = <
   DirectoryReadError extends Error,
-  PathStatusError extends Error
+  PathStatusError extends Error,
 >(
   readDirectory: DirectoryReader<DirectoryReadError>,
   pathStatus: PathStatusChecker<PathStatusError>,
@@ -27,37 +28,32 @@ export const cachingDirectoryReader = <
     },
   );
   return (
-    directory: Directory,
-  ): io.IO<
-    taskEither.TaskEither<DirectoryReadError | PathStatusError, Entry[]>
-  > => () => {
-    const path = directoryPath(directory);
-    const key = absolutePathToString(path);
-    return fn.pipe(
-      pathStatus(path)(),
-      taskEither.chain<
-        DirectoryReadError | PathStatusError,
-        StatsBase<BigInt>,
-        Entry[]
-      >((status) =>
-        cache.has(key) &&
-        ((status as unknown) as { ctimeNs: BigInt }).ctimeNs ===
-          (cache.get(key) as { ctimeNs: BigInt }).ctimeNs
-          ? taskEither.right(
-              ((cache.peek(key) as unknown) as { entries: Entry[] }).entries,
-            )
-          : fn.pipe(
-              readDirectory(directory)(),
-              taskEither.map((entries) => {
-                const entriesArray = [...entries];
-                cache.set(key, {
-                  ctimeNs: ((status as unknown) as { ctimeNs: BigInt }).ctimeNs,
-                  entries: entriesArray,
-                });
-                return entriesArray;
-              }),
-            ),
-      ),
-    );
-  };
+      d: Directory,
+    ): IO<TaskEither<DirectoryReadError | PathStatusError, readonly Entry[]>> =>
+    () => {
+      const path = directory.path(d);
+      const key = absolutePath.toString(path);
+      return fn.pipe(
+        pathStatus(path)(),
+        taskEither.chainW((status) =>
+          cache.has(key) &&
+          (status as unknown as { ctimeNs: BigInt }).ctimeNs ===
+            (cache.get(key) as { ctimeNs: BigInt }).ctimeNs
+            ? taskEither.right(
+                (cache.peek(key) as unknown as { entries: Entry[] }).entries,
+              )
+            : fn.pipe(
+                readDirectory(d)(),
+                taskEither.map((entries) => {
+                  const entriesArray = [...entries];
+                  cache.set(key, {
+                    ctimeNs: (status as unknown as { ctimeNs: BigInt }).ctimeNs,
+                    entries: entriesArray,
+                  });
+                  return entriesArray;
+                }),
+              ),
+        ),
+      );
+    };
 };

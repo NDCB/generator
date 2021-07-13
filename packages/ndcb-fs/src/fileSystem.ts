@@ -1,33 +1,37 @@
-import { io, readonlyArray, taskEither, option, function as fn } from "fp-ts";
+import { readonlyArray, taskEither, option, function as fn } from "fp-ts";
+import type { IO } from "fp-ts/IO";
+import type { TaskEither } from "fp-ts/TaskEither";
+import type { Option } from "fp-ts/Option";
 
-import { File, RelativePath, Entry, relativePathToString } from "@ndcb/fs-util";
+import { relativePath } from "@ndcb/fs-util";
+import type { File, RelativePath, Entry } from "@ndcb/fs-util";
 
 export interface FileSystem<
   FileRetrievalError extends Error,
   FileExistenceTestError extends Error,
   DirectoryExistenceTestError extends Error,
   FileReadError extends Error,
-  DirectoryReadError extends Error
+  DirectoryReadError extends Error,
 > {
-  readonly pathname: (entry: Entry) => option.Option<RelativePath>;
+  readonly pathname: (entry: Entry) => Option<RelativePath>;
   readonly file: (
     pathname: RelativePath,
-  ) => io.IO<taskEither.TaskEither<FileRetrievalError, option.Option<File>>>;
+  ) => IO<TaskEither<FileRetrievalError, Option<File>>>;
   readonly files: () => AsyncIterable<
-    io.IO<taskEither.TaskEither<DirectoryReadError, readonly File[]>>
+    IO<TaskEither<DirectoryReadError, readonly File[]>>
   >;
   readonly fileExists: (
     path: RelativePath,
-  ) => io.IO<taskEither.TaskEither<FileExistenceTestError, boolean>>;
+  ) => IO<TaskEither<FileExistenceTestError, boolean>>;
   readonly directoryExists: (
     path: RelativePath,
-  ) => io.IO<taskEither.TaskEither<DirectoryExistenceTestError, boolean>>;
+  ) => IO<TaskEither<DirectoryExistenceTestError, boolean>>;
   readonly readFile: (
     path: RelativePath,
-  ) => io.IO<taskEither.TaskEither<FileReadError, Buffer>>;
+  ) => IO<TaskEither<FileReadError, Buffer>>;
   readonly readDirectory: (
     path: RelativePath,
-  ) => io.IO<taskEither.TaskEither<DirectoryReadError, readonly Entry[]>>;
+  ) => IO<TaskEither<DirectoryReadError, readonly Entry[]>>;
 }
 
 export interface FileNotFoundError extends Error {
@@ -35,7 +39,7 @@ export interface FileNotFoundError extends Error {
 }
 
 export const fileNotFoundError = (path: RelativePath): FileNotFoundError => ({
-  ...new Error(`File not found at "${relativePathToString(path)}"`),
+  ...new Error(`File not found at "${relativePath.toString(path)}"`),
   path,
 });
 
@@ -46,7 +50,7 @@ export interface DirectoryNotFoundError extends Error {
 export const directoryNotFoundError = (
   path: RelativePath,
 ): DirectoryNotFoundError => ({
-  ...new Error(`Directory not found at "${relativePathToString(path)}"`),
+  ...new Error(`Directory not found at "${relativePath.toString(path)}"`),
   path,
 });
 
@@ -55,7 +59,7 @@ export const compositeFileSystem = <
   FileExistenceTestError extends Error,
   DirectoryExistenceTestError extends Error,
   FileReadError extends Error,
-  DirectoryReadError extends Error
+  DirectoryReadError extends Error,
 >(
   systems: readonly FileSystem<
     FileRetrievalError,
@@ -74,21 +78,19 @@ export const compositeFileSystem = <
   pathname: (entry) =>
     fn.pipe(
       systems,
-      readonlyArray.map((system) => system.pathname(entry)),
-      readonlyArray.findFirst(option.isSome),
-      option.flatten,
+      readonlyArray.findFirstMap((system) => system.pathname(entry)),
     ),
   file: (pathname) => () =>
     fn.pipe(
       systems,
       readonlyArray.map((system) => system.file(pathname)()),
       taskEither.sequenceSeqArray,
-      taskEither.map((files) =>
-        fn.pipe(files, readonlyArray.findFirst(option.isSome), option.flatten),
+      taskEither.map(
+        fn.flow(readonlyArray.findFirst(option.isSome), option.flatten),
       ),
     ),
   files: async function* () {
-    for (const systemFiles of fn.pipe(
+    for await (const systemFiles of fn.pipe(
       systems,
       readonlyArray.map((system) => system.files()),
     ))

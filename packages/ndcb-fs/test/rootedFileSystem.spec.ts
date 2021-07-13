@@ -1,104 +1,258 @@
-import { task, taskEither, readonlyArray, function as fn } from "fp-ts";
+import { describe, expect, test } from "@jest/globals";
 
 import {
-  normalizedDirectory,
-  normalizedFile,
-  normalizedRelativePath,
-  File,
-} from "@ndcb/fs-util";
-import { mockFileSystem, MockDirectory } from "@ndcb/mock-fs";
-import { sequence } from "@ndcb/util";
+  io,
+  taskEither,
+  readonlyArray,
+  function as fn,
+  readonlySet,
+  string,
+} from "fp-ts";
+import type { Task } from "fp-ts/Task";
+
+import { file, directory, relativePath } from "@ndcb/fs-util";
+import type { File } from "@ndcb/fs-util";
+
+import * as mockFs from "@ndcb/mock-fs";
 
 import { rootedFileSystem } from "@ndcb/fs";
 
-import rootedFileSystemFilesTestCases from "./fixtures/rootedFileSystem-files.json";
-import rootedFileSystemFileExistsTestCases from "./fixtures/rootedFileSystem-fileExists.json";
-import rootedFileSystemDirectoryExistsTestCases from "./fixtures/rootedFileSystem-directoryExists.json";
-
 describe("rootedFileSystem", () => {
-  describe("#files", () => {
-    for (const {
-      index,
-      element: { fs, root, expected },
-    } of sequence.enumerate(1)<{
-      fs: MockDirectory;
-      root: string;
-      expected: string[];
-    }>(rootedFileSystemFilesTestCases)) {
-      const { files } = rootedFileSystem(mockFileSystem(fs))(
-        normalizedDirectory(root),
-      );
-      const expectedFiles = fn.pipe(
+  test.concurrent.each(
+    [
+      {
+        fs: {
+          "/": {
+            root: {
+              "index.html": "",
+              "about.html": "",
+              directory: {
+                "index.html": "",
+                "posts.html": "",
+              },
+            },
+            "file.exclude": "",
+          },
+        },
+        root: "/root",
+        expected: [
+          "/root/about.html",
+          "/root/index.html",
+          "/root/directory/index.html",
+          "/root/directory/posts.html",
+        ],
+      },
+    ].map(({ fs, root, expected }) => ({
+      files: fn.pipe(
+        directory.makeNormalized(root),
+        rootedFileSystem(mockFs.make(fs)),
+        ({ files }) =>
+          (): Task<ReadonlySet<File>> =>
+          async () => {
+            const collectedFiles: File[] = [];
+            for await (const readFiles of files()) {
+              for (const file of await fn.pipe(
+                readFiles,
+                io.map(
+                  taskEither.getOrElse(() => {
+                    throw new Error("Unexpectedly failed to read some files");
+                  }),
+                ),
+              )()()) {
+                collectedFiles.push(file);
+              }
+            }
+            return fn.pipe(
+              collectedFiles,
+              readonlySet.fromReadonlyArray(file.Eq),
+            );
+          },
+      ),
+      expected: fn.pipe(
         expected,
-        readonlyArray.map(normalizedFile),
-        readonlyArray.toArray,
-      );
-      test(`case #${index}`, async () => {
-        let actualFiles: File[] = [];
-        for await (const readFiles of files())
-          await fn.pipe(
-            readFiles(),
-            taskEither.getOrElse(() => {
-              throw new Error(`Unexpectedly failed to read all files`);
-            }),
-            task.map(readonlyArray.toArray),
-            task.map((files) => (actualFiles = actualFiles.concat(files))),
-          )();
-        expect(actualFiles).toEqual(expect.arrayContaining(expectedFiles));
-        expect(expectedFiles).toEqual(expect.arrayContaining(actualFiles));
-      });
-    }
-  });
+        readonlySet.fromReadonlyArray(string.Eq),
+        readonlySet.map(file.Eq)(file.makeNormalized),
+      ),
+    })),
+  )(
+    "scenario $#",
+    async ({
+      files,
+      expected,
+    }: {
+      files: () => Task<ReadonlySet<File>>;
+      expected: ReadonlySet<File>;
+    }) => {
+      expect(await files()()).toEqual(expected);
+    },
+  );
   describe("#fileExists", () => {
-    for (const { fs, root, cases } of rootedFileSystemFileExistsTestCases) {
-      const { fileExists } = rootedFileSystem(mockFileSystem(fs))(
-        normalizedDirectory(root),
-      );
-      for (const {
-        index,
-        element: { path, expected },
-      } of sequence.enumerate(1)<{ path: string; expected: boolean }>(cases)) {
-        test(`case #${index}`, async () => {
+    describe.each(
+      [
+        {
+          fs: {
+            "/": {
+              root: {
+                "index.html": "",
+                "about.html": "",
+                directory: {
+                  "index.html": "",
+                  "posts.html": "",
+                },
+              },
+              "outside-root.md": "",
+            },
+          },
+          root: "/root",
+          tests: [
+            {
+              path: "",
+              expected: false,
+            },
+            {
+              path: "index.html",
+              expected: true,
+            },
+            {
+              path: "about.html",
+              expected: true,
+            },
+            {
+              path: "inexistent.html",
+              expected: false,
+            },
+            {
+              path: "directory",
+              expected: false,
+            },
+            {
+              path: "directory/index.html",
+              expected: true,
+            },
+            {
+              path: "directory/posts.html",
+              expected: true,
+            },
+            {
+              path: "directory/inexistent.html",
+              expected: false,
+            },
+            {
+              path: "inexistent/index.html",
+              expected: false,
+            },
+            {
+              path: "../outside-root.md",
+              expected: false,
+            },
+          ],
+        },
+      ].map(({ fs, root, tests }) => ({
+        fileExists: fn.pipe(
+          directory.makeNormalized(root),
+          rootedFileSystem(mockFs.make(fs)),
+          ({ fileExists }) => fileExists,
+        ),
+        tests: fn.pipe(
+          tests,
+          readonlyArray.map(({ path, expected }) => ({
+            path: relativePath.makeNormalized(path),
+            expected,
+          })),
+        ),
+      })),
+    )("scenario $#", ({ fileExists, tests }) => {
+      test.concurrent.each(tests)("case $#", async ({ path, expected }) => {
+        expect(
           await fn.pipe(
-            fileExists(normalizedRelativePath(path))(),
-            taskEither.getOrElse(() => {
-              throw new Error(
-                `Unexpectedly failed to determine the existence of file "${path}"`,
-              );
-            }),
-            task.map((exists) => expect(exists).toBe(expected)),
-          )();
-        });
-      }
-    }
+            fileExists(path),
+            io.map(
+              taskEither.getOrElse(() => {
+                throw new Error(
+                  `Unexpectedly failed to determine the existence of directory "${path}"`,
+                );
+              }),
+            ),
+          )()(),
+        ).toBe(expected);
+      });
+    });
   });
   describe("#directoryExists", () => {
-    for (const {
-      fs,
-      root,
-      cases,
-    } of rootedFileSystemDirectoryExistsTestCases) {
-      const { directoryExists } = rootedFileSystem(mockFileSystem(fs))(
-        normalizedDirectory(root),
-      );
-      for (const {
-        index,
-        element: { path, expected },
-      } of sequence.enumerate(1)<{ path: string; expected: boolean }>(cases)) {
-        test(`case #${index}`, async () => {
+    describe.each(
+      [
+        {
+          fs: {
+            "/": {
+              root: {
+                "index.html": "",
+                "about.html": "",
+                directory: {
+                  "index.html": "",
+                  "posts.html": "",
+                  subdirectory: {},
+                },
+              },
+              "outside-root": {},
+            },
+          },
+          root: "/root",
+          tests: [
+            {
+              path: "",
+              expected: true,
+            },
+            {
+              path: "directory",
+              expected: true,
+            },
+            {
+              path: "directory/subdirectory",
+              expected: true,
+            },
+            {
+              path: "index.html",
+              expected: false,
+            },
+            {
+              path: "inexistent",
+              expected: false,
+            },
+            {
+              path: "../outside-root",
+              expected: false,
+            },
+          ],
+        },
+      ].map(({ fs, root, tests }) => ({
+        directoryExists: fn.pipe(
+          directory.makeNormalized(root),
+          rootedFileSystem(mockFs.make(fs)),
+          ({ directoryExists }) => directoryExists,
+        ),
+        tests: fn.pipe(
+          tests,
+          readonlyArray.map(({ path, expected }) => ({
+            path: relativePath.makeNormalized(path),
+            expected,
+          })),
+        ),
+      })),
+    )("scenario $#", ({ directoryExists, tests }) => {
+      test.concurrent.each(tests)("case $#", async ({ path, expected }) => {
+        expect(
           await fn.pipe(
-            directoryExists(normalizedRelativePath(path))(),
-            taskEither.getOrElse(() => {
-              throw new Error(
-                `Unexpectedly failed to determine the existence of directory "${path}"`,
-              );
-            }),
-            task.map((exists) => {
-              expect(exists).toBe(expected);
-            }),
-          )();
-        });
-      }
-    }
+            directoryExists(path),
+            io.map(
+              taskEither.getOrElse(() => {
+                throw new Error(
+                  `Unexpectedly failed to determine the existence of directory "${path}"`,
+                );
+              }),
+            ),
+          )()(),
+        ).toBe(expected);
+      });
+    });
   });
 });
