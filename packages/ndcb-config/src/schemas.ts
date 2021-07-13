@@ -1,19 +1,19 @@
-import * as Joi from "joi";
 import { option, taskEither, function as fn } from "fp-ts";
+import type { TaskEither } from "fp-ts/TaskEither";
 
-import {
-  normalizedFile,
-  normalizedDirectory,
-  directoryToString,
-  Directory,
-  directoryHasDescendent,
-} from "@ndcb/fs-util";
+import * as Joi from "joi";
+
+import { directory, entry, file } from "@ndcb/fs-util";
+import type { Directory } from "@ndcb/fs-util";
+
 import { sequence } from "@ndcb/util";
 import { ColorCode } from "@ndcb/logger";
 
-export const fileSchema = Joi.string().trim().custom(normalizedFile);
+export const fileSchema = Joi.string().trim().external(file.makeNormalized);
 
-export const directorySchema = Joi.string().trim().custom(normalizedDirectory);
+export const directorySchema = Joi.string()
+  .trim()
+  .external(directory.makeNormalized);
 
 export const bufferEncodingSchema = Joi.string()
   .trim()
@@ -56,15 +56,15 @@ export const mutuallyDisjointSourceDirectoriesSchema = Joi.array()
       value,
       sequence.orderedPairs,
       sequence.filter(([d1, d2]) => d1 !== d2),
-      sequence.find(([d1, d2]) => directoryHasDescendent(d1, d2)),
+      sequence.find(([d1, d2]) => entry.isDescendentFrom(d1)(d2)),
     );
     if (option.isSome(meetingSourceDirectories)) {
       const [d1, d2] = meetingSourceDirectories.value;
       throw new Error(
         `Source directories must be mutually disjoint.
-Directory "${directoryToString(d1)}" is not disjoint from "${directoryToString(
-          d2,
-        )}"`,
+Directory "${directory.toString(
+          d1,
+        )}" is not disjoint from "${directory.toString(d2)}"`,
       );
     }
     return value;
@@ -107,7 +107,7 @@ export interface Configuration {
 
 export const commonConfigurationSchema = Joi.object({
   sources: mutuallyDisjointSourceDirectoriesSchema.default([
-    normalizedDirectory("./public"),
+    directory.makeNormalized("./public"),
   ]),
   pathEncoding: bufferEncodingSchema.default("utf8"),
   exclusionRulesFileNames: Joi.array()
@@ -153,7 +153,7 @@ export const commonConfigurationSchema = Joi.object({
   .default();
 
 export const buildConfigurationSchema = Joi.object({
-  output: directorySchema.default(normalizedDirectory("./build")),
+  output: directorySchema.default(directory.makeNormalized("./build")),
 })
   .unknown(true)
   .default();
@@ -185,10 +185,10 @@ export const configurationSchema = Joi.object({
   .unknown(true)
   .default();
 
-export const validate = (schema: Joi.Schema) => (
-  element?: unknown,
-): taskEither.TaskEither<Joi.ValidationError, unknown> =>
-  taskEither.tryCatch(
-    () => schema.validateAsync(element),
-    (error) => error as Joi.ValidationError,
-  );
+export const validate =
+  (schema: Joi.Schema) =>
+  (element?: unknown): TaskEither<Joi.ValidationError, unknown> =>
+    taskEither.tryCatch(
+      () => schema.validateAsync(element),
+      (error) => error as Joi.ValidationError,
+    );
