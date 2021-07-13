@@ -1,17 +1,32 @@
 import * as fse from "fs-extra";
-import * as fs from "fs";
+
+import { promises } from "fs";
+import type { PathLike, StatsBase } from "fs";
+
 import upath from "upath";
-const { resolve, sep, basename, parse } = upath;
+
 import {
   option,
   io,
-  task,
   taskEither,
   readonlyArray,
   function as fn,
+  eq,
+  string,
+  show,
+  readonlySet,
 } from "fp-ts";
+import type { Refinement } from "fp-ts/function";
+import type { IO } from "fp-ts/IO";
+import type { Option } from "fp-ts/Option";
+import type { Task } from "fp-ts/Task";
+import type { TaskEither } from "fp-ts/TaskEither";
 
-import { hash, type } from "@ndcb/util";
+import * as util from "@ndcb/util";
+import type { Sequence } from "@ndcb/util";
+
+import * as extensionModule from "./extension.js";
+import type { Extension } from "./extension.js";
 
 export interface PathIOError extends Error {
   readonly code: string;
@@ -26,92 +41,171 @@ export interface PathIOError extends Error {
  */
 export interface AbsolutePath {
   readonly value: string;
-  readonly tag: "ABSOLUTE_PATH"; // For discriminated union
+  readonly _tag: "ABSOLUTE_PATH"; // For discriminated union
 }
 
-export const absolutePath = (value: string): AbsolutePath => ({
+const make = (value: string): AbsolutePath => ({
   value,
-  tag: "ABSOLUTE_PATH",
+  _tag: "ABSOLUTE_PATH",
 });
 
-export const isAbsolutePath = (element: unknown): element is AbsolutePath =>
+export const is: Refinement<unknown, AbsolutePath> = (
+  element: unknown,
+): element is AbsolutePath =>
   typeof element === "object" &&
-  type.isNotNull(element) &&
-  element["tag"] === "ABSOLUTE_PATH";
+  util.type.isNotNull(element) &&
+  element["_tag"] === "ABSOLUTE_PATH";
 
-export const absolutePathToString = (path: AbsolutePath): string => path.value;
+export const Eq: eq.Eq<AbsolutePath> = eq.struct({ value: string.Eq });
 
-export const absolutePathEquals = (
-  p1: AbsolutePath,
-  p2: AbsolutePath,
-): boolean => p1.value === p2.value;
-
-export const hashAbsolutePath = (path: AbsolutePath): number =>
-  hash.hashString(absolutePathToString(path));
-
-export const normalizedAbsolutePath = (value: string): AbsolutePath =>
-  absolutePath(resolve(value));
-
-export type PathExistenceTester = (
-  path: AbsolutePath,
-) => io.IO<task.Task<boolean>>;
-
-export const pathExists: PathExistenceTester = (path) => () =>
-  fn.pipe(
-    taskEither.tryCatch<unknown, boolean>(
-      () => fse.pathExists(absolutePathToString(path)),
-      (error) => error,
-    ),
-    taskEither.fold(
-      () => task.of(false),
-      (exists) => task.of(exists),
-    ),
-  );
-
-export const rootPath = (path: AbsolutePath): AbsolutePath =>
-  absolutePath(parse(absolutePathToString(path)).root);
-
-export const parentPath = (path: AbsolutePath): option.Option<AbsolutePath> => {
-  const parent = absolutePath(resolve(absolutePathToString(path), ".."));
-  return absolutePathEquals(path, parent) ? option.none : option.some(parent);
+export const Show: show.Show<AbsolutePath> = {
+  show: ({ value }) => value,
 };
 
-export const absolutePathSegments = (path: AbsolutePath): string[] => {
-  const pathString = absolutePathToString(path);
-  const withoutRoot = pathString.substring(parse(pathString).root.length);
-  return withoutRoot.length > 0 ? withoutRoot.split(sep) : [];
-};
+export const toString: (path: AbsolutePath) => string = Show.show;
 
-/**
- * Determines whether an absolute path is located upwards from another.
- *
- * @param up The queried upward path.
- * @param down The queried downward path.
- *
- * @return `true` if `up` is located upwards from `down`, and `false` otherwise.
- */
-export const isUpwardPath = (up: AbsolutePath, down: AbsolutePath): boolean =>
-  absolutePathToString(down).startsWith(absolutePathToString(up)) &&
+export const hash: (path: AbsolutePath) => number = fn.flow(
+  toString,
+  util.hash.hashString,
+);
+
+export const equals: (p1: AbsolutePath, p2: AbsolutePath) => boolean =
+  Eq.equals;
+
+export const makeNormalized: (value: string) => AbsolutePath = fn.flow(
+  upath.normalizeTrim,
+  make,
+);
+
+export const makeResolved: (value: string) => IO<AbsolutePath> = fn.flow(
+  io.of,
+  io.map(fn.flow(upath.resolve, make)),
+);
+
+export type PathExistenceTester = (path: AbsolutePath) => IO<Task<boolean>>;
+
+export const exists: PathExistenceTester = fn.flow(
+  toString,
+  io.of,
+  io.map(
+    fn.flow(
+      (path) =>
+        taskEither.tryCatch<unknown, boolean>(
+          () => fse.pathExists(path),
+          fn.identity,
+        ),
+      taskEither.match(fn.constFalse, fn.identity),
+    ),
+  ),
+);
+
+export const root: (path: AbsolutePath) => AbsolutePath = fn.flow(
+  toString,
+  upath.parse,
+  ({ root }) => root,
+  make,
+);
+
+export const parent = (path: AbsolutePath): Option<AbsolutePath> =>
   fn.pipe(
-    readonlyArray.zip(absolutePathSegments(up), absolutePathSegments(down)),
-    readonlyArray.every(([s1, s2]) => s1 === s2),
+    upath.resolve(toString(path), ".."),
+    make,
+    option.fromPredicate((parent) => !equals(path, parent)),
   );
 
-export const absolutePathBaseName = (path: AbsolutePath): string =>
-  basename(absolutePathToString(path));
+export const segments = (path: AbsolutePath): string[] => {
+  const pathString = toString(path);
+  const withoutRoot = pathString.substring(upath.parse(pathString).root.length);
+  return withoutRoot.length > 0 ? withoutRoot.split(upath.sep) : [];
+};
 
-export type PathStatusChecker<E extends Error> = (
+export const isUpwardFrom =
+  (up: AbsolutePath) =>
+  (down: AbsolutePath): boolean =>
+    toString(down).startsWith(toString(up)) &&
+    fn.pipe(
+      readonlyArray.zip(segments(up), segments(down)),
+      readonlyArray.every(([s1, s2]) => s1 === s2),
+    );
+
+export const basename: (path: AbsolutePath) => string = fn.flow(
+  toString,
+  upath.basename,
+);
+
+export type PathStatusChecker<PathStatusCheckError extends Error> = (
   path: AbsolutePath,
-) => io.IO<taskEither.TaskEither<E, fs.StatsBase<BigInt>>>;
+) => IO<TaskEither<PathStatusCheckError, StatsBase<BigInt>>>;
 
-export const pathStatus: PathStatusChecker<PathIOError> = (path) => () =>
+export const status: PathStatusChecker<PathIOError> = (path) => () =>
   taskEither.tryCatch(
     () =>
-      ((fs.promises.stat as unknown) as (
-        path: fs.PathLike,
-        options: { bigint: true },
-      ) => Promise<fs.StatsBase<BigInt>>)(absolutePathToString(path), {
+      (
+        promises.stat as unknown as (
+          path: PathLike,
+          options: { bigint: true },
+        ) => Promise<StatsBase<BigInt>>
+      )(toString(path), {
         bigint: true,
       }),
     (error) => ({ ...(error as Error & { code: string }), path }),
   );
+
+export const extension: (path: AbsolutePath) => Option<Extension> = fn.flow(
+  toString,
+  upath.extname,
+  option.fromPredicate((extname) => !!extname),
+  option.map(extensionModule.make),
+);
+
+export const extensions = function* (path: AbsolutePath): Sequence<Extension> {
+  let pathString = toString(path);
+  do {
+    const extname = upath.extname(pathString).toLowerCase();
+    if (!extname) return;
+    yield extensionModule.make(extname);
+    pathString = upath.trimExt(pathString);
+  } while (true);
+};
+
+export const hasExtension: (path: AbsolutePath) => boolean = fn.flow(
+  extension,
+  option.isSome,
+);
+
+const base = (path: string): string =>
+  upath.joinSafe(
+    upath.dirname(path),
+    upath.basename(path, upath.extname(path)),
+  );
+
+export const withoutExtension: (path: AbsolutePath) => AbsolutePath = fn.flow(
+  toString,
+  base,
+  make,
+);
+
+export const withExtension = (
+  extension: Option<Extension>,
+): ((path: AbsolutePath) => AbsolutePath) =>
+  fn.pipe(
+    extension,
+    option.fold(
+      () => withoutExtension,
+      (extension) =>
+        fn.flow(
+          toString,
+          base,
+          (base) => base + extensionModule.toString(extension),
+          make,
+        ),
+    ),
+  );
+
+export const withExtensions =
+  (extensions: ReadonlySet<Option<Extension>>) =>
+  (path: AbsolutePath): ReadonlySet<AbsolutePath> =>
+    fn.pipe(
+      extensions,
+      readonlySet.map(Eq)(fn.flow(withExtension, (apply) => apply(path))),
+    );

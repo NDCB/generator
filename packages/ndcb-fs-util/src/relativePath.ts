@@ -1,8 +1,16 @@
 import upath from "upath";
-const { dirname, join, normalizeTrim, sep } = upath;
-import { function as fn } from "fp-ts";
+import { function as fn, eq, string, show, option, readonlySet } from "fp-ts";
+import type { Option } from "fp-ts/Option";
+import type { Refinement } from "fp-ts/function";
 
-import { hash, type, sequence } from "@ndcb/util";
+import * as util from "@ndcb/util";
+import type { Sequence } from "@ndcb/util";
+
+import * as extensionModule from "./extension.js";
+import type { Extension } from "./extension.js";
+
+import * as absolutePath from "./absolutePath.js";
+import type { AbsolutePath } from "./absolutePath.js";
 
 /**
  * A relative path between entries in the file system.
@@ -12,7 +20,7 @@ import { hash, type, sequence } from "@ndcb/util";
  */
 export interface RelativePath {
   readonly value: string;
-  readonly tag: "RELATIVE_PATH"; // For discriminated union
+  readonly _tag: "RELATIVE_PATH"; // For discriminated union
 }
 
 /**
@@ -23,26 +31,30 @@ export interface RelativePath {
  *
  * @return The constructed relative path.
  */
-export const relativePath = (value: string): RelativePath => ({
+const make = (value: string): RelativePath => ({
   value,
-  tag: "RELATIVE_PATH",
+  _tag: "RELATIVE_PATH",
 });
 
-export const isRelativePath = (element: unknown): element is RelativePath =>
+export const is: Refinement<unknown, RelativePath> = (
+  element: unknown,
+): element is RelativePath =>
   typeof element === "object" &&
-  type.isNotNull(element) &&
-  element["tag"] === "RELATIVE_PATH";
+  util.type.isNotNull(element) &&
+  element["_tag"] === "RELATIVE_PATH";
 
-export const relativePathToString = (path: RelativePath): string => path.value;
+export const Eq: eq.Eq<RelativePath> = eq.struct({ value: string.Eq });
 
-export const relativePathEquals = (
-  p1: RelativePath,
-  p2: RelativePath,
-): boolean => p1.value === p2.value;
+export const Show: show.Show<RelativePath> = { show: ({ value }) => value };
 
-export const hashRelativePath: (path: RelativePath) => number = fn.flow(
-  relativePathToString,
-  hash.hashString,
+export const toString: (path: RelativePath) => string = Show.show;
+
+export const equals: (p1: RelativePath, p2: RelativePath) => boolean =
+  Eq.equals;
+
+export const hash: (path: RelativePath) => number = fn.flow(
+  toString,
+  util.hash.hashString,
 );
 
 /**
@@ -52,9 +64,9 @@ export const hashRelativePath: (path: RelativePath) => number = fn.flow(
  *
  * @return The constructed relative path.
  */
-export const normalizedRelativePath: (value: string) => RelativePath = fn.flow(
-  normalizeTrim,
-  relativePath,
+export const makeNormalized: (value: string) => RelativePath = fn.flow(
+  upath.normalizeTrim,
+  make,
 );
 
 /**
@@ -68,43 +80,107 @@ export const normalizedRelativePath: (value: string) => RelativePath = fn.flow(
  */
 export const upwardRelativePaths = function* (
   path: RelativePath,
-): sequence.Sequence<RelativePath> {
-  let current: string = relativePathToString(path);
+): Sequence<RelativePath> {
+  let current: string = toString(path);
   let previous: string;
   do {
-    yield relativePath(current);
+    yield make(current);
     previous = current;
-    current = dirname(current);
+    current = upath.dirname(current);
   } while (current !== previous);
 };
 
-export function joinRelativePath(
-  path: RelativePath,
-  other: RelativePath,
-): RelativePath;
-export function joinRelativePath(
-  path: RelativePath,
-  segment: string,
-): RelativePath;
-export function joinRelativePath(
+export function join(path: RelativePath, other: RelativePath): RelativePath;
+export function join(path: RelativePath, segment: string): RelativePath;
+export function join(
   path: RelativePath,
   other: string | RelativePath,
 ): RelativePath {
-  return relativePath(
-    join(
-      relativePathToString(path),
-      type.isString(other) ? other : relativePathToString(other),
+  return make(
+    upath.join(
+      toString(path),
+      util.type.isString(other) ? other : toString(other),
     ),
   );
 }
 
-export const relativePathIsEmpty = (path: RelativePath): boolean =>
-  relativePathToString(path) === ".";
+export const isEmpty = (path: RelativePath): boolean => toString(path) === ".";
 
-export const relativePathSegments = function* (
-  path: RelativePath,
-): sequence.Sequence<string> {
-  const segments = relativePathToString(path).split(sep);
+export const segments = function* (path: RelativePath): Sequence<string> {
+  const segments = toString(path).split(upath.sep);
   for (let i = segments[0] === "." ? 1 : 0; i < segments.length; i++)
     yield segments[i];
 };
+
+export const resolve =
+  (from: AbsolutePath) =>
+  (to: RelativePath): AbsolutePath =>
+    absolutePath.makeNormalized(
+      upath.resolve(absolutePath.toString(from), toString(to)),
+    );
+
+export const relativeFrom =
+  (from: AbsolutePath) =>
+  (to: AbsolutePath): RelativePath =>
+    makeNormalized(
+      upath.relative(absolutePath.toString(from), absolutePath.toString(to)),
+    );
+
+export const extension: (path: RelativePath) => Option<Extension> = fn.flow(
+  toString,
+  upath.extname,
+  option.fromPredicate((extname) => !!extname),
+  option.map(extensionModule.make),
+);
+
+export const extensions = function* (path: RelativePath): Sequence<Extension> {
+  let pathString = toString(path);
+  do {
+    const extname = upath.extname(pathString).toLowerCase();
+    if (!extname) return;
+    yield extensionModule.make(extname);
+    pathString = upath.trimExt(pathString);
+  } while (true);
+};
+
+export const hasExtension: (path: RelativePath) => boolean = fn.flow(
+  extension,
+  option.isSome,
+);
+
+const base = (path: string): string =>
+  upath.joinSafe(
+    upath.dirname(path),
+    upath.basename(path, upath.extname(path)),
+  );
+
+export const withoutExtension: (path: RelativePath) => RelativePath = fn.flow(
+  toString,
+  base,
+  make,
+);
+
+export const withExtension = (
+  extension: Option<Extension>,
+): ((path: RelativePath) => RelativePath) =>
+  fn.pipe(
+    extension,
+    option.fold(
+      () => withoutExtension,
+      (extension) =>
+        fn.flow(
+          toString,
+          base,
+          (base) => base + extensionModule.toString(extension),
+          make,
+        ),
+    ),
+  );
+
+export const withExtensions =
+  (extensions: ReadonlySet<Option<Extension>>) =>
+  (path: RelativePath): ReadonlySet<RelativePath> =>
+    fn.pipe(
+      extensions,
+      readonlySet.map(Eq)(fn.flow(withExtension, (apply) => apply(path))),
+    );

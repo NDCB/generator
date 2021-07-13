@@ -1,19 +1,28 @@
-import * as fse from "fs-extra";
-import { io, taskEither, function as fn } from "fp-ts";
-
-import { type } from "@ndcb/util";
-
 import {
-  AbsolutePath,
-  absolutePathEquals,
-  absolutePathBaseName,
-  absolutePathToString,
-  pathExists,
-  pathStatus,
-  normalizedAbsolutePath,
-  PathIOError,
-  hashAbsolutePath,
-} from "./absolutePath.js";
+  io,
+  taskEither,
+  function as fn,
+  boolean,
+  option,
+  eq,
+  show,
+  readonlySet,
+} from "fp-ts";
+import type { Refinement } from "fp-ts/function";
+import type { IO } from "fp-ts/IO";
+import type { Option } from "fp-ts/Option";
+import type { TaskEither } from "fp-ts/TaskEither";
+
+import fse from "fs-extra";
+
+import * as util from "@ndcb/util";
+import type { Sequence } from "@ndcb/util";
+
+import * as extensionModule from "./extension.js";
+import type { Extension } from "./extension.js";
+
+import * as absolutePath from "./absolutePath.js";
+import type { AbsolutePath, PathIOError } from "./absolutePath.js";
 
 /**
  * A file representation in the file system.
@@ -25,51 +34,71 @@ export interface File {
   readonly tag: "FILE"; // For discriminated union
 }
 
-export const isFile = (element: unknown): element is File =>
+export const is: Refinement<unknown, File> = (
+  element: unknown,
+): element is File =>
   typeof element === "object" &&
-  type.isNotNull(element) &&
+  util.type.isNotNull(element) &&
   element["tag"] === "FILE";
 
-export const file = (path: AbsolutePath): File => ({
+/**
+ * @private
+ */
+export const make = (path: AbsolutePath): File => ({
   path,
   tag: "FILE",
 });
 
-export const normalizedFile: (path: string) => File = fn.flow(
-  normalizedAbsolutePath,
-  file,
+export const makeNormalized: (path: string) => File = fn.flow(
+  absolutePath.makeNormalized,
+  make,
 );
 
-export const filePath = (file: File): AbsolutePath => file.path;
-
-export const fileToString: (file: File) => string = fn.flow(
-  filePath,
-  absolutePathToString,
+export const makeResolved: (path: string) => IO<File> = fn.flow(
+  absolutePath.makeResolved,
+  io.map(make),
 );
 
-export const fileEquals = (f1: File, f2: File): boolean =>
-  absolutePathEquals(filePath(f1), filePath(f2));
+export const path = ({ path }: File): AbsolutePath => path;
 
-export const hashFile: (file: File) => number = fn.flow(
-  filePath,
-  hashAbsolutePath,
-);
+export const Eq: eq.Eq<File> = eq.struct({ path: absolutePath.Eq });
 
-export type FileExistenceTester<E extends Error> = (
+export const Show: show.Show<File> = {
+  show: fn.flow(path, absolutePath.toString),
+};
+
+export const toString: (file: File) => string = Show.show;
+
+export const equals: (f1: File, f2: File) => boolean = Eq.equals;
+
+export const hash: (file: File) => number = fn.flow(path, absolutePath.hash);
+
+export type FileExistenceTester<FileStatusError extends Error> = (
   file: File,
-) => io.IO<taskEither.TaskEither<E, boolean>>;
+) => IO<TaskEither<FileStatusError, boolean>>;
 
-export const fileExists: FileExistenceTester<PathIOError> = (file) => () =>
+export const exists: FileExistenceTester<PathIOError> = (file) =>
   fn.pipe(
-    pathExists(filePath(file))(),
-    taskEither.fromTask,
-    taskEither.chainFirst((exists) =>
-      exists
-        ? fn.pipe(
-            pathStatus(filePath(file))(),
-            taskEither.map((status) => status.isFile()),
-          )
-        : taskEither.right(false),
+    file,
+    path,
+    absolutePath.exists,
+    io.map(
+      fn.flow(
+        (task): TaskEither<PathIOError, boolean> => taskEither.fromTask(task),
+        taskEither.chainIOK(
+          boolean.match(
+            () => fn.pipe(fn.constFalse(), taskEither.right, io.of),
+            () =>
+              fn.pipe(
+                file,
+                path,
+                absolutePath.status,
+                io.map(taskEither.map((status) => status.isFile())),
+              ),
+          ),
+        ),
+        taskEither.flatten,
+      ),
     ),
   );
 
@@ -78,15 +107,101 @@ export interface FileIOError extends Error {
   readonly file: File;
 }
 
-export const ensureFile = (
+export const ensure =
+  (file: File): IO<TaskEither<FileIOError, File>> =>
+  () =>
+    fn.pipe(
+      taskEither.tryCatch(
+        () => fse.ensureFile(absolutePath.toString(path(file))),
+        (error) => ({ ...(error as Error & { code: string }), file }),
+      ),
+      taskEither.map(() => file),
+    );
+
+export const basename: (file: File) => string = fn.flow(
+  path,
+  absolutePath.basename,
+);
+
+export const name: (file: File) => string = fn.flow(basename, (basename) =>
+  fn.pipe(
+    basename.indexOf("."),
+    option.fromPredicate((index) => index > 0),
+    option.fold(
+      () => basename,
+      (index) => basename.substring(0, index),
+    ),
+  ),
+);
+
+export const extension: (file: File) => Option<Extension> = fn.flow(
+  path,
+  absolutePath.extension,
+);
+
+export const extensions: (file: File) => Sequence<Extension> = fn.flow(
+  path,
+  absolutePath.extensions,
+);
+
+export const hasExtension: (
+  extension: Option<Extension>,
+) => (file: File) => boolean = fn.pipe(
+  option.getEq(extensionModule.Eq),
+  (Eq) => (target) => fn.flow(extension, (query) => Eq.equals(target, query)),
+);
+
+export const hasExtensionIn: (
+  extensions: ReadonlySet<Option<Extension>>,
+) => (file: File) => boolean = fn.pipe(
+  option.getEq(extensionModule.Eq),
+  readonlySet.elem,
+  (elem) => (extensions) =>
+    fn.flow(extension, (extension) => elem(extension, extensions)),
+);
+
+export type FileReader<FileReadError extends Error> = (
   file: File,
-): io.IO<taskEither.TaskEither<FileIOError, void>> => () =>
+) => IO<TaskEither<FileReadError, Buffer>>;
+
+export const read: FileReader<FileIOError> = (file) => () =>
   taskEither.tryCatch(
-    () => fse.ensureFile(absolutePathToString(filePath(file))),
+    () => fse.readFile(toString(file)),
     (error) => ({ ...(error as Error & { code: string }), file }),
   );
 
-export const fileName: (file: File) => string = fn.flow(
-  filePath,
-  absolutePathBaseName,
-);
+export type TextFileReader<TextFileReadError extends Error> = (
+  file: File,
+) => IO<TaskEither<TextFileReadError, string>>;
+
+export const textReader = <FileReadError extends Error>(
+  readFile: FileReader<FileReadError>,
+  encoding: BufferEncoding,
+): TextFileReader<FileReadError> =>
+  fn.flow(
+    readFile,
+    io.map(taskEither.map((buffer) => buffer.toString(encoding))),
+  );
+
+export type FileWriter<FileWriteError extends Error> = (
+  file: File,
+  contents: Buffer,
+) => IO<TaskEither<FileWriteError, void>>;
+
+export const writeFile: FileWriter<FileIOError> = (file, contents) => () =>
+  taskEither.tryCatch(
+    () => fse.writeFile(toString(file), contents),
+    (error) => ({ ...(error as Error & { code: string }), file }),
+  );
+
+export type TextFileWriter<FileWriteError extends Error> = (
+  file: File,
+  contents: string,
+) => IO<TaskEither<FileWriteError, void>>;
+
+export const writeTextFile: TextFileWriter<FileIOError> =
+  (file, contents) => () =>
+    taskEither.tryCatch(
+      () => fse.writeFile(toString(file), contents),
+      (error) => ({ ...(error as Error & { code: string }), file }),
+    );

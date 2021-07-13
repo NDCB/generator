@@ -1,25 +1,36 @@
-import { hash, type } from "@ndcb/util";
+import { function as fn, eq, show, string } from "fp-ts";
+import type { Refinement } from "fp-ts/function";
+
+import * as util from "@ndcb/util";
 
 export interface Extension {
   readonly value: string;
-  readonly tag: "EXTENSION"; // For discriminated union
+  readonly _tag: "EXTENSION"; // For discriminated union
 }
 
-export const extension = (value: string): Extension => ({
-  value,
-  tag: "EXTENSION",
+export const make = (value: string): Extension => ({
+  value: value.toLowerCase(),
+  _tag: "EXTENSION",
 });
 
-export const isExtension = (element: unknown): element is Extension =>
+export const is: Refinement<unknown, Extension> = (
+  element: unknown,
+): element is Extension =>
   typeof element === "object" &&
-  type.isNotNull(element) &&
-  element["tag"] === "EXTENSION";
+  util.type.isNotNull(element) &&
+  element["_tag"] === "EXTENSION";
 
-export const extensionToString = (extension: Extension): string =>
-  extension.value;
+export const Eq: eq.Eq<Extension> = eq.struct({ value: string.Eq });
 
-export const extensionEquals = (e1: Extension, e2: Extension): boolean =>
-  e1.value === e2.value;
+export const Show: show.Show<Extension> = {
+  show: ({ value }) => value,
+};
 
-export const hashExtension = (extension: Extension): number =>
-  hash.hashString(extensionToString(extension));
+export const toString: (extension: Extension) => string = Show.show;
+
+export const equals: (e1: Extension, e2: Extension) => boolean = Eq.equals;
+
+export const hash: (extension: Extension) => number = fn.flow(
+  toString,
+  util.hash.hashString,
+);

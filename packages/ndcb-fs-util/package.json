@@ -4,7 +4,16 @@
   "description": "File system utilities",
   "type": "module",
   "main": "./lib/index.js",
-  "exports": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./AbsolutePath": "./lib/absolutePath.js",
+    "./Directory": "./lib/directory.js",
+    "./Entry": "./lib/entry.js",
+    "./Extension": "./lib/extension.js",
+    "./File": "./lib/file.js",
+    "./Path": "./lib/path.js",
+    "./RelativePath": "./lib/relativePath.js"
+  },
   "types": "./lib/index.d.ts",
   "repository": "https://github.com/NDCB/generator/tree/master/packages/ndcb-fs-util",
   "author": "Marc-Antoine Ouimet",
