@@ -1,12 +1,15 @@
+import type { IO } from "fp-ts/IO";
+
 import consola, { ConsolaOptions } from "consola";
-import { io } from "fp-ts";
 
-export type MessageLogger = (message: string) => io.IO<void>;
-export type ErrorLogger = MessageLogger & ((error: Error) => io.IO<void>);
+export type MessageLogger = (message: string) => IO<void>;
+export type ErrorLogger = MessageLogger & ((error: Error) => IO<void>);
 
-const messageLogger = (logger: (message: string) => void): MessageLogger => (
-  message: string,
-) => () => logger(message);
+const messageLogger =
+  (logger: (message: string) => void): MessageLogger =>
+  (message: string) =>
+  () =>
+    logger(message);
 
 export interface Logger {
   readonly fatal: MessageLogger;
@@ -21,19 +24,9 @@ export interface Logger {
   readonly trace: MessageLogger;
 }
 
-export const scoppedLogger = (tag: string): Logger => {
-  const {
-    fatal,
-    error,
-    warn,
-    log,
-    info,
-    start,
-    success,
-    ready,
-    debug,
-    trace,
-  } = consola.create(({ tag, level: Infinity } as unknown) as ConsolaOptions);
+export const scopedLogger = (tag: string, level = Infinity): Logger => {
+  const { fatal, error, warn, log, info, start, success, ready, debug, trace } =
+    consola.create({ tag, level } as unknown as ConsolaOptions);
   return {
     fatal: messageLogger(fatal),
     error: (message) => () => error(message),
@@ -47,3 +40,14 @@ export const scoppedLogger = (tag: string): Logger => {
     trace: messageLogger(trace),
   };
 };
+
+export const fatal: MessageLogger = messageLogger(consola.fatal);
+export const error: ErrorLogger = (message) => () => error(message);
+export const warn: MessageLogger = messageLogger(consola.warn);
+export const log: MessageLogger = messageLogger(consola.log);
+export const info: MessageLogger = messageLogger(consola.info);
+export const start: MessageLogger = messageLogger(consola.start);
+export const success: MessageLogger = messageLogger(consola.success);
+export const ready: MessageLogger = messageLogger(consola.ready);
+export const debug: MessageLogger = messageLogger(consola.debug);
+export const trace: MessageLogger = messageLogger(consola.trace);
