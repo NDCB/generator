@@ -13,6 +13,8 @@
     "fp-ts": "^2.10.5"
   },
   "devDependencies": {
+    "json5": "^2.2.0",
+    "toml": "^3.0.0",
     "yaml": "^1.10.2",
     "@ndcb/fs-util": "^0.3.0",
     "@ndcb/util": "^0.9.1"
