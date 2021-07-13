@@ -14,6 +14,7 @@
   "rules": {
     "@typescript-eslint/no-var-requires": 0,
     "jest/valid-title": 0,
-    "jest/no-conditional-expect": 0
+    "jest/no-conditional-expect": 0,
+    "jest/no-identical-title": 0
   }
 }
