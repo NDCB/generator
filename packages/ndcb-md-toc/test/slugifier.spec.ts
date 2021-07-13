@@ -1,3 +1,5 @@
+import { describe, expect, test } from "@jest/globals";
+
 import {
   tree,
   readonlyArray,
@@ -5,79 +7,155 @@ import {
   taskEither,
   option,
   function as fn,
+  io,
 } from "fp-ts";
-import { resolve, dirname } from "path";
+import type { IO } from "fp-ts/IO";
+import type { TaskEither } from "fp-ts/TaskEither";
+import type { Option } from "fp-ts/Option";
+import type { Tree } from "fp-ts/Tree";
+
+import { dirname } from "path";
 import { fileURLToPath } from "url";
 
 import unified from "unified";
 import markdown from "remark-parse";
 import frontmatter from "remark-frontmatter";
 
-import {
-  normalizedDirectory,
-  fileFromDirectory,
-  normalizedRelativePath,
-  readFile,
-  textFileReader,
-} from "@ndcb/fs-util";
+import { file, directory, relativePath } from "@ndcb/fs-util";
 
-import { mdastTableOfContentsTree } from "../src/toc";
-import { slugifyTableOfContents } from "../src/slugifier";
-
-import slugifyTableOfContentsTestCases from "./fixtures/slugifyTableOfContents.json";
+import * as _ from "@ndcb/md-toc";
 
 const { parse } = unified()
   .use(markdown, { commonmark: true } as Record<string, unknown>)
   .use(frontmatter);
 
-describe("slugifyTableOfContents", () => {
-  const fixturesDirectory = normalizedDirectory(
-    resolve(dirname(fileURLToPath(import.meta.url)), "./fixtures"),
+const readFile = fn.flow(
+  relativePath.makeNormalized,
+  directory.fileFrom(
+    fn.pipe(import.meta.url, fileURLToPath, dirname, directory.makeNormalized),
+  ),
+  file.textReader(file.read, "utf8"),
+);
+
+const makeTree = ({ node, children }) =>
+  tree.make(
+    node,
+    fn.pipe(children, readonlyArray.map(makeTree), readonlyArray.toArray),
   );
-  const fileInFixtures = fileFromDirectory(fixturesDirectory);
-  const readTextFile = textFileReader(readFile, "utf-8");
-  const readContents = (path: string) =>
-    readTextFile(fileInFixtures(normalizedRelativePath(path)));
-  for (const {
-    file,
-    description,
-    expected,
-  } of slugifyTableOfContentsTestCases) {
-    const makeTree = (node) =>
-      tree.make(
-        node.node,
-        fn.pipe(
-          node.children,
-          readonlyArray.map(makeTree),
-          readonlyArray.toArray,
+
+describe("withSlugs", () => {
+  test.concurrent.each(
+    [
+      {
+        file: "./fixtures/standard.md",
+        description: "slugifies the headings of the table of contents",
+        expected: {
+          node: { heading: "Actual Title", slug: "actual title" },
+          children: [
+            {
+              node: { heading: "Section 1", slug: "section 1" },
+              children: [
+                {
+                  node: { heading: "Section 1.1", slug: "section 1.1" },
+                  children: [],
+                },
+                {
+                  node: { heading: "Section 1.2", slug: "section 1.2" },
+                  children: [],
+                },
+                {
+                  node: { heading: "Section 1.3", slug: "section 1.3" },
+                  children: [],
+                },
+              ],
+            },
+            {
+              node: { heading: "Section 2", slug: "section 2" },
+              children: [
+                {
+                  node: { heading: "Section 2.1", slug: "section 2.1" },
+                  children: [],
+                },
+                {
+                  node: { heading: "Section 2.2", slug: "section 2.2" },
+                  children: [],
+                },
+                {
+                  node: { heading: "Section 2.3", slug: "section 2.3" },
+                  children: [],
+                },
+              ],
+            },
+            {
+              node: { heading: "Section 3", slug: "section 3" },
+              children: [
+                {
+                  node: { heading: "Section 3.1", slug: "section 3.1" },
+                  children: [],
+                },
+                {
+                  node: { heading: "Section 3.2", slug: "section 3.2" },
+                  children: [],
+                },
+                {
+                  node: { heading: "Section 3.3", slug: "section 3.3" },
+                  children: [],
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ].map(
+      ({
+        file,
+        expected,
+        description,
+      }): {
+        file: string;
+        tree: IO<TaskEither<Error, Option<Tree<{ readonly heading: string }>>>>;
+        expected: Option<
+          Tree<{ readonly heading: string; readonly slug: string }>
+        >;
+        description: string;
+      } => ({
+        file,
+        tree: fn.pipe(
+          readFile(file),
+          io.map(taskEither.map(fn.flow(parse, _.fromMdast))),
         ),
-      );
-    test(description, async () => {
-      await fn.pipe(
-        readContents(file)(),
-        taskEither.getOrElse(() => {
-          throw new Error(`Unexpectedly failed to read file "${file}"`);
-        }),
-        task.map((contents) =>
-          fn.pipe(
-            mdastTableOfContentsTree(parse(contents)),
-            option.map(slugifyTableOfContents((token) => token.toLowerCase())),
-            option.fold(
-              () => {
-                if (expected)
-                  throw new Error(`Unexpectedly parsed a non-empty tree`);
-              },
-              (tree) => {
-                if (!expected)
-                  throw new Error(
-                    `Unexpectedly failed to parse a non-empty tree`,
-                  );
-                expect(tree).toEqual(makeTree(expected));
-              },
+        expected: fn.pipe(expected, option.fromNullable, option.map(makeTree)),
+        description,
+      }),
+    ),
+  )(
+    "$description",
+    async ({
+      file,
+      tree,
+      expected,
+    }: {
+      file: string;
+      tree: IO<TaskEither<Error, Option<Tree<{ readonly heading: string }>>>>;
+      expected: Option<
+        Tree<{ readonly heading: string; readonly slug: string }>
+      >;
+    }) => {
+      expect(
+        await fn.pipe(
+          tree,
+          io.map(
+            fn.flow(
+              taskEither.getOrElse(() => {
+                throw new Error(
+                  `Unexpectedly failed to read fixtures file "${file}"`,
+                );
+              }),
+              task.map(option.map(_.withSlugs((token) => token.toLowerCase()))),
             ),
           ),
-        ),
-      )();
-    });
-  }
+        )()(),
+      ).toEqual(expected);
+    },
+  );
 });
