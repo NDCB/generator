@@ -1,79 +1,176 @@
-import { option, eq, function as fn } from "fp-ts";
+import { describe, expect, test } from "@jest/globals";
 
-import { hashMap } from "@ndcb/util";
+import { option, eq } from "fp-ts";
+import type { Option } from "fp-ts/Option";
 
-import hashMapTestCases from "./fixtures/hashMap";
-import inversedHashMapTestCases from "./fixtures/inversedHashMap";
+import { hashMap as _ } from "@ndcb/util";
 
 describe("hashMap", () => {
-  for (const { entries, hash, equals, has, get } of hashMapTestCases) {
-    const map = hashMap.hashMap(entries, hash, eq.fromEquals(equals));
-    describe("has", () => {
-      for (const { key, expected } of has || []) {
-        test(
-          expected
-            ? "return `true` if the key is in the map"
-            : "returns `false` if the key is not in the map",
-          () => {
-            expect(map.has(key)).toEqual(expected);
+  describe.each([
+    {
+      entries: [
+        [-1, 1],
+        [0, 0],
+        [1, 10],
+      ],
+      hash: (n: number): number => Math.abs(n),
+      equals: (n1: number, n2: number): boolean => n1 === n2,
+      has: [-1, 0, 1],
+      doesNotHave: [-2, 2],
+      get: [
+        {
+          key: -1,
+          expected: 1,
+        },
+        {
+          key: 0,
+          expected: 0,
+        },
+        {
+          key: 1,
+          expected: 10,
+        },
+        {
+          key: -2,
+          expected: null,
+        },
+      ],
+    },
+    {
+      entries: [
+        [0, 0],
+        [0, 1],
+      ],
+      hash: (n: number): number => Math.abs(n),
+      equals: (n1: number, n2: number): boolean => n1 === n2,
+      has: [0],
+      doesNotHave: [-2, 2],
+      get: [
+        {
+          key: 0,
+          expected: 1,
+        },
+      ],
+    },
+  ])(
+    "scenario $#",
+    ({
+      entries,
+      hash,
+      equals,
+      has,
+      doesNotHave,
+      get,
+    }: {
+      entries: [unknown, unknown][];
+      hash: (a: unknown) => number;
+      equals: (a: unknown, b: unknown) => boolean;
+      has: unknown[];
+      doesNotHave: unknown[];
+      get: {
+        key: unknown;
+        expected: Option<unknown>;
+      }[];
+    }) => {
+      const map = _.hashMap(entries, hash, eq.fromEquals(equals));
+      describe("has", () => {
+        test.concurrent.each(has || [])(
+          "return `true` if the key is in the map",
+          async (key) => {
+            expect(map.has(key)).toBe(true);
           },
         );
-      }
-    });
-    describe("get", () => {
-      for (const { key, expected } of get || []) {
-        test(
-          option.isSome(expected)
-            ? "returns the value with the associated key"
-            : "returns `none` if there is no value associated with the key",
-          () => {
-            expect(map.get(key)).toEqual(expected);
+        test.concurrent.each(doesNotHave || [])(
+          "returns `false` if the key is not in the map",
+          async (key) => {
+            expect(map.has(key)).toBe(false);
           },
         );
-      }
-    });
-  }
+      });
+      describe("get", () => {
+        test.concurrent.each(get || [])(
+          "returns the optional value with the associated key",
+          async ({ key, expected }) => {
+            expect(map.get(key)).toEqual(option.fromNullable(expected));
+          },
+        );
+      });
+    },
+  );
 });
 
 describe("inversedHashMap", () => {
-  for (const { entries, hash, equals, has, get } of inversedHashMapTestCases) {
-    const map = hashMap.inversedHashMap(entries, hash, eq.fromEquals(equals));
-    describe("has", () => {
-      for (const { key, expected } of has || []) {
-        test(
-          expected
-            ? "return `true` if the key is in the map"
-            : "returns `false` if the key is not in the map",
-          () => {
-            expect(map.has(key)).toEqual(expected);
+  describe.each([
+    {
+      entries: [
+        [0, 2],
+        [1, 2],
+        [2, 2],
+        [-2, 1],
+        [-1, 1],
+      ],
+      hash: (n: number): number => Math.abs(n),
+      equals: (n1: number, n2: number): boolean => n1 === n2,
+      has: [2, 1],
+      doesNotHave: [0, -1, -2],
+      get: [
+        {
+          key: 2,
+          expected: [0, 1, 2],
+        },
+        {
+          key: 1,
+          expected: [-1, -2],
+        },
+        {
+          key: 0,
+          expected: null,
+        },
+      ],
+    },
+  ])(
+    "scenario $#",
+    ({
+      entries,
+      hash,
+      equals,
+      has,
+      doesNotHave,
+      get,
+    }: {
+      entries: [unknown, unknown][];
+      hash: (a: unknown) => number;
+      equals: (a: unknown, b: unknown) => boolean;
+      has: unknown[];
+      doesNotHave: unknown[];
+      get: {
+        key: unknown;
+        expected: Option<unknown>;
+      }[];
+    }) => {
+      const map = _.inversedHashMap(entries, hash, eq.fromEquals(equals));
+      describe("has", () => {
+        test.concurrent.each(has || [])(
+          "return `true` if the key is in the map",
+          async (key) => {
+            expect(map.has(key)).toBe(true);
           },
         );
-      }
-    });
-    describe("get", () => {
-      for (const { key, expected } of get || []) {
-        test("returns the value with the associated key", () => {
-          const actual = map.get(key);
-          fn.pipe(
-            actual,
-            option.fold<unknown[], void>(
-              () => {
-                expect(actual).toEqual(expected);
-              },
-              (actualValues) => {
-                const expectedValues: unknown[] =
-                  option.toNullable<unknown[]>(expected) ?? [];
-                expect(actualValues).toEqual(
-                  expect.arrayContaining(expectedValues),
-                );
-                expect(expectedValues).toEqual(
-                  expect.arrayContaining(actualValues),
-                );
-              },
-            ),
-          );
-        });
-      }
-    });
-  }
+        test.concurrent.each(doesNotHave || [])(
+          "returns `false` if the key is not in the map",
+          async (key) => {
+            expect(map.has(key)).toBe(false);
+          },
+        );
+      });
+      describe("get", () => {
+        test.concurrent.each(get || [])(
+          "returns the optional value with the associated key",
+          async ({ key, expected }) => {
+            expect(map.get(key)).toEqual(option.fromNullable(expected));
+          },
+        );
+      });
+    },
+  );
 });

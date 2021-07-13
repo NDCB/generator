@@ -1,20 +1,21 @@
 import { readonlyArray, option, function as fn } from "fp-ts";
+import type { Option } from "fp-ts/Option";
 
 export type Sequence<T> = Iterable<T>;
 
-export const every = <T>(predicate: (element: T) => boolean) => (
-  sequence: Sequence<T>,
-): boolean => {
-  for (const element of sequence) if (!predicate(element)) return false;
-  return true;
-};
+export const every =
+  <T>(predicate: (element: T) => boolean) =>
+  (sequence: Sequence<T>): boolean => {
+    for (const element of sequence) if (!predicate(element)) return false;
+    return true;
+  };
 
-export const some = <T>(predicate: (element: T) => boolean) => (
-  sequence: Sequence<T>,
-): boolean => {
-  for (const element of sequence) if (predicate(element)) return true;
-  return false;
-};
+export const some =
+  <T>(predicate: (element: T) => boolean) =>
+  (sequence: Sequence<T>): boolean => {
+    for (const element of sequence) if (predicate(element)) return true;
+    return false;
+  };
 
 export function filter<T, K>(
   assertion: (element: T | K) => element is K,
@@ -30,12 +31,12 @@ export function filter<T>(
   };
 }
 
-export const first = <T>(sequence: Sequence<T>): option.Option<T> => {
+export const first = <T>(sequence: Sequence<T>): Option<T> => {
   for (const element of sequence) return option.some(element);
   return option.none;
 };
 
-export const last = <T>(sequence: Sequence<T>): option.Option<T> => {
+export const last = <T>(sequence: Sequence<T>): Option<T> => {
   let last: T | null = null;
   let isEmpty = true;
   for (const element of sequence) {
@@ -58,21 +59,20 @@ export const rest = function* <T>(sequence: Sequence<T>): Sequence<T> {
 
 export function find<T, K>(
   assertion: (element: T | K) => element is K,
-): (sequence: Sequence<T>) => option.Option<K>;
+): (sequence: Sequence<T>) => Option<K>;
 export function find<T>(
   predicate: (element: T) => boolean,
-): (sequence: Sequence<T>) => option.Option<T>;
+): (sequence: Sequence<T>) => Option<T>;
 export function find<T>(
   predicate: (element: T) => boolean,
-): (sequence: Sequence<T>) => option.Option<T> {
+): (sequence: Sequence<T>) => Option<T> {
   return (sequence) => fn.pipe(sequence, filter(predicate), first);
 }
 
 export const toArray = <T>(sequence: Sequence<T>): T[] => [...sequence];
 
-export const toReadonlyArray: <T>(
-  sequence: Sequence<T>,
-) => readonly T[] = toArray;
+export const toReadonlyArray: <T>(sequence: Sequence<T>) => readonly T[] =
+  toArray;
 
 export const concat = <T>(...sequences: Array<Sequence<T>>) =>
   function* (sequence: Sequence<T>): Sequence<T> {
@@ -110,6 +110,15 @@ export const flatMap = <T, K>(mapper: (element: T) => Sequence<K>) =>
     for (const mappedSequences of map(mapper)(sequence)) yield* mappedSequences;
   };
 
+export const fold =
+  <T, K>(callback: (element: T, accumulation: K) => K, accumulation: K) =>
+  (sequence: Sequence<T>): K => {
+    for (const element of sequence) {
+      accumulation = callback(element, accumulation);
+    }
+    return accumulation;
+  };
+
 export const orderedPairs = function* <T>(
   sequence: Sequence<T>,
 ): Sequence<[T, T]> {
@@ -133,11 +142,11 @@ export const enumerate = (base = 0) =>
     for (const element of sequence) yield { index: base++, element };
   };
 
-export const forEach = <T>(callback: (element: T) => void) => (
-  sequence: Sequence<T>,
-): void => {
-  for (const element of sequence) callback(element);
-};
+export const forEach =
+  <T>(callback: (element: T) => void) =>
+  (sequence: Sequence<T>): void => {
+    for (const element of sequence) callback(element);
+  };
 
 export function* zip<T>(...sequences: readonly Sequence<T>[]): Sequence<T[]> {
   const iterators = fn.pipe(
@@ -164,12 +173,15 @@ export function* zip<T>(...sequences: readonly Sequence<T>[]): Sequence<T[]> {
   }
 }
 
-export const join = (separator = ", ") => (
-  sequence: Sequence<string>,
-): string => toReadonlyArray(sequence).join(separator);
+export const join =
+  (separator = ", ") =>
+  (sequence: Sequence<string>): string =>
+    toReadonlyArray(sequence).join(separator);
 
-export const toString = <T>(
-  elementToString: (element: T) => string = JSON.stringify,
-  separator?: string,
-) => (sequence: Sequence<T>): string =>
-  `[${fn.pipe(sequence, map(elementToString), join(separator))}]`;
+export const toString =
+  <T>(
+    elementToString: (element: T) => string = JSON.stringify,
+    separator?: string,
+  ) =>
+  (sequence: Sequence<T>): string =>
+    `[${fn.pipe(sequence, map(elementToString), join(separator))}]`;

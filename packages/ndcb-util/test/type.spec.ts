@@ -1,87 +1,316 @@
-import { type } from "@ndcb/util";
+import { describe, expect, test } from "@jest/globals";
 
-import isStringTestCases from "./fixtures/isString.json";
-import isNumberTestCases from "./fixtures/isNumber.json";
-import isNullTestCases from "./fixtures/isNull.json";
-import isIterableTestCases from "./fixtures/isIterable.json";
-import isTypeIterableTestCases from "./fixtures/isTypeIterable";
-import isArrayTestCases from "./fixtures/isArray.json";
-import isTypeArrayTestCases from "./fixtures/isTypeArray";
-import isStringArrayTestCases from "./fixtures/isStringArray.json";
+import { function as fn } from "fp-ts";
+
+import { type as _ } from "@ndcb/util";
+import type { Refinement } from "@ndcb/util";
 
 describe("isString", () => {
-  for (const { input, expected } of isStringTestCases) {
-    test(`returns "${expected}" for input "${input}"`, () => {
-      expect(type.isString(input)).toBe(expected);
-    });
-  }
+  test.concurrent.each([
+    {
+      input: null,
+      expected: false,
+    },
+    {
+      input: "String",
+      expected: true,
+    },
+    {
+      input: {},
+      expected: false,
+    },
+    {
+      input: [],
+      expected: false,
+    },
+    {
+      input: 0,
+      expected: false,
+    },
+  ])(
+    `returns "$expected" for input "$input"`,
+    async ({ input, expected }: { input: unknown; expected: boolean }) => {
+      expect(_.isString(input)).toBe(expected);
+    },
+  );
 });
 
 describe("isNumber", () => {
-  for (const { input, expected } of isNumberTestCases) {
-    test(`returns "${expected}" for input "${input}"`, () => {
-      expect(type.isNumber(input)).toBe(expected);
-    });
-  }
+  test.concurrent.each([
+    {
+      input: null,
+      expected: false,
+    },
+    {
+      input: "NaN",
+      expected: false,
+    },
+    {
+      input: {},
+      expected: false,
+    },
+    {
+      input: [],
+      expected: false,
+    },
+    {
+      input: 0,
+      expected: true,
+    },
+    {
+      input: -1,
+      expected: true,
+    },
+    {
+      input: 1,
+      expected: true,
+    },
+  ])(
+    `returns "$expected" for input "$input"`,
+    async ({ input, expected }: { input: unknown; expected: boolean }) => {
+      expect(_.isNumber(input)).toBe(expected);
+    },
+  );
 });
 
 describe("isNull", () => {
-  for (const { input, expected } of isNullTestCases) {
-    test(`returns "${expected}" for input "${input}"`, () => {
-      expect(type.isNull(input)).toBe(expected);
-    });
-  }
+  test.concurrent.each([
+    {
+      input: null,
+      expected: true,
+    },
+    {
+      input: "String",
+      expected: false,
+    },
+    {
+      input: {},
+      expected: false,
+    },
+    {
+      input: [],
+      expected: false,
+    },
+    {
+      input: 0,
+      expected: false,
+    },
+  ])(
+    `returns "$expected" for input "$input"`,
+    async ({ input, expected }: { input: unknown; expected: boolean }) => {
+      expect(_.isNull(input)).toBe(expected);
+    },
+  );
 });
 
 describe("isNotNull", () => {
-  for (const { input, expected } of isNullTestCases) {
-    test(`returns "${!expected}" for input "${input}"`, () => {
-      expect(type.isNotNull(input)).toBe(!expected);
-    });
-  }
+  test.concurrent.each([
+    {
+      input: null,
+      expected: false,
+    },
+    {
+      input: "String",
+      expected: true,
+    },
+    {
+      input: {},
+      expected: true,
+    },
+    {
+      input: [],
+      expected: true,
+    },
+    {
+      input: 0,
+      expected: true,
+    },
+  ])(
+    `returns "$expected" for input "$input"`,
+    async ({ input, expected }: { input: unknown; expected: boolean }) => {
+      expect(_.isNotNull(input)).toBe(expected);
+    },
+  );
 });
 
 describe("isIterable", () => {
-  for (const { input, expected } of isIterableTestCases) {
-    test(`returns "${expected}" for input "${input}"`, () => {
-      expect(type.isIterable(input)).toBe(expected);
-    });
-  }
+  test.concurrent.each([
+    {
+      input: null,
+      expected: false,
+    },
+    {
+      input: "String",
+      expected: true,
+    },
+    {
+      input: {},
+      expected: false,
+    },
+    {
+      input: [],
+      expected: true,
+    },
+    {
+      input: [1, 2, 3],
+      expected: true,
+    },
+    {
+      input: ["1", "2", "3"],
+      expected: true,
+    },
+    {
+      input: 0,
+      expected: false,
+    },
+  ])(
+    `returns "$expected" for input "$input"`,
+    async ({ input, expected }: { input: unknown; expected: boolean }) => {
+      expect(_.isIterable(input)).toBe(expected);
+    },
+  );
 });
 
-describe("isTypeIterable", () => {
-  for (const {
-    input,
-    ofType,
-    expected,
-    description,
-  } of isTypeIterableTestCases) {
-    test(description, () => {
-      expect(type.isTypeIterable(input, ofType)).toBe(expected);
-    });
-  }
+describe("isIterableOfType", () => {
+  test.concurrent.each([
+    {
+      input: null,
+      ofType: () => true,
+      expected: false,
+      description: 'returns "false" if the element is not an iterable',
+    },
+    {
+      input: [],
+      ofType: (n) => typeof n === "number",
+      expected: true,
+      description: 'returns "true" if the iterable is empty',
+    },
+    {
+      input: [1, 2, 3],
+      ofType: (n) => typeof n === "number",
+      expected: true,
+      description:
+        'returns "true" if all elements of the iterable are of the queried type',
+    },
+    {
+      input: [1, "2", 3],
+      ofType: (n) => typeof n === "number",
+      expected: false,
+      description:
+        'returns "false" if some element of the iterable is not of the queried type',
+    },
+  ])(
+    "$description",
+    async ({
+      input,
+      ofType,
+      expected,
+    }: {
+      input: unknown;
+      ofType: Refinement<unknown, unknown>;
+      expected: boolean;
+    }) => {
+      expect(fn.pipe(input, _.isIterableOfType(ofType))).toBe(expected);
+    },
+  );
 });
 
 describe("isArray", () => {
-  for (const { input, expected } of isArrayTestCases) {
-    test(`returns "${expected}" for input "${input}"`, () => {
-      expect(type.isArray(input)).toBe(expected);
-    });
-  }
+  test.concurrent.each([
+    {
+      input: [1, 2, 3],
+      expected: true,
+    },
+    {
+      input: null,
+      expected: false,
+    },
+    {
+      input: {},
+      expected: false,
+    },
+    {
+      input: 0,
+      expected: false,
+    },
+    {
+      input: "String",
+      expected: false,
+    },
+  ])(
+    `returns "$expected" for input "$input"`,
+    async ({ input, expected }: { input: unknown; expected: boolean }) => {
+      expect(_.isArray(input)).toBe(expected);
+    },
+  );
 });
 
-describe("isTypeArray", () => {
-  for (const { input, ofType, expected, description } of isTypeArrayTestCases) {
-    test(description, () => {
-      expect(type.isTypeArray(input, ofType)).toBe(expected);
-    });
-  }
+describe("isArrayOfType", () => {
+  test.concurrent.each([
+    {
+      input: null,
+      ofType: () => true,
+      expected: false,
+      description: 'returns "false" if the element is not an array',
+    },
+    {
+      input: [],
+      ofType: (n) => typeof n === "number",
+      expected: true,
+      description: 'returns "true" if the array is empty',
+    },
+    {
+      input: [1, 2, 3],
+      ofType: (n) => typeof n === "number",
+      expected: true,
+      description:
+        'returns "true" if all elements of the array are of the queried type',
+    },
+    {
+      input: [1, "2", 3],
+      ofType: (n) => typeof n === "number",
+      expected: false,
+      description:
+        'returns "false" if some element of the array is not of the queried type',
+    },
+  ])(
+    "$description",
+    async ({
+      input,
+      ofType,
+      expected,
+    }: {
+      input: unknown;
+      ofType: Refinement<unknown, unknown>;
+      expected: boolean;
+    }) => {
+      expect(fn.pipe(input, _.isArrayOfType(ofType))).toBe(expected);
+    },
+  );
 });
 
 describe("isStringArray", () => {
-  for (const { input, expected } of isStringArrayTestCases) {
-    test(`returns "${expected}" for input "${input}"`, () => {
-      expect(type.isStringArray(input)).toBe(expected);
-    });
-  }
+  test.concurrent.each([
+    {
+      input: [],
+      expected: true,
+    },
+    {
+      input: ["String1", "String2"],
+      expected: true,
+    },
+    {
+      input: ["String", 2],
+      expected: false,
+    },
+    {
+      input: null,
+      expected: false,
+    },
+  ])(
+    `returns "$expected" for input "$input"`,
+    async ({ input, expected }: { input: unknown; expected: boolean }) => {
+      expect(_.isStringArray(input)).toBe(expected);
+    },
+  );
 });

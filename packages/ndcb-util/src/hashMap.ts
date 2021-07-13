@@ -1,15 +1,18 @@
 import { eq, option, function as fn } from "fp-ts";
+import type { Option } from "fp-ts/Option";
 
 import * as sequence from "./sequence.js";
+
+import type { Sequence } from "./sequence.js";
 import { hashString } from "./hash.js";
 
 export interface HashMap<K, V> {
   readonly has: (key: K) => boolean;
-  readonly get: (key: K) => option.Option<V>;
+  readonly get: (key: K) => Option<V>;
 }
 
 export const hashMap = <K, V>(
-  entries: sequence.Sequence<[K, V]>,
+  entries: Sequence<[K, V]>,
   hash: (key: K) => number,
   keyEquality: eq.Eq<K>,
 ): HashMap<K, V> => {
@@ -36,10 +39,9 @@ export const hashMap = <K, V>(
       buckets[hash(key)] ?? [],
       sequence.some<[K, V]>((bucket) => keyEquality.equals(key, bucket[0])),
     );
-  const bucketOptionalValue = <K, V>(
-    bucket: option.Option<[K, V]>,
-  ): option.Option<V> => option.map<[K, V], V>((bucket) => bucket[1])(bucket);
-  const get = (key: K): option.Option<V> =>
+  const bucketOptionalValue = <K, V>(bucket: Option<[K, V]>): Option<V> =>
+    option.map<[K, V], V>((bucket) => bucket[1])(bucket);
+  const get = (key: K): Option<V> =>
     bucketOptionalValue(
       fn.pipe(
         buckets[hash(key)] ?? [],
@@ -50,11 +52,11 @@ export const hashMap = <K, V>(
 };
 
 export const inversedHashMap = <K, V>(
-  entries: sequence.Sequence<[K, V]>,
+  entries: Sequence<[K, V]>,
   hash: (value: V) => number,
   valueEquality: eq.Eq<V>,
 ): HashMap<V, K[]> => {
-  const inversedEntries = function* (): sequence.Sequence<[V, K[]]> {
+  const inversedEntries = function* (): Sequence<[V, K[]]> {
     let remainingEntries: Array<[K, V]> = [...entries];
     let ignoredEntries: Array<[K, V]> = [];
     while (remainingEntries.length > 0) {
@@ -75,7 +77,7 @@ export const inversedHashMap = <K, V>(
 };
 
 export const stringHashMap = <V>(
-  entries: sequence.Sequence<[string, V]>,
+  entries: Sequence<[string, V]>,
 ): HashMap<string, V> =>
   hashMap(
     entries,

@@ -1,36 +1,48 @@
 import { function as fn } from "fp-ts";
+import type { Refinement } from "fp-ts/function";
 
 import * as sequence from "./sequence.js";
 
-export const isString = (element: unknown): element is string =>
-  typeof element === "string";
+export type { Refinement } from "fp-ts/function";
 
-export const isNumber = (element: unknown): element is number =>
-  typeof element === "number";
+export const isString: Refinement<unknown, string> = (
+  element,
+): element is string => typeof element === "string";
 
-export const isNull = (element: unknown): element is null => element === null;
+export const isNumber: Refinement<unknown, number> = (
+  element,
+): element is number => typeof element === "number";
+
+export const isNull: Refinement<unknown, null> = (element): element is null =>
+  element === null;
 
 export const isNotNull = <T>(element: T | null): element is T =>
   !isNull(element);
 
-export const isIterable = (element: unknown): element is Iterable<unknown> =>
+export const isIterable: Refinement<unknown, Iterable<unknown>> = (
+  element,
+): element is Iterable<unknown> =>
   (typeof element === "object" || isString(element)) &&
   isNotNull(element) &&
   !!element[Symbol.iterator];
 
-export const isTypeIterable = <T>(
-  element: unknown,
-  isOfType: (element: unknown) => element is T,
-): element is Iterable<T> =>
-  isIterable(element) && fn.pipe(element, sequence.every(isOfType));
+export const isIterableOfType =
+  <T>(isOfType: (element) => element is T): Refinement<unknown, Iterable<T>> =>
+  (element): element is Iterable<T> =>
+    isIterable(element) && fn.pipe(element, sequence.every(isOfType));
 
-export const isArray = (element: unknown): element is unknown[] =>
-  Array.isArray(element);
+export const isArray: Refinement<unknown, unknown[]> = (
+  element,
+): element is unknown[] => Array.isArray(element);
 
-export const isTypeArray = <T>(
-  element: unknown,
-  isOfType: (element: unknown) => element is T,
-): element is T[] => isArray(element) && isTypeIterable(element, isOfType);
+export const isArrayOfType: <T>(
+  isOfType: (element) => element is T,
+) => Refinement<unknown, T[]> = fn.flow(
+  isIterableOfType,
+  <T>(isIterableOfType: (element) => element is Iterable<T>) =>
+    (element): element is T[] =>
+      isArray(element) && isIterableOfType(element),
+);
 
-export const isStringArray = (element: unknown): element is string[] =>
-  isTypeArray(element, isString);
+export const isStringArray: Refinement<unknown, string[]> =
+  isArrayOfType(isString);
