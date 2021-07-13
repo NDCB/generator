@@ -1,11 +1,15 @@
-import { io, task } from "fp-ts";
+import type { IO } from "fp-ts/IO";
+import type { Task } from "fp-ts/Task";
 
-import { scoppedLogger } from "@ndcb/logger";
+import { scopedLogger } from "@ndcb/logger";
 
-const LOGGER = scoppedLogger("server");
+const LOGGER = scopedLogger("server");
 
-export const serve = (config?: string): io.IO<task.Task<void>> => () => () =>
-  new Promise(() => {
-    LOGGER.error("Not implemented yet")();
-    LOGGER.info(`Config: ${config}`)();
-  });
+export const serve =
+  (config?: string): IO<Task<void>> =>
+  () =>
+  () =>
+    new Promise(() => {
+      LOGGER.error("Not implemented yet")();
+      LOGGER.info(`Config: ${config}`)();
+    });
