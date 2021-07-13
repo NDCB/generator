@@ -60,12 +60,12 @@ export const markdownFileProcessors = (
 ): FileProcessor<Error>[] => [
   {
     processor,
-    sourceExtension: option.some(extension(".md")),
-    destinationExtension: option.some(extension(".html")),
+    sourceExtension: option.some(extension.make(".md")),
+    destinationExtension: option.some(extension.make(".html")),
   },
   {
     processor,
-    sourceExtension: option.some(extension(".markdown")),
-    destinationExtension: option.some(extension(".html")),
+    sourceExtension: option.some(extension.make(".markdown")),
+    destinationExtension: option.some(extension.make(".html")),
   },
 ];

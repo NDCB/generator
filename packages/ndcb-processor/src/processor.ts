@@ -1,62 +1,41 @@
-import {
-  readonlyArray,
-  eq,
-  io,
-  option,
-  taskEither,
-  function as fn,
-} from "fp-ts";
+import { readonlyArray, option, function as fn } from "fp-ts";
+import type { IO } from "fp-ts/IO";
+import type { TaskEither } from "fp-ts/TaskEither";
+import type { Option } from "fp-ts/Option";
 
 import { detect as detectEncoding } from "jschardet";
 
-import {
-  Extension,
-  extensionEquals,
-  File,
-  fileExtension,
-  hashExtension,
-} from "@ndcb/fs-util/lib";
+import { extension, file } from "@ndcb/fs-util";
+import type { Extension, File } from "@ndcb/fs-util";
+
 import { hashMap } from "@ndcb/util";
 
 export type Processor<ProcessorError extends Error> = (
   file: File,
-) => io.IO<
-  taskEither.TaskEither<
-    ProcessorError,
-    { contents: Buffer; encoding: BufferEncoding }
-  >
+) => IO<
+  TaskEither<ProcessorError, { contents: Buffer; encoding: BufferEncoding }>
 >;
 
 export type Locals = Record<string, unknown>;
 
 export interface FileProcessor<ProcessorError extends Error> {
   readonly processor: Processor<ProcessorError>;
-  readonly sourceExtension: option.Option<Extension>;
-  readonly destinationExtension: option.Option<Extension>;
+  readonly sourceExtension: Option<Extension>;
+  readonly destinationExtension: Option<Extension>;
 }
 
-const hashFileExtension: (
-  fileExtension: option.Option<Extension>,
-) => number = option.fold(
-  () => 0,
-  (extension) => hashExtension(extension),
-);
+const hashFileExtension: (fileExtension: Option<Extension>) => number =
+  option.fold(() => 0, extension.hash);
 
-const fileExtensionEquals = option.getEq(eq.fromEquals(extensionEquals));
+const fileExtensionEquals = option.getEq(extension.Eq);
 
 export const fileProcessorExtensionMaps = <ProcessorError extends Error>(
   processors: readonly FileProcessor<ProcessorError>[],
 ): {
-  source: hashMap.HashMap<option.Option<Extension>, option.Option<Extension>[]>;
-  destination: hashMap.HashMap<
-    option.Option<Extension>,
-    option.Option<Extension>
-  >;
+  source: hashMap.HashMap<Option<Extension>, Option<Extension>[]>;
+  destination: hashMap.HashMap<Option<Extension>, Option<Extension>>;
 } => {
-  const entries: readonly [
-    option.Option<Extension>,
-    option.Option<Extension>,
-  ][] = fn.pipe(
+  const entries: readonly [Option<Extension>, Option<Extension>][] = fn.pipe(
     processors,
     readonlyArray.map((processor) => [
       processor.sourceExtension,
@@ -77,23 +56,26 @@ export const fileProcessorExtensionMaps = <ProcessorError extends Error>(
   };
 };
 
-export const compositeFileProcessor = <ProcessorError extends Error>(
-  processors: readonly FileProcessor<ProcessorError>[],
-  fallbackProcessor: Processor<ProcessorError>,
-): Processor<ProcessorError> => (file: File) => () =>
-  fn.pipe(
-    processors,
-    readonlyArray.findFirst((processor) =>
-      fileExtensionEquals.equals(
-        processor.sourceExtension,
-        fileExtension(file),
+export const compositeFileProcessor =
+  <ProcessorError extends Error>(
+    processors: readonly FileProcessor<ProcessorError>[],
+    fallbackProcessor: Processor<ProcessorError>,
+  ): Processor<ProcessorError> =>
+  (f: File) =>
+  () =>
+    fn.pipe(
+      processors,
+      readonlyArray.findFirst((processor) =>
+        fileExtensionEquals.equals(
+          processor.sourceExtension,
+          file.extension(f),
+        ),
       ),
-    ),
-    option.fold(
-      () => fallbackProcessor(file)(),
-      (processor) => processor.processor(file)(),
-    ),
-  );
+      option.fold(
+        () => fallbackProcessor(f)(),
+        (processor) => processor.processor(f)(),
+      ),
+    );
 
 export const bufferToProcessorResult = (
   contents: Buffer,

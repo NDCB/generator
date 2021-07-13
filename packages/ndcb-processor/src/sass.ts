@@ -2,16 +2,17 @@ import { option, either, taskEither, function as fn } from "fp-ts";
 
 import { renderSync } from "sass";
 
-import { extension, File, filePath, pathToString } from "@ndcb/fs-util";
+import { extension, file, path } from "@ndcb/fs-util";
+import type { File } from "@ndcb/fs-util";
 
 import { FileProcessor, Processor } from "./processor.js";
 
-export const sassProcessor: Processor<Error> = (file: File) => () =>
+export const sassProcessor: Processor<Error> = (f: File) => () =>
   fn.pipe(
     either.tryCatch(
       () =>
         renderSync({
-          file: pathToString(filePath(file)),
+          file: path.toString(file.path(f)),
           outputStyle: "compressed",
         }).css,
       (error) => error as Error,
@@ -31,12 +32,12 @@ export const sassFileProcessors = (
 ): FileProcessor<Error>[] => [
   {
     processor,
-    sourceExtension: option.some(extension(".sass")),
-    destinationExtension: option.some(extension(".css")),
+    sourceExtension: option.some(extension.make(".sass")),
+    destinationExtension: option.some(extension.make(".css")),
   },
   {
     processor,
-    sourceExtension: option.some(extension(".scss")),
-    destinationExtension: option.some(extension(".css")),
+    sourceExtension: option.some(extension.make(".scss")),
+    destinationExtension: option.some(extension.make(".css")),
   },
 ];
