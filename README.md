@@ -1,4 +1,3 @@
-[![Build Status][travis-status-shield]][travis-status-url]
 [![lerna][lerna-shield]][lerna-url]
 [![MIT License][license-shield]][license-url]
 
@@ -33,8 +32,6 @@ yarn run deploy
 
 -   **Marc-Antoine Ouimet** - [MartyO256](https://github.com/MartyO256)
 
-[travis-status-shield]: https://travis-ci.com/NDCB/generator.svg?branch=master
-[travis-status-url]: https://travis-ci.com/NDCB/generator
 [lerna-shield]: https://img.shields.io/badge/maintained%20with-lerna-cc00ff.svg
 [lerna-url]: https://lerna.js.org/
 [license-shield]: https://img.shields.io/github/license/NDCB/generator.svg?style=flat
