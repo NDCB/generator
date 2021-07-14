@@ -51,7 +51,7 @@ export const attacher: unified.Attacher<
           ),
         );
         (parent as HastNode).children[index as number] = transformedNode;
-        return [CONTINUE, index];
+        return [CONTINUE, index as number];
       });
     }
   };

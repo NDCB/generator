@@ -18,9 +18,9 @@ const parse = (astRoot: Node): Option<TableOfContentsNode> => {
     readonly node: TableOfContentsNode;
     readonly depth: number;
   }[] = [];
-  visit(astRoot, "heading", (astNode) => {
+  visit(astRoot, "heading", (astNode: Node & { depth: number }) => {
     // https://github.com/syntax-tree/mdast#heading
-    const depth = astNode.depth as number;
+    const depth = astNode.depth;
     while (stack.length > 0 && stack[stack.length - 1].depth >= depth)
       stack.pop();
     // Parent node is at the top of the stack

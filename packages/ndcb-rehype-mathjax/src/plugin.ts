@@ -68,7 +68,7 @@ export const createPlugin: unified.Attacher<[Partial<RehypeMathJaxOptions>?]> =
     const createInputJax = inputJaxBuilderSupplier(input);
     const createOutputJax = outputJaxBuilderSupplier(output);
     const adaptor = jsdomAdaptor(JSDOM);
-    return (tree, { data }) => {
+    return (tree: HastNode & { children: HastNode[] }, { data }) => {
       const handler = a11y?.assistiveMml
         ? AssistiveMmlHandler(RegisterHTMLHandler(adaptor))
         : RegisterHTMLHandler(adaptor);
@@ -90,27 +90,35 @@ export const createPlugin: unified.Attacher<[Partial<RehypeMathJaxOptions>?]> =
       let context = tree;
       let found = false;
 
-      visit(tree, "element", (node: HastNode) => {
-        const classes =
-          ((node?.properties as Record<string, unknown>)
-            ?.className as string[]) ?? [];
-        const inline = classes.includes("math-inline");
-        const display = classes.includes("math-display");
+      visit(
+        tree,
+        "element",
+        (
+          node: HastNode & {
+            properties?: { className?: string[] };
+            tagName: string;
+            children: HastNode[];
+          },
+        ) => {
+          const classes = node?.properties?.className ?? [];
+          const inline = classes.includes("math-inline");
+          const display = classes.includes("math-display");
 
-        if (node.tagName === "head") context = node;
+          if (node.tagName === "head") context = node;
 
-        if (!inline && !display) return;
+          if (!inline && !display) return;
 
-        found = true;
-        node.children = [
-          hastFromDom(document.convert(hastToText(node), { display })),
-        ];
+          found = true;
+          node.children = [
+            hastFromDom(document.convert(hastToText(node), { display })),
+          ];
 
-        return SKIP;
-      });
+          return SKIP;
+        },
+      );
 
       if (found)
-        (context.children as unknown[]).push({
+        context.children.push({
           type: "element",
           tagName: "style",
           properties: {},
