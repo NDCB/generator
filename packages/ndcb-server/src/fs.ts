@@ -12,7 +12,7 @@ import {
 } from "@ndcb/fs";
 import type { FileSystem } from "@ndcb/fs";
 
-import { file, directory, absolutePath } from "@ndcb/fs-util";
+import { file, directory, absolutePath, cache } from "@ndcb/fs-util";
 import type {
   FileReader,
   File,
@@ -25,12 +25,6 @@ import type {
   DirectoryIOError,
 } from "@ndcb/fs-util";
 
-import {
-  cachingFileReader,
-  cachingTextFileReader,
-  cachingDirectoryReader,
-} from "@ndcb/fs-cache";
-import { textFileReader } from "@ndcb/fs-text";
 import {
   exclusionRuleReaderFromDirectory,
   gitignoreExclusionRule,
@@ -85,17 +79,17 @@ export const fileSystemReaders = (
     log: { filesRead: logFileReader, directoriesRead: logDirectoryReader },
   } = configuration.common;
   const log = logger.scoped("fs");
-  const readFile = cachingFileReader(
+  const readFile = cache.fileReader(
     logFileReader ? logReadFile(file.read, log) : file.read,
     absolutePath.status,
     fileReaderCacheSize,
   );
-  const readTextFile = cachingTextFileReader(
-    textFileReader(readFile),
+  const readTextFile = cache.textFileReader(
+    file.autoTextReader(readFile),
     absolutePath.status,
     textFileReaderCacheSize,
   );
-  const readDirectory = cachingDirectoryReader(
+  const readDirectory = cache.directoryReader(
     logDirectoryReader
       ? logReadDirectory(directory.reader(pathEncoding), log)
       : directory.reader(pathEncoding),
