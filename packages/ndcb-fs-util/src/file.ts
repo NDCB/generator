@@ -15,6 +15,9 @@ import type { TaskEither } from "fp-ts/TaskEither";
 
 import fse from "fs-extra";
 
+import { detect } from "jschardet";
+import { decode } from "iconv-lite";
+
 import * as util from "@ndcb/util";
 import type { Sequence } from "@ndcb/util";
 
@@ -174,6 +177,14 @@ export const textReader = <FileReadError extends Error>(
   fn.flow(
     readFile,
     taskEither.map((buffer) => buffer.toString(encoding)),
+  );
+
+export const autoTextReader = <FileReadError extends Error>(
+  readFile: FileReader<FileReadError>,
+): TextFileReader<FileReadError> =>
+  fn.flow(
+    readFile,
+    taskEither.map((contents) => decode(contents, detect(contents).encoding)),
   );
 
 export type FileWriter<FileWriteError extends Error> = (

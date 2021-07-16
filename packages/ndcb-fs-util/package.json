@@ -25,7 +25,9 @@
     "@ndcb/util": "^0.9.1",
     "fp-ts": "^2.10.5",
     "fs-extra": "^10.0.0",
-    "upath": "^2.0.1"
+    "upath": "^2.0.1",
+    "iconv-lite": "^0.6.2",
+    "jschardet": "^3.0.0"
   },
   "publishConfig": {
     "access": "public"
