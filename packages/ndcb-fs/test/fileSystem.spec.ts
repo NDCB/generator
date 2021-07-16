@@ -1,7 +1,6 @@
 import { describe, expect, test } from "@jest/globals";
 
 import {
-  io,
   option,
   task,
   taskEither,
@@ -501,12 +500,10 @@ describe("FileSystem", () => {
           for await (const readFiles of system.files()) {
             for (const file of await fn.pipe(
               readFiles,
-              io.map(
-                taskEither.getOrElse(() => {
-                  throw new Error("Unexpectedly failed to read some files");
-                }),
-              ),
-            )()()) {
+              taskEither.getOrElse(() => {
+                throw new Error("Unexpectedly failed to read some files");
+              }),
+            )()) {
               collectedFiles.push(file);
             }
           }
@@ -533,16 +530,14 @@ describe("FileSystem", () => {
               await fn.pipe(
                 path,
                 system.fileExists,
-                io.map(
-                  taskEither.getOrElse(() => {
-                    throw new Error(
-                      `Unexpectdly failed to determine the existence of file "${relativePath.toString(
-                        path,
-                      )}"`,
-                    );
-                  }),
-                ),
-              )()(),
+                taskEither.getOrElse(() => {
+                  throw new Error(
+                    `Unexpectdly failed to determine the existence of file "${relativePath.toString(
+                      path,
+                    )}"`,
+                  );
+                }),
+              )(),
             ).toBe(expected);
           },
         );
@@ -561,16 +556,14 @@ describe("FileSystem", () => {
               await fn.pipe(
                 path,
                 system.directoryExists,
-                io.map(
-                  taskEither.getOrElse(() => {
-                    throw new Error(
-                      `Unexpectdly failed to determine the existence of directory "${relativePath.toString(
-                        path,
-                      )}"`,
-                    );
-                  }),
-                ),
-              )()(),
+                taskEither.getOrElse(() => {
+                  throw new Error(
+                    `Unexpectdly failed to determine the existence of directory "${relativePath.toString(
+                      path,
+                    )}"`,
+                  );
+                }),
+              )(),
             ).toBe(expected);
           },
         );
@@ -593,20 +586,16 @@ describe("FileSystem", () => {
                     await fn.pipe(
                       path,
                       system.readFile,
-                      io.map(
-                        fn.flow(
-                          taskEither.swap,
-                          taskEither.getOrElse(() => {
-                            throw new Error(
-                              `Unexpectedly succeeded to read file at "${relativePath.toString(
-                                path,
-                              )}"`,
-                            );
-                          }),
-                          task.map(fn.constTrue),
-                        ),
-                      ),
-                    )()(),
+                      taskEither.swap,
+                      taskEither.getOrElse(() => {
+                        throw new Error(
+                          `Unexpectedly succeeded to read file at "${relativePath.toString(
+                            path,
+                          )}"`,
+                        );
+                      }),
+                      task.map(fn.constTrue),
+                    )(),
                   ).toEqual(true);
                 },
                 async (expected) => {
@@ -614,16 +603,14 @@ describe("FileSystem", () => {
                     await fn.pipe(
                       path,
                       system.readFile,
-                      io.map(
-                        taskEither.getOrElse(() => {
-                          throw new Error(
-                            `Unexpectedly failed to read file at "${relativePath.toString(
-                              path,
-                            )}"`,
-                          );
-                        }),
-                      ),
-                    )()(),
+                      taskEither.getOrElse(() => {
+                        throw new Error(
+                          `Unexpectedly failed to read file at "${relativePath.toString(
+                            path,
+                          )}"`,
+                        );
+                      }),
+                    )(),
                   ).toEqual(expected);
                 },
               ),
@@ -649,20 +636,16 @@ describe("FileSystem", () => {
                     await fn.pipe(
                       path,
                       system.readDirectory,
-                      io.map(
-                        fn.flow(
-                          taskEither.swap,
-                          taskEither.getOrElse(() => {
-                            throw new Error(
-                              `Unexpectedly succeeded to read directory at "${relativePath.toString(
-                                path,
-                              )}"`,
-                            );
-                          }),
-                          task.map(fn.constTrue),
-                        ),
-                      ),
-                    )()(),
+                      taskEither.swap,
+                      taskEither.getOrElse(() => {
+                        throw new Error(
+                          `Unexpectedly succeeded to read directory at "${relativePath.toString(
+                            path,
+                          )}"`,
+                        );
+                      }),
+                      task.map(fn.constTrue),
+                    )(),
                   ).toEqual(true);
                 },
                 async (expected) => {
@@ -670,19 +653,15 @@ describe("FileSystem", () => {
                     await fn.pipe(
                       path,
                       system.readDirectory,
-                      io.map(
-                        fn.flow(
-                          taskEither.getOrElse(() => {
-                            throw new Error(
-                              `Unexpectedly failed to read directory at "${relativePath.toString(
-                                path,
-                              )}"`,
-                            );
-                          }),
-                          task.map(readonlySet.fromReadonlyArray(entry.Eq)),
-                        ),
-                      ),
-                    )()(),
+                      taskEither.getOrElse(() => {
+                        throw new Error(
+                          `Unexpectedly failed to read directory at "${relativePath.toString(
+                            path,
+                          )}"`,
+                        );
+                      }),
+                      task.map(readonlySet.fromReadonlyArray(entry.Eq)),
+                    )(),
                   ).toEqual(expected);
                 },
               ),
@@ -717,14 +696,12 @@ describe("FileSystem", () => {
             expect(
               await fn.pipe(
                 system.file(pathname),
-                io.map(
-                  taskEither.getOrElse(() => {
-                    throw new Error(
-                      `Unexpectedly failed to determine the existence of file at "${pathname}"`,
-                    );
-                  }),
-                ),
-              )()(),
+                taskEither.getOrElse(() => {
+                  throw new Error(
+                    `Unexpectedly failed to determine the existence of file at "${pathname}"`,
+                  );
+                }),
+              )(),
             ).toEqual(expected);
           },
         );

@@ -35,7 +35,7 @@ export const siteFilesServerRequestListener =
     const pathname = incomingMessagePathname(request);
     onStart(pathname)();
     return fn.pipe(
-      processor(pathname)(),
+      processor(pathname),
       taskEither.fold(
         (error) =>
           task.of(

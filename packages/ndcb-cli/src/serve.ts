@@ -12,6 +12,8 @@ new Command()
   .option("-c, --config <file>", "website configuration file")
   .action((command) => {
     const { config } = command;
-    return serve(config)()();
+    return serve(config)();
   })
   .parseAsync(process.argv);
+
+// TODO: Listen for changes to the configuration file, if plugins change, close server from the callback given by the engine, re-launch

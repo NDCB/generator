@@ -1,7 +1,6 @@
 import { describe, expect, test } from "@jest/globals";
 
 import {
-  io,
   taskEither,
   readonlyArray,
   function as fn,
@@ -53,12 +52,10 @@ describe("rootedFileSystem", () => {
             for await (const readFiles of files()) {
               for (const file of await fn.pipe(
                 readFiles,
-                io.map(
-                  taskEither.getOrElse(() => {
-                    throw new Error("Unexpectedly failed to read some files");
-                  }),
-                ),
-              )()()) {
+                taskEither.getOrElse(() => {
+                  throw new Error("Unexpectedly failed to read some files");
+                }),
+              )()) {
                 collectedFiles.push(file);
               }
             }
@@ -166,14 +163,12 @@ describe("rootedFileSystem", () => {
         expect(
           await fn.pipe(
             fileExists(path),
-            io.map(
-              taskEither.getOrElse(() => {
-                throw new Error(
-                  `Unexpectedly failed to determine the existence of directory "${path}"`,
-                );
-              }),
-            ),
-          )()(),
+            taskEither.getOrElse(() => {
+              throw new Error(
+                `Unexpectedly failed to determine the existence of directory "${path}"`,
+              );
+            }),
+          )(),
         ).toBe(expected);
       });
     });
@@ -243,14 +238,12 @@ describe("rootedFileSystem", () => {
         expect(
           await fn.pipe(
             directoryExists(path),
-            io.map(
-              taskEither.getOrElse(() => {
-                throw new Error(
-                  `Unexpectedly failed to determine the existence of directory "${path}"`,
-                );
-              }),
-            ),
-          )()(),
+            taskEither.getOrElse(() => {
+              throw new Error(
+                `Unexpectedly failed to determine the existence of directory "${path}"`,
+              );
+            }),
+          )(),
         ).toBe(expected);
       });
     });

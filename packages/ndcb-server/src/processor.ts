@@ -1,5 +1,4 @@
 import { option, taskEither, function as fn } from "fp-ts";
-import type { IO } from "fp-ts/IO";
 import type { TaskEither } from "fp-ts/TaskEither";
 import type { Option } from "fp-ts/Option";
 
@@ -31,25 +30,24 @@ export type ServerProcessorResult = {
 
 export type ServerProcessor<ServerProcessorError extends Error> = (
   pathname: Pathname,
-) => IO<TaskEither<ServerProcessorError, ServerProcessorResult>>;
+) => TaskEither<ServerProcessorError, ServerProcessorResult>;
 
 export type FileServerProcessor<FileServerProcessorError extends Error> = (
   file: File,
-) => IO<TaskEither<FileServerProcessorError, ServerProcessorResult>>;
+) => TaskEither<FileServerProcessorError, ServerProcessorResult>;
 
 export type TimedServerProcessor<ServerProcessorError extends Error> = (
   pathname: Pathname,
-) => IO<TaskEither<ServerProcessorError, Timed<ServerProcessorResult>>>;
+) => TaskEither<ServerProcessorError, Timed<ServerProcessorResult>>;
 
 export const processorAsTimedProcessor =
   <ServerProcessorError extends Error>(
     processor: ServerProcessor<ServerProcessorError>,
   ): TimedServerProcessor<ServerProcessorError> =>
-  (pathname: Pathname) =>
-  () => {
+  (pathname: Pathname) => {
     const startTime = process.hrtime.bigint();
     return fn.pipe(
-      processor(pathname)(),
+      processor(pathname),
       taskEither.map((result) => ({
         ...result,
         elapsedTime: process.hrtime.bigint() - startTime,
@@ -59,11 +57,9 @@ export const processorAsTimedProcessor =
 
 export type FileRouter<FileRouterError extends Error> = (
   query: Pathname,
-) => IO<
-  TaskEither<
-    FileRouterError,
-    Option<{ file: File; destination: Pathname; statusCode: 200 | 404 }>
-  >
+) => TaskEither<
+  FileRouterError,
+  Option<{ file: File; destination: Pathname; statusCode: 200 | 404 }>
 >;
 
 export const fileRouter =
@@ -71,12 +67,11 @@ export const fileRouter =
     router: PathnameRouter<PathnameRouterError>,
     correspondingFile: (
       query: Pathname,
-    ) => IO<TaskEither<CorrespondingFileError, Option<File>>>,
+    ) => TaskEither<CorrespondingFileError, Option<File>>,
   ): FileRouter<PathnameRouterError | CorrespondingFileError> =>
   (query: Pathname) =>
-  () =>
     fn.pipe(
-      router.sourcePathname(query)(),
+      router.sourcePathname(query),
       taskEither.chainW<
         PathnameRouterError,
         Option<RelativePath>,
@@ -97,7 +92,7 @@ export const fileRouter =
         >(
           () =>
             fn.pipe(
-              router.sourcePathname404(query)(),
+              router.sourcePathname404(query),
               taskEither.map((routedPathname) => ({
                 routedPathname,
                 statusCode: 404,
@@ -127,7 +122,7 @@ export const fileRouter =
             () => taskEither.right(option.none),
             (routedPathname) =>
               fn.pipe(
-                correspondingFile(routedPathname)(),
+                correspondingFile(routedPathname),
                 taskEither.map(
                   option.map((file) => ({
                     file,
@@ -151,13 +146,12 @@ export const processor =
     processor: Processor<ProcessorError>,
     generator404: (
       query: Pathname,
-    ) => IO<TaskEither<Generator404Error, ServerProcessorResult>>,
+    ) => TaskEither<Generator404Error, ServerProcessorResult>,
   ): ServerProcessor<FileRouterError | ProcessorError | Generator404Error> =>
   (pathname: Pathname) =>
-  () =>
     fn.pipe(
-      router(pathname)(),
-      taskEither.chain(
+      router(pathname),
+      taskEither.chainW(
         option.fold<
           {
             file: File;
@@ -169,10 +163,10 @@ export const processor =
             ServerProcessorResult
           >
         >(
-          () => generator404(pathname)(),
+          () => generator404(pathname),
           ({ file, destination, statusCode }) =>
             fn.pipe(
-              processor(file)(),
+              processor(file),
               taskEither.map(({ contents, encoding }) => ({
                 statusCode,
                 contents,

@@ -5,7 +5,6 @@ import {
   readonlyArray,
   function as fn,
 } from "fp-ts";
-import type { IO } from "fp-ts/IO";
 import type { Either } from "fp-ts/Either";
 import type { Option } from "fp-ts/Option";
 import type { TaskEither } from "fp-ts/TaskEither";
@@ -130,7 +129,7 @@ export const compositeTextDataParserToFileContentsParser = <E extends Error>(
 
 export type TextFileDataReader<ReadFileError extends Error> = (
   file: File,
-) => IO<TaskEither<ReadFileError, unknown>>;
+) => TaskEither<ReadFileError, unknown>;
 
 export interface UnhandledFileError extends Error {
   readonly file: File;
@@ -148,16 +147,12 @@ export const textFileDataReader =
   ): TextFileDataReader<ReadFileError | ParseError | UnhandledFileError> =>
   (
     file: File,
-  ): IO<TaskEither<ReadFileError | ParseError | UnhandledFileError, unknown>> =>
-  () =>
+  ): TaskEither<ReadFileError | ParseError | UnhandledFileError, unknown> =>
     fn.pipe(
-      (parser.handles(file)
-        ? taskEither.right(file)
-        : taskEither.left(unhandledFileError(file))) as TaskEither<
-        ReadFileError | ParseError | UnhandledFileError,
-        File
-      >,
-      taskEither.chainW((file) => readTextFile(file)()),
+      file,
+      option.fromPredicate(parser.handles),
+      taskEither.fromOption(() => unhandledFileError(file)),
+      taskEither.chainW(readTextFile),
       taskEither.chainW((contents) =>
         fn.pipe(parser.parse(file, contents), taskEither.fromEither),
       ),

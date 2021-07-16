@@ -5,7 +5,6 @@ import {
   function as fn,
   readonlySet,
 } from "fp-ts";
-import type { IO } from "fp-ts/IO";
 import type { TaskEither } from "fp-ts/TaskEither";
 import type { Option } from "fp-ts/Option";
 
@@ -64,17 +63,16 @@ export const sourcePathname =
     possibleSourcePathnames: (query: Pathname) => Iterable<Pathname>,
     sourceExists: (
       pathname: Pathname,
-    ) => IO<TaskEither<FileExistenceTestError, boolean>>,
+    ) => TaskEither<FileExistenceTestError, boolean>,
   ) =>
-  (query: Pathname): IO<TaskEither<FileExistenceTestError, Option<Pathname>>> =>
-  () =>
+  (query: Pathname): TaskEither<FileExistenceTestError, Option<Pathname>> =>
     fn.pipe(
       query,
       possibleSourcePathnames,
       sequence.toReadonlyArray,
       readonlyArray.map((source) =>
         fn.pipe(
-          sourceExists(source)(),
+          sourceExists(source),
           taskEither.map((exists) => ({ source, exists })),
         ),
       ),
@@ -92,16 +90,15 @@ export const sourcePathname404 =
   <FileExistenceTestError extends Error>(
     sourcePathname: (
       query: Pathname,
-    ) => IO<TaskEither<FileExistenceTestError, Option<Pathname>>>,
+    ) => TaskEither<FileExistenceTestError, Option<Pathname>>,
   ) =>
-  (query: Pathname): IO<TaskEither<FileExistenceTestError, Option<Pathname>>> =>
-  () =>
+  (query: Pathname): TaskEither<FileExistenceTestError, Option<Pathname>> =>
     fn.pipe(
       query,
       relativePath.upwardRelativePaths,
       sequence.toReadonlyArray,
       readonlyArray.map((source) =>
-        sourcePathname(relativePath.join(source, "404.html"))(),
+        sourcePathname(relativePath.join(source, "404.html")),
       ),
       taskEither.sequenceSeqArray,
       taskEither.map(
@@ -136,10 +133,10 @@ export const destinationPathname =
 export interface PathnameRouter<FileExistenceTestError extends Error> {
   readonly sourcePathname: (
     query: Pathname,
-  ) => IO<TaskEither<FileExistenceTestError, Option<Pathname>>>;
+  ) => TaskEither<FileExistenceTestError, Option<Pathname>>;
   readonly sourcePathname404: (
     query: Pathname,
-  ) => IO<TaskEither<FileExistenceTestError, Option<Pathname>>>;
+  ) => TaskEither<FileExistenceTestError, Option<Pathname>>;
   readonly destinationPathname: (source: Pathname) => Pathname;
 }
 
@@ -150,7 +147,7 @@ export const router = <FileExistenceTestError extends Error>(
   },
   fileExists: (
     path: RelativePath,
-  ) => IO<TaskEither<FileExistenceTestError, boolean>>,
+  ) => TaskEither<FileExistenceTestError, boolean>,
 ): PathnameRouter<FileExistenceTestError> => {
   const source = sourcePathname(
     possibleSourcePathnames(extensionsMap.source),

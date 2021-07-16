@@ -1,5 +1,4 @@
-import { io, taskEither, function as fn } from "fp-ts";
-import type { IO } from "fp-ts/IO";
+import { taskEither, function as fn } from "fp-ts";
 import type { TaskEither } from "fp-ts/TaskEither";
 
 import upath from "upath";
@@ -115,8 +114,8 @@ export interface MockDirectoryReadError extends Error {
 }
 
 export interface MockFileSystem {
-  fileExists: (file: File) => IO<TaskEither<never, boolean>>;
-  directoryExists: (directory: Directory) => IO<TaskEither<never, boolean>>;
+  fileExists: (file: File) => TaskEither<never, boolean>;
+  directoryExists: (directory: Directory) => TaskEither<never, boolean>;
   readFile: FileReader<MockFileReadError>;
   readDirectory: DirectoryReader<MockDirectoryReadError>;
 }
@@ -124,9 +123,9 @@ export interface MockFileSystem {
 export const make: (structure: MockDirectory) => MockFileSystem = fn.flow(
   transformMockStructure,
   ({ fileContents, directoryEntries }) => ({
-    fileExists: (file) => io.of(taskEither.right(fileContents.has(file))),
+    fileExists: (file) => taskEither.right(fileContents.has(file)),
     directoryExists: (directory) =>
-      io.of(taskEither.right(directoryEntries.has(directory))),
+      taskEither.right(directoryEntries.has(directory)),
     readFile: (f) =>
       fn.pipe(
         f,
@@ -137,7 +136,6 @@ export const make: (structure: MockDirectory) => MockFileSystem = fn.flow(
           file: f,
         })),
         taskEither.map((contents) => Buffer.from(contents)),
-        io.of,
       ),
     readDirectory: (d: Directory) =>
       fn.pipe(
@@ -148,7 +146,6 @@ export const make: (structure: MockDirectory) => MockFileSystem = fn.flow(
           message: `Failed to read mocked directory "${directory.toString(d)}"`,
           directory: d,
         })),
-        io.of,
       ),
   }),
 );

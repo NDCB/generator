@@ -1,6 +1,8 @@
 import { option, taskEither, readonlyArray, function as fn } from "fp-ts";
 
-import { scopedLogger, Logger } from "@ndcb/logger";
+import * as logger from "@ndcb/logger";
+import type { Logger } from "@ndcb/logger";
+
 import { Configuration } from "@ndcb/config";
 
 import {
@@ -39,11 +41,10 @@ const logReadFile =
     readFile: FileReader<FileReadError>,
     logger: Logger,
   ): FileReader<FileReadError> =>
-  (f: File) =>
-  () => {
+  (f: File) => {
     logger.trace(`Reading file "${file.toString(f)}"`)();
     return fn.pipe(
-      readFile(f)(),
+      readFile(f),
       taskEither.map((contents) => {
         logger.trace(`Read file "${file.toString(f)}"`)();
         return contents;
@@ -56,11 +57,10 @@ const logReadDirectory =
     readDirectory: DirectoryReader<DirectoryReadError>,
     logger: Logger,
   ): DirectoryReader<DirectoryReadError> =>
-  (d: Directory) =>
-  () => {
+  (d: Directory) => {
     logger.trace(`Reading directory "${directory.toString(d)}"`)();
     return fn.pipe(
-      readDirectory(d)(),
+      readDirectory(d),
       taskEither.map((entries) => {
         logger.trace(`Read directory "${directory.toString(d)}"`)();
         return entries;
@@ -84,9 +84,9 @@ export const fileSystemReaders = (
     },
     log: { filesRead: logFileReader, directoriesRead: logDirectoryReader },
   } = configuration.common;
-  const logger = scopedLogger("fs");
+  const log = logger.scoped("fs");
   const readFile = cachingFileReader(
-    logFileReader ? logReadFile(file.read, logger) : file.read,
+    logFileReader ? logReadFile(file.read, log) : file.read,
     absolutePath.status,
     fileReaderCacheSize,
   );
@@ -97,7 +97,7 @@ export const fileSystemReaders = (
   );
   const readDirectory = cachingDirectoryReader(
     logDirectoryReader
-      ? logReadDirectory(directory.reader(pathEncoding), logger)
+      ? logReadDirectory(directory.reader(pathEncoding), log)
       : directory.reader(pathEncoding),
     absolutePath.status,
     directoryReaderCacheSize,

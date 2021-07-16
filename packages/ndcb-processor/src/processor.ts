@@ -1,5 +1,4 @@
 import { readonlyArray, option, function as fn } from "fp-ts";
-import type { IO } from "fp-ts/IO";
 import type { TaskEither } from "fp-ts/TaskEither";
 import type { Option } from "fp-ts/Option";
 
@@ -12,9 +11,7 @@ import { hashMap } from "@ndcb/util";
 
 export type Processor<ProcessorError extends Error> = (
   file: File,
-) => IO<
-  TaskEither<ProcessorError, { contents: Buffer; encoding: BufferEncoding }>
->;
+) => TaskEither<ProcessorError, { contents: Buffer; encoding: BufferEncoding }>;
 
 export type Locals = Record<string, unknown>;
 

@@ -24,7 +24,7 @@ export interface Logger {
   readonly trace: MessageLogger;
 }
 
-export const scopedLogger = (tag: string, level = Infinity): Logger => {
+export const scoped = (tag: string, level = Infinity): Logger => {
   const { fatal, error, warn, log, info, start, success, ready, debug, trace } =
     consola.create({ tag, level } as unknown as ConsolaOptions);
   return {

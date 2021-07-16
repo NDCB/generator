@@ -10,6 +10,6 @@ new Command()
   .option("-c, --config <file>", "website configuration file")
   .action((command) => {
     const { config } = command;
-    return build(config)()();
+    return build(config)();
   })
   .parseAsync(process.argv);

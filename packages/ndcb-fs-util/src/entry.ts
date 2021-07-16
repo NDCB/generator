@@ -1,5 +1,4 @@
 import { option, readonlyArray, function as fn, eq, show } from "fp-ts";
-import type { IO } from "fp-ts/IO";
 import type { TaskEither } from "fp-ts/TaskEither";
 import type { Option } from "fp-ts/Option";
 import type { Refinement } from "fp-ts/function";
@@ -78,16 +77,17 @@ export const filterDirectories: (
   entries: readonly Entry[],
 ) => readonly Directory[] = readonlyArray.filter(isDirectory);
 
-export const exists: (entry: Entry) => IO<TaskEither<PathIOError, boolean>> =
-  match({
+export const exists: (entry: Entry) => TaskEither<PathIOError, boolean> = match(
+  {
     file: file.exists,
     directory: directory.exists,
-  });
+  },
+);
 
 export const ensure: (
   entry: Entry,
-) => IO<TaskEither<FileIOError | DirectoryIOError, Entry>> = match<
-  IO<TaskEither<FileIOError | DirectoryIOError, Entry>>
+) => TaskEither<FileIOError | DirectoryIOError, Entry> = match<
+  TaskEither<FileIOError | DirectoryIOError, Entry>
 >({
   file: file.ensure,
   directory: directory.ensure,

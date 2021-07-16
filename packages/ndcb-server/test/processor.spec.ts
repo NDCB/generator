@@ -1,7 +1,6 @@
 import { describe, expect, test } from "@jest/globals";
 
-import { io, taskEither, function as fn, option } from "fp-ts";
-import type { IO } from "fp-ts/IO";
+import { taskEither, function as fn, option } from "fp-ts";
 import type { TaskEither } from "fp-ts/TaskEither";
 import type { Option } from "fp-ts/Option";
 
@@ -28,7 +27,6 @@ describe("fileRouter", () => {
               option.fromNullable,
               option.map(relativePath.makeNormalized),
               taskEither.right,
-              io.of,
             ),
         ),
         sourcePathname404: fn.pipe(
@@ -43,7 +41,6 @@ describe("fileRouter", () => {
               option.fromNullable,
               option.map(relativePath.makeNormalized),
               taskEither.right,
-              io.of,
             ),
         ),
         destinationPathname: fn.pipe(
@@ -77,7 +74,6 @@ describe("fileRouter", () => {
             option.fromNullable,
             option.map(file.makeNormalized),
             taskEither.right,
-            io.of,
           ),
       ),
       cases: [
@@ -153,9 +149,7 @@ describe("fileRouter", () => {
       cases,
     }: {
       router: PathnameRouter<never>;
-      correspondingFile: (
-        query: Pathname,
-      ) => IO<TaskEither<never, Option<File>>>;
+      correspondingFile: (query: Pathname) => TaskEither<never, Option<File>>;
       cases: {
         query: Pathname;
         expected: Option<{
@@ -173,16 +167,14 @@ describe("fileRouter", () => {
           expect(
             await fn.pipe(
               route(query),
-              io.map(
-                taskEither.getOrElse(() => {
-                  throw new Error(
-                    `Unexpectedly failed to route query "${relativePath.toString(
-                      query,
-                    )}"`,
-                  );
-                }),
-              ),
-            )()(),
+              taskEither.getOrElse(() => {
+                throw new Error(
+                  `Unexpectedly failed to route query "${relativePath.toString(
+                    query,
+                  )}"`,
+                );
+              }),
+            )(),
           ).toEqual(expected);
         },
       );

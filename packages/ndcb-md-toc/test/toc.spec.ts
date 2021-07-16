@@ -1,14 +1,6 @@
 import { describe, expect, test } from "@jest/globals";
 
-import {
-  tree,
-  readonlyArray,
-  taskEither,
-  option,
-  function as fn,
-  io,
-} from "fp-ts";
-import type { IO } from "fp-ts/IO";
+import { tree, readonlyArray, taskEither, option, function as fn } from "fp-ts";
 import type { TaskEither } from "fp-ts/TaskEither";
 import type { Option } from "fp-ts/Option";
 import type { Tree } from "fp-ts/Tree";
@@ -314,12 +306,12 @@ describe("fromMdast", () => {
         description,
       }): {
         file: string;
-        ast: IO<TaskEither<Error, Node>>;
+        ast: TaskEither<Error, Node>;
         expected: Option<Tree<{ readonly heading: string }>>;
         description: string;
       } => ({
         file,
-        ast: fn.pipe(readFile(file), io.map(taskEither.map(parse))),
+        ast: fn.pipe(readFile(file), taskEither.map(parse)),
         expected: fn.pipe(expected, option.fromNullable, option.map(makeTree)),
         description,
       }),
@@ -332,21 +324,19 @@ describe("fromMdast", () => {
       expected,
     }: {
       file: string;
-      ast: IO<TaskEither<Error, Node>>;
+      ast: TaskEither<Error, Node>;
       expected: Option<Tree<{ readonly heading: string }>>;
     }) => {
       expect(
         await fn.pipe(
           ast,
-          io.map(taskEither.map(_.fromMdast)),
-          io.map(
-            taskEither.getOrElse(() => {
-              throw new Error(
-                `Unexpectedly failed to read fixtures file "${file}"`,
-              );
-            }),
-          ),
-        )()(),
+          taskEither.map(_.fromMdast),
+          taskEither.getOrElse(() => {
+            throw new Error(
+              `Unexpectedly failed to read fixtures file "${file}"`,
+            );
+          }),
+        )(),
       ).toEqual(expected);
     },
   );

@@ -1,4 +1,4 @@
-import { either, taskEither, function as fn, io } from "fp-ts";
+import { either, taskEither, function as fn } from "fp-ts";
 import type { Either } from "fp-ts/Either";
 
 import gitignore from "ignore";
@@ -43,15 +43,13 @@ export const gitignoreExclusionRule =
     fn.pipe(
       rulesFile,
       readTextFile,
-      io.map(
-        taskEither.chainW(
-          fn.flow(
-            parseGitignoreToPathnameExcluder(rulesFile),
-            either.map(
-              parseGitignoreToExclusionRule(entry.fileDirectory(rulesFile)),
-            ),
-            taskEither.fromEither,
+      taskEither.chainW(
+        fn.flow(
+          parseGitignoreToPathnameExcluder(rulesFile),
+          either.map(
+            parseGitignoreToExclusionRule(entry.fileDirectory(rulesFile)),
           ),
+          taskEither.fromEither,
         ),
       ),
     );

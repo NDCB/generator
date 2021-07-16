@@ -1,5 +1,4 @@
 import { either, taskEither, function as fn } from "fp-ts";
-import type { IO } from "fp-ts/IO";
 import type { TaskEither } from "fp-ts/TaskEither";
 import type { Either } from "fp-ts/Either";
 
@@ -31,26 +30,25 @@ export const templatingProcessor =
     TransformerFetchError extends Error,
   >(
     readTextFile: TextFileReader<TextFileReadError>,
-    dataSupplier: (file: File) => IO<TaskEither<DataFetchError, Locals>>,
+    dataSupplier: (file: File) => TaskEither<DataFetchError, Locals>,
     transformerSupplier: (
       data: Locals,
-    ) => IO<TaskEither<TransformerFetchError, Transformer>>,
+    ) => TaskEither<TransformerFetchError, Transformer>,
   ): Processor<
     TextFileReadError | DataFetchError | TransformerFetchError | Error
   > =>
   (file) =>
-  () =>
     fn.pipe(
-      readTextFile(file)(),
+      readTextFile(file),
       taskEither.chainW((contents) =>
         fn.pipe(
-          dataSupplier(file)(),
+          dataSupplier(file),
           taskEither.map((data) => ({ contents, data })),
         ),
       ),
       taskEither.chainW(({ contents, data }) =>
         fn.pipe(
-          transformerSupplier(data)(),
+          transformerSupplier(data),
           taskEither.chain((transformer) =>
             fn.pipe(transformer(contents, data), taskEither.fromEither),
           ),

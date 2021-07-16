@@ -1,5 +1,4 @@
 import { taskEither, function as fn } from "fp-ts";
-import type { IO } from "fp-ts/IO";
 import type { TaskEither } from "fp-ts/TaskEither";
 
 import LRU from "lru-cache";
@@ -20,32 +19,29 @@ export const cachingTextFileReader = <
     max: cacheSize * 1024 ** 2,
     length: ({ contents }) => contents.length,
   });
-  return (
-      f: File,
-    ): IO<TaskEither<TextFileReadError | PathStatusError, string>> =>
-    () => {
-      const path = file.path(f);
-      const key = absolutePath.toString(path);
-      return fn.pipe(
-        pathStatus(path)(),
-        taskEither.chainW((status) =>
-          cache.has(key) &&
-          (status as unknown as { ctimeNs: BigInt }).ctimeNs ===
-            (cache.get(key) as { ctimeNs: BigInt }).ctimeNs
-            ? taskEither.right(
-                (cache.peek(key) as unknown as { contents: string }).contents,
-              )
-            : fn.pipe(
-                readFile(f)(),
-                taskEither.map((contents) => {
-                  cache.set(key, {
-                    ctimeNs: (status as unknown as { ctimeNs: BigInt }).ctimeNs,
-                    contents,
-                  });
-                  return contents;
-                }),
-              ),
-        ),
-      );
-    };
+  return (f: File): TaskEither<TextFileReadError | PathStatusError, string> => {
+    const path = file.path(f);
+    const key = absolutePath.toString(path);
+    return fn.pipe(
+      pathStatus(path),
+      taskEither.chainW((status) =>
+        cache.has(key) &&
+        (status as unknown as { ctimeNs: BigInt }).ctimeNs ===
+          (cache.get(key) as { ctimeNs: BigInt }).ctimeNs
+          ? taskEither.right(
+              (cache.peek(key) as unknown as { contents: string }).contents,
+            )
+          : fn.pipe(
+              readFile(f),
+              taskEither.map((contents) => {
+                cache.set(key, {
+                  ctimeNs: (status as unknown as { ctimeNs: BigInt }).ctimeNs,
+                  contents,
+                });
+                return contents;
+              }),
+            ),
+      ),
+    );
+  };
 };

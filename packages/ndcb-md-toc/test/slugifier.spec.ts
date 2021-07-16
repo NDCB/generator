@@ -7,9 +7,7 @@ import {
   taskEither,
   option,
   function as fn,
-  io,
 } from "fp-ts";
-import type { IO } from "fp-ts/IO";
 import type { TaskEither } from "fp-ts/TaskEither";
 import type { Option } from "fp-ts/Option";
 import type { Tree } from "fp-ts/Tree";
@@ -113,7 +111,7 @@ describe("withSlugs", () => {
         description,
       }): {
         file: string;
-        tree: IO<TaskEither<Error, Option<Tree<{ readonly heading: string }>>>>;
+        tree: TaskEither<Error, Option<Tree<{ readonly heading: string }>>>;
         expected: Option<
           Tree<{ readonly heading: string; readonly slug: string }>
         >;
@@ -122,7 +120,7 @@ describe("withSlugs", () => {
         file,
         tree: fn.pipe(
           readFile(file),
-          io.map(taskEither.map(fn.flow(parse, _.fromMdast))),
+          taskEither.map(fn.flow(parse, _.fromMdast)),
         ),
         expected: fn.pipe(expected, option.fromNullable, option.map(makeTree)),
         description,
@@ -136,7 +134,7 @@ describe("withSlugs", () => {
       expected,
     }: {
       file: string;
-      tree: IO<TaskEither<Error, Option<Tree<{ readonly heading: string }>>>>;
+      tree: TaskEither<Error, Option<Tree<{ readonly heading: string }>>>;
       expected: Option<
         Tree<{ readonly heading: string; readonly slug: string }>
       >;
@@ -144,17 +142,13 @@ describe("withSlugs", () => {
       expect(
         await fn.pipe(
           tree,
-          io.map(
-            fn.flow(
-              taskEither.getOrElse(() => {
-                throw new Error(
-                  `Unexpectedly failed to read fixtures file "${file}"`,
-                );
-              }),
-              task.map(option.map(_.withSlugs((token) => token.toLowerCase()))),
-            ),
-          ),
-        )()(),
+          taskEither.getOrElse(() => {
+            throw new Error(
+              `Unexpectedly failed to read fixtures file "${file}"`,
+            );
+          }),
+          task.map(option.map(_.withSlugs((token) => token.toLowerCase()))),
+        )(),
       ).toEqual(expected);
     },
   );

@@ -1,5 +1,4 @@
-import { readonlyArray, function as fn } from "fp-ts";
-import type { IO } from "fp-ts/IO";
+import { monoid, readonlyArray, function as fn } from "fp-ts";
 import type { TaskEither } from "fp-ts/TaskEither";
 
 import type { Entry, File } from "@ndcb/fs-util";
@@ -14,6 +13,11 @@ export const compose =
       readonlyArray.some((excludes) => excludes(entry)),
     );
 
+export const Monoid: monoid.Monoid<ExclusionRule> = {
+  concat: (x, y) => (entry) => x(entry) || y(entry),
+  empty: () => false,
+};
+
 export const toFilter =
   (rule: ExclusionRule): ExclusionRule =>
   (entry: Entry): boolean =>
@@ -21,4 +25,4 @@ export const toFilter =
 
 export type ExclusionRuleReader<ExclusionRuleReadError extends Error> = (
   file: File,
-) => IO<TaskEither<ExclusionRuleReadError, ExclusionRule>>;
+) => TaskEither<ExclusionRuleReadError, ExclusionRule>;

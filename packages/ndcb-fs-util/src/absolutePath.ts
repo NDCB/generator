@@ -82,21 +82,16 @@ export const makeResolved: (value: string) => IO<AbsolutePath> = fn.flow(
   io.map(fn.flow(upath.resolve, make)),
 );
 
-export type PathExistenceTester = (path: AbsolutePath) => IO<Task<boolean>>;
+export type PathExistenceTester = (path: AbsolutePath) => Task<boolean>;
 
 export const exists: PathExistenceTester = fn.flow(
   toString,
-  io.of,
-  io.map(
-    fn.flow(
-      (path) =>
-        taskEither.tryCatch<unknown, boolean>(
-          () => fse.pathExists(path),
-          fn.identity,
-        ),
-      taskEither.match(fn.constFalse, fn.identity),
+  (path) =>
+    taskEither.tryCatch<boolean, boolean>(
+      () => fse.pathExists(path),
+      fn.constFalse,
     ),
-  ),
+  taskEither.toUnion,
 );
 
 export const root: (path: AbsolutePath) => AbsolutePath = fn.flow(
@@ -135,9 +130,9 @@ export const basename: (path: AbsolutePath) => string = fn.flow(
 
 export type PathStatusChecker<PathStatusCheckError extends Error> = (
   path: AbsolutePath,
-) => IO<TaskEither<PathStatusCheckError, StatsBase<BigInt>>>;
+) => TaskEither<PathStatusCheckError, StatsBase<BigInt>>;
 
-export const status: PathStatusChecker<PathIOError> = (path) => () =>
+export const status: PathStatusChecker<PathIOError> = (path) =>
   taskEither.tryCatch(
     () =>
       (

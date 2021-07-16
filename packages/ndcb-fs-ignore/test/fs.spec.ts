@@ -1,13 +1,6 @@
 import { describe, expect, test } from "@jest/globals";
 
-import {
-  io,
-  option,
-  taskEither,
-  function as fn,
-  string,
-  readonlySet,
-} from "fp-ts";
+import { option, taskEither, function as fn, string, readonlySet } from "fp-ts";
 
 import * as mockFs from "@ndcb/mock-fs";
 import { file, entry, directory } from "@ndcb/fs-util";
@@ -59,17 +52,13 @@ describe("exclusionRuleReaderFromDirectory", () => {
         file,
         entry.fileDirectory,
         readDirectoryExclusionRules,
-        io.map(
-          fn.flow(
-            taskEither.map((excludes) => excludes(file)),
-            taskEither.getOrElse(() => {
-              throw new Error(
-                "Unexpectedly failed to read exclusion rule for mocked directory",
-              );
-            }),
-          ),
-        ),
-      )()(),
+        taskEither.map((excludes) => excludes(file)),
+        taskEither.getOrElse(() => {
+          throw new Error(
+            "Unexpectedly failed to read exclusion rule for mocked directory",
+          );
+        }),
+      )(),
     ).toBe(false);
   });
   test.concurrent.each(
@@ -82,17 +71,13 @@ describe("exclusionRuleReaderFromDirectory", () => {
         file,
         entry.fileDirectory,
         readDirectoryExclusionRules,
-        io.map(
-          fn.flow(
-            taskEither.map((excludes) => excludes(file)),
-            taskEither.getOrElse(() => {
-              throw new Error(
-                "Unexpectedly failed to read exclusion rule for mocked directory",
-              );
-            }),
-          ),
-        ),
-      )()(),
+        taskEither.map((excludes) => excludes(file)),
+        taskEither.getOrElse(() => {
+          throw new Error(
+            "Unexpectedly failed to read exclusion rule for mocked directory",
+          );
+        }),
+      )(),
     ).toBe(true);
   });
   test.concurrent.each(["/content/node_modules"].map(directory.makeNormalized))(
@@ -106,17 +91,13 @@ describe("exclusionRuleReaderFromDirectory", () => {
             throw new Error("Unexpectedly failed to get parent directory");
           }),
           readDirectoryExclusionRules,
-          io.map(
-            fn.flow(
-              taskEither.map((excludes) => excludes(directory)),
-              taskEither.getOrElse(() => {
-                throw new Error(
-                  "Unexpectedly failed to read exclusion rule for mocked directory",
-                );
-              }),
-            ),
-          ),
-        )()(),
+          taskEither.map((excludes) => excludes(directory)),
+          taskEither.getOrElse(() => {
+            throw new Error(
+              "Unexpectedly failed to read exclusion rule for mocked directory",
+            );
+          }),
+        )(),
       ).toBe(true);
     },
   );

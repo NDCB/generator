@@ -75,29 +75,24 @@ export const hash: (file: File) => number = fn.flow(path, absolutePath.hash);
 
 export type FileExistenceTester<FileStatusError extends Error> = (
   file: File,
-) => IO<TaskEither<FileStatusError, boolean>>;
+) => TaskEither<FileStatusError, boolean>;
 
 export const exists: FileExistenceTester<PathIOError> = (file) =>
   fn.pipe(
     file,
     path,
     absolutePath.exists,
-    io.map(
-      fn.flow(
-        (task): TaskEither<PathIOError, boolean> => taskEither.fromTask(task),
-        taskEither.chainIOK(
-          boolean.match(
-            () => fn.pipe(fn.constFalse(), taskEither.right, io.of),
-            () =>
-              fn.pipe(
-                file,
-                path,
-                absolutePath.status,
-                io.map(taskEither.map((status) => status.isFile())),
-              ),
+    taskEither.fromTask,
+    taskEither.chain(
+      boolean.match(
+        () => taskEither.right(fn.constFalse()),
+        () =>
+          fn.pipe(
+            file,
+            path,
+            absolutePath.status,
+            taskEither.map((status) => status.isFile()),
           ),
-        ),
-        taskEither.flatten,
       ),
     ),
   );
@@ -107,16 +102,14 @@ export interface FileIOError extends Error {
   readonly file: File;
 }
 
-export const ensure =
-  (file: File): IO<TaskEither<FileIOError, File>> =>
-  () =>
-    fn.pipe(
-      taskEither.tryCatch(
-        () => fse.ensureFile(absolutePath.toString(path(file))),
-        (error) => ({ ...(error as Error & { code: string }), file }),
-      ),
-      taskEither.map(() => file),
-    );
+export const ensure = (file: File): TaskEither<FileIOError, File> =>
+  fn.pipe(
+    taskEither.tryCatch(
+      () => fse.ensureFile(absolutePath.toString(path(file))),
+      (error) => ({ ...(error as Error & { code: string }), file }),
+    ),
+    taskEither.map(() => file),
+  );
 
 export const basename: (file: File) => string = fn.flow(
   path,
@@ -162,9 +155,9 @@ export const hasExtensionIn: (
 
 export type FileReader<FileReadError extends Error> = (
   file: File,
-) => IO<TaskEither<FileReadError, Buffer>>;
+) => TaskEither<FileReadError, Buffer>;
 
-export const read: FileReader<FileIOError> = (file) => () =>
+export const read: FileReader<FileIOError> = (file) =>
   taskEither.tryCatch(
     () => fse.readFile(toString(file)),
     (error) => ({ ...(error as Error & { code: string }), file }),
@@ -172,7 +165,7 @@ export const read: FileReader<FileIOError> = (file) => () =>
 
 export type TextFileReader<TextFileReadError extends Error> = (
   file: File,
-) => IO<TaskEither<TextFileReadError, string>>;
+) => TaskEither<TextFileReadError, string>;
 
 export const textReader = <FileReadError extends Error>(
   readFile: FileReader<FileReadError>,
@@ -180,15 +173,15 @@ export const textReader = <FileReadError extends Error>(
 ): TextFileReader<FileReadError> =>
   fn.flow(
     readFile,
-    io.map(taskEither.map((buffer) => buffer.toString(encoding))),
+    taskEither.map((buffer) => buffer.toString(encoding)),
   );
 
 export type FileWriter<FileWriteError extends Error> = (
   file: File,
   contents: Buffer,
-) => IO<TaskEither<FileWriteError, void>>;
+) => TaskEither<FileWriteError, void>;
 
-export const writeFile: FileWriter<FileIOError> = (file, contents) => () =>
+export const writeFile: FileWriter<FileIOError> = (file, contents) =>
   taskEither.tryCatch(
     () => fse.writeFile(toString(file), contents),
     (error) => ({ ...(error as Error & { code: string }), file }),
@@ -197,11 +190,10 @@ export const writeFile: FileWriter<FileIOError> = (file, contents) => () =>
 export type TextFileWriter<FileWriteError extends Error> = (
   file: File,
   contents: string,
-) => IO<TaskEither<FileWriteError, void>>;
+) => TaskEither<FileWriteError, void>;
 
-export const writeTextFile: TextFileWriter<FileIOError> =
-  (file, contents) => () =>
-    taskEither.tryCatch(
-      () => fse.writeFile(toString(file), contents),
-      (error) => ({ ...(error as Error & { code: string }), file }),
-    );
+export const writeTextFile: TextFileWriter<FileIOError> = (file, contents) =>
+  taskEither.tryCatch(
+    () => fse.writeFile(toString(file), contents),
+    (error) => ({ ...(error as Error & { code: string }), file }),
+  );

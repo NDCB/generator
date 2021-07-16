@@ -1,5 +1,4 @@
 import { readonlyArray, taskEither, option, function as fn } from "fp-ts";
-import type { IO } from "fp-ts/IO";
 import type { TaskEither } from "fp-ts/TaskEither";
 import type { Option } from "fp-ts/Option";
 
@@ -16,22 +15,20 @@ export interface FileSystem<
   readonly pathname: (entry: Entry) => Option<RelativePath>;
   readonly file: (
     pathname: RelativePath,
-  ) => IO<TaskEither<FileRetrievalError, Option<File>>>;
+  ) => TaskEither<FileRetrievalError, Option<File>>;
   readonly files: () => AsyncIterable<
-    IO<TaskEither<DirectoryReadError, readonly File[]>>
+    TaskEither<DirectoryReadError, readonly File[]>
   >;
   readonly fileExists: (
     path: RelativePath,
-  ) => IO<TaskEither<FileExistenceTestError, boolean>>;
+  ) => TaskEither<FileExistenceTestError, boolean>;
   readonly directoryExists: (
     path: RelativePath,
-  ) => IO<TaskEither<DirectoryExistenceTestError, boolean>>;
-  readonly readFile: (
-    path: RelativePath,
-  ) => IO<TaskEither<FileReadError, Buffer>>;
+  ) => TaskEither<DirectoryExistenceTestError, boolean>;
+  readonly readFile: (path: RelativePath) => TaskEither<FileReadError, Buffer>;
   readonly readDirectory: (
     path: RelativePath,
-  ) => IO<TaskEither<DirectoryReadError, readonly Entry[]>>;
+  ) => TaskEither<DirectoryReadError, readonly Entry[]>;
 }
 
 export interface FileNotFoundError extends Error {
@@ -80,10 +77,10 @@ export const compositeFileSystem = <
       systems,
       readonlyArray.findFirstMap((system) => system.pathname(entry)),
     ),
-  file: (pathname) => () =>
+  file: (pathname) =>
     fn.pipe(
       systems,
-      readonlyArray.map((system) => system.file(pathname)()),
+      readonlyArray.map((system) => system.file(pathname)),
       taskEither.sequenceSeqArray,
       taskEither.map(
         fn.flow(readonlyArray.findFirst(option.isSome), option.flatten),
@@ -96,10 +93,10 @@ export const compositeFileSystem = <
     ))
       yield* systemFiles;
   },
-  fileExists: (path) => () =>
+  fileExists: (path) =>
     fn.pipe(
       systems,
-      readonlyArray.map((system) => system.fileExists(path)()),
+      readonlyArray.map((system) => system.fileExists(path)),
       taskEither.sequenceSeqArray,
       taskEither.map((tests) =>
         fn.pipe(
@@ -108,10 +105,10 @@ export const compositeFileSystem = <
         ),
       ),
     ),
-  directoryExists: (path) => () =>
+  directoryExists: (path) =>
     fn.pipe(
       systems,
-      readonlyArray.map((system) => system.directoryExists(path)()),
+      readonlyArray.map((system) => system.directoryExists(path)),
       taskEither.sequenceSeqArray,
       taskEither.map((tests) =>
         fn.pipe(
@@ -120,12 +117,12 @@ export const compositeFileSystem = <
         ),
       ),
     ),
-  readFile: (path) => () =>
+  readFile: (path) =>
     fn.pipe(
       systems,
       readonlyArray.map((system) =>
         fn.pipe(
-          system.fileExists(path)(),
+          system.fileExists(path),
           taskEither.map((fileExists) => ({ system, fileExists })),
         ),
       ),
@@ -138,14 +135,14 @@ export const compositeFileSystem = <
           taskEither.map(({ system }) => system),
         ),
       ),
-      taskEither.chainW((system) => system.readFile(path)()),
+      taskEither.chainW((system) => system.readFile(path)),
     ),
-  readDirectory: (path) => () =>
+  readDirectory: (path) =>
     fn.pipe(
       systems,
       readonlyArray.map((system) =>
         fn.pipe(
-          system.directoryExists(path)(),
+          system.directoryExists(path),
           taskEither.map((directoryExists) => ({ system, directoryExists })),
         ),
       ),
@@ -165,7 +162,7 @@ export const compositeFileSystem = <
       taskEither.chainW((systems) =>
         fn.pipe(
           systems,
-          readonlyArray.map((system) => system.readDirectory(path)()),
+          readonlyArray.map((system) => system.readDirectory(path)),
           taskEither.sequenceSeqArray,
         ),
       ),

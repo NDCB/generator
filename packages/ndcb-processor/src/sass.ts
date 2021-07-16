@@ -7,7 +7,7 @@ import type { File } from "@ndcb/fs-util";
 
 import { FileProcessor, Processor } from "./processor.js";
 
-export const sassProcessor: Processor<Error> = (f: File) => () =>
+export const sassProcessor: Processor<Error> = (f: File) =>
   fn.pipe(
     either.tryCatch(
       () =>

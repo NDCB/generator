@@ -1,7 +1,6 @@
 import { describe, expect, test } from "@jest/globals";
 
 import {
-  io,
   task,
   taskEither,
   readonlyArray,
@@ -27,20 +26,18 @@ describe("make(...)#fileExists", () => {
     fn.pipe(
       f,
       fileExists,
-      io.map(
-        taskEither.getOrElse(() => {
-          throw new Error(
-            `Unexpectedly failed to test for the existence of file "${file.toString(
-              f,
-            )}"`,
-          );
-        }),
-      ),
+      taskEither.getOrElse(() => {
+        throw new Error(
+          `Unexpectedly failed to test for the existence of file "${file.toString(
+            f,
+          )}"`,
+        );
+      }),
     );
   test.concurrent.each(
     ["/file.txt", "/directory/file.txt"].map(file.makeNormalized),
   )(`returns true for existent files`, async (file: File) => {
-    expect(await fn.pipe(file, fileExistsThrow)()()).toBe(true);
+    expect(await fn.pipe(file, fileExistsThrow)()).toBe(true);
   });
   test.concurrent.each(
     [
@@ -50,7 +47,7 @@ describe("make(...)#fileExists", () => {
       "/inexistent",
     ].map(file.makeNormalized),
   )(`returns false for inexistent files`, async (file: File) => {
-    expect(await fn.pipe(file, fileExistsThrow)()()).toBe(false);
+    expect(await fn.pipe(file, fileExistsThrow)()).toBe(false);
   });
 });
 
@@ -68,22 +65,20 @@ describe("make(...)#directoryExists", () => {
     fn.pipe(
       d,
       directoryExists,
-      io.map(
-        taskEither.getOrElse(() => {
-          throw new Error(
-            `Unexpectedly failed to test for the existence of directory "${directory.toString(
-              d,
-            )}"`,
-          );
-        }),
-      ),
+      taskEither.getOrElse(() => {
+        throw new Error(
+          `Unexpectedly failed to test for the existence of directory "${directory.toString(
+            d,
+          )}"`,
+        );
+      }),
     );
   test.concurrent.each(
     ["/", "/directory", "/directory/subdirectory"].map(
       directory.makeNormalized,
     ),
   )(`returns true for existent directories`, async (directory: Directory) => {
-    expect(await fn.pipe(directory, directoryExistsThrow)()()).toBe(true);
+    expect(await fn.pipe(directory, directoryExistsThrow)()).toBe(true);
   });
   test.concurrent.each(
     [
@@ -95,7 +90,7 @@ describe("make(...)#directoryExists", () => {
   )(
     `returns false for inexistent directories`,
     async (directory: Directory) => {
-      expect(await fn.pipe(directory, directoryExistsThrow)()()).toBe(false);
+      expect(await fn.pipe(directory, directoryExistsThrow)()).toBe(false);
     },
   );
 });
@@ -116,20 +111,14 @@ describe("make(...)#readFile", () => {
         await fn.pipe(
           f,
           readFile,
-          io.map(
-            fn.flow(
-              taskEither.swap,
-              taskEither.getOrElse(() => {
-                throw new Error(
-                  `Unexpectedly succeeded in reading file "${file.toString(
-                    f,
-                  )}"`,
-                );
-              }),
-              task.map(fn.constTrue),
-            ),
-          ),
-        )()(),
+          taskEither.swap,
+          taskEither.getOrElse(() => {
+            throw new Error(
+              `Unexpectedly succeeded in reading file "${file.toString(f)}"`,
+            );
+          }),
+          task.map(fn.constTrue),
+        )(),
       ).toBe(true);
     },
   );
@@ -154,14 +143,12 @@ describe("make(...)#readFile", () => {
         await fn.pipe(
           f,
           readFile,
-          io.map(
-            taskEither.getOrElse(() => {
-              throw new Error(
-                `Unexpectedly failed to read file "${file.toString(f)}"`,
-              );
-            }),
-          ),
-        )()(),
+          taskEither.getOrElse(() => {
+            throw new Error(
+              `Unexpectedly failed to read file "${file.toString(f)}"`,
+            );
+          }),
+        )(),
       ).toEqual(contents);
     },
   );
@@ -184,20 +171,16 @@ describe("make(...)#readDirectory", () => {
         await fn.pipe(
           d,
           readDirectory,
-          io.map(
-            fn.flow(
-              taskEither.swap,
-              taskEither.getOrElse(() => {
-                throw new Error(
-                  `Unexpectedly succeeded to read directory "${directory.toString(
-                    d,
-                  )}"`,
-                );
-              }),
-              task.map(fn.constTrue),
-            ),
-          ),
-        )()(),
+          taskEither.swap,
+          taskEither.getOrElse(() => {
+            throw new Error(
+              `Unexpectedly succeeded to read directory "${directory.toString(
+                d,
+              )}"`,
+            );
+          }),
+          task.map(fn.constTrue),
+        )(),
       ).toBe(true);
     },
   );
@@ -261,23 +244,19 @@ describe("make(...)#readDirectory", () => {
         await fn.pipe(
           d,
           readDirectory,
-          io.map(
-            fn.flow(
-              taskEither.getOrElse(() => {
-                throw new Error(
-                  `Unexpectedly failed to read directory "${directory.toString(
-                    d,
-                  )}"`,
-                );
-              }),
-              task.map(
-                fn.flow(readonlySet.fromReadonlyArray(entry.Eq), (actual) =>
-                  readonlySet.getEq(entry.Eq).equals(actual, expected),
-                ),
-              ),
+          taskEither.getOrElse(() => {
+            throw new Error(
+              `Unexpectedly failed to read directory "${directory.toString(
+                d,
+              )}"`,
+            );
+          }),
+          task.map(
+            fn.flow(readonlySet.fromReadonlyArray(entry.Eq), (actual) =>
+              readonlySet.getEq(entry.Eq).equals(actual, expected),
             ),
           ),
-        )()(),
+        )(),
       ).toEqual(true);
     },
   );

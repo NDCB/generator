@@ -1,6 +1,6 @@
 import { describe, expect, test } from "@jest/globals";
 
-import { io, option, readonlyArray, taskEither, function as fn } from "fp-ts";
+import { option, readonlyArray, taskEither, function as fn } from "fp-ts";
 
 import * as mockFs from "@ndcb/mock-fs";
 import type { MockDirectory } from "@ndcb/mock-fs";
@@ -163,16 +163,14 @@ describe("sourcePathname", () => {
       expect(
         await fn.pipe(
           source(query),
-          io.map(
-            taskEither.getOrElse(() => {
-              throw new Error(
-                `Unexpectedly failed to find query result for query "${relativePath.toString(
-                  query,
-                )}".`,
-              );
-            }),
-          ),
-        )()(),
+          taskEither.getOrElse(() => {
+            throw new Error(
+              `Unexpectedly failed to find query result for query "${relativePath.toString(
+                query,
+              )}".`,
+            );
+          }),
+        )(),
       ).toEqual(expected);
     });
   });
@@ -365,16 +363,14 @@ describe("sourcePathname404", () => {
       expect(
         await fn.pipe(
           source404(query),
-          io.map(
-            taskEither.getOrElse(() => {
-              throw new Error(
-                `Unexpectedly failed to find query result for query "${relativePath.toString(
-                  query,
-                )}".`,
-              );
-            }),
-          ),
-        )()(),
+          taskEither.getOrElse(() => {
+            throw new Error(
+              `Unexpectedly failed to find query result for query "${relativePath.toString(
+                query,
+              )}".`,
+            );
+          }),
+        )(),
       ).toEqual(expected);
     });
   });

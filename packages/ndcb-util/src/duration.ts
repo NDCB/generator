@@ -1,4 +1,12 @@
-import { ord, readonlyArray, option, function as fn, either, eq } from "fp-ts";
+import {
+  ord,
+  readonlyArray,
+  option,
+  function as fn,
+  either,
+  eq,
+  show,
+} from "fp-ts";
 import type { Either } from "fp-ts/Either";
 
 export type Duration = bigint; // Duration in nanoseconds
@@ -22,13 +30,19 @@ export const fromString = (token: string): Either<Error, Duration> =>
     (cause) => fn.unsafeCoerce<unknown, Error>(cause),
   );
 
-export const Eq: eq.Eq<bigint> = eq.eqStrict;
+export const Eq: eq.Eq<Duration> = eq.eqStrict;
 
-export const Ord: ord.Ord<bigint> = ord.fromCompare<Duration>((a, b) =>
+export const Ord: ord.Ord<Duration> = ord.fromCompare<Duration>((a, b) =>
   a < b ? -1 : a > b ? 1 : 0,
 );
 
+export const Show: show.Show<Duration> = {
+  show: (duration) => duration.toString(),
+};
+
 export const equals: (d1: Duration, d2: Duration) => boolean = Eq.equals;
+
+export const toString: (duration: Duration) => string = Show.show;
 
 export const tieredFormatter = (
   thresholds: readonly {

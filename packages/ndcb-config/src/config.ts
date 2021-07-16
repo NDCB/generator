@@ -1,7 +1,6 @@
 import { ValidationError } from "joi";
 
 import { taskEither, function as fn } from "fp-ts";
-import type { IO } from "fp-ts/IO";
 import type { TaskEither } from "fp-ts/TaskEither";
 
 import { TextFileDataReader } from "@ndcb/data";
@@ -29,36 +28,32 @@ export const configurationFetcher =
   ) =>
   (
     configurationPath?: string,
-  ): IO<
-    TaskEither<
-      TextFileReadError | ValidationError | TestFileExistenceError,
-      Configuration
-    >
+  ): TaskEither<
+    TextFileReadError | ValidationError | TestFileExistenceError,
+    Configuration
   > =>
     typeof configurationPath === "string"
-      ? () =>
-          // Configuration path supplied
-          fn.pipe(
-            coerceConfigurationFile(configurationPath),
-            taskEither.chainW((file) => readTextFileData(file)()),
-            taskEither.chainW((data) => coerceConfiguration(data)),
-          )
-      : () =>
-          // Use default configuration path if it exists, or default configuration
-          fn.pipe(
-            coerceConfigurationFile(),
-            taskEither.chainW((file) =>
-              fn.pipe(
-                fileExists(file)(),
-                taskEither.map((exists) => ({ exists, file })),
-              ),
+      ? // Configuration path supplied
+        fn.pipe(
+          coerceConfigurationFile(configurationPath),
+          taskEither.chainW(readTextFileData),
+          taskEither.chainW(coerceConfiguration),
+        )
+      : // Use default configuration path if it exists, or default configuration
+        fn.pipe(
+          coerceConfigurationFile(),
+          taskEither.chainW((file) =>
+            fn.pipe(
+              fileExists(file),
+              taskEither.map((exists) => ({ exists, file })),
             ),
-            taskEither.chainW(({ exists, file }) =>
-              exists
-                ? fn.pipe(
-                    readTextFileData(file)(),
-                    taskEither.chainW((data) => coerceConfiguration(data)),
-                  )
-                : coerceConfiguration(),
-            ),
-          );
+          ),
+          taskEither.chainW(({ exists, file }) =>
+            exists
+              ? fn.pipe(
+                  readTextFileData(file),
+                  taskEither.chainW(coerceConfiguration),
+                )
+              : coerceConfiguration(),
+          ),
+        );
