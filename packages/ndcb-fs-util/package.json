@@ -27,7 +27,11 @@
     "fs-extra": "^10.0.0",
     "upath": "^2.0.1",
     "iconv-lite": "^0.6.2",
-    "jschardet": "^3.0.0"
+    "jschardet": "^3.0.0",
+    "lru-cache": "^6.0.0"
+  },
+  "devDependencies": {
+    "@types/lru-cache": "^5.1.0"
   },
   "publishConfig": {
     "access": "public"

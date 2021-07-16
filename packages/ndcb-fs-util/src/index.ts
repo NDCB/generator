@@ -39,4 +39,15 @@ export type {
 import * as entry from "./entry.js";
 export type { Entry, EntryPattern } from "./entry.js";
 
-export { absolutePath, relativePath, path, extension, file, directory, entry };
+import * as cache from "./cache.js";
+
+export {
+  absolutePath,
+  relativePath,
+  path,
+  extension,
+  file,
+  directory,
+  entry,
+  cache,
+};
