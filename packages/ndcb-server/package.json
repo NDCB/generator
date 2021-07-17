@@ -16,8 +16,6 @@
     "@ndcb/config": "^0.2.0",
     "@ndcb/data": "^0.1.1",
     "@ndcb/fs": "^0.7.0",
-    "@ndcb/fs-cache": "^0.1.0",
-    "@ndcb/fs-text": "^0.1.0",
     "@ndcb/fs-util": "^0.3.0",
     "@ndcb/logger": "^0.1.1",
     "@ndcb/util": "^0.9.1",

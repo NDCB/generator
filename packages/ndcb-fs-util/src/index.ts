@@ -3,7 +3,7 @@ export type {
   AbsolutePath,
   PathExistenceTester,
   PathStatusChecker,
-  PathIOError,
+  AbsolutePathIOError,
 } from "./absolutePath.js";
 
 import * as relativePath from "./relativePath.js";
@@ -18,6 +18,7 @@ export type { Extension } from "./extension.js";
 import * as file from "./file.js";
 export type {
   File,
+  FileStatusReader,
   FileExistenceTester,
   FileIOError,
   FileReader,
@@ -28,6 +29,7 @@ export type {
 import * as directory from "./directory.js";
 export type {
   Directory,
+  DirectoryStatusReader,
   DirectoryExistenceTester,
   DirectoryIOError,
   DirectoryFilesReader,

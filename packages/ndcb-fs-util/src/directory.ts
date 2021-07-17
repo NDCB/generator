@@ -6,18 +6,19 @@ import {
   boolean,
   eq,
   show,
+  option,
 } from "fp-ts";
 import type { IO } from "fp-ts/IO";
 import type { TaskEither } from "fp-ts/TaskEither";
 import type { Refinement } from "fp-ts/function";
 
 import * as fse from "fs-extra";
-import { promises } from "fs";
+import { BigIntStats, promises } from "fs";
 
 import { type } from "@ndcb/util";
 
 import * as absolutePath from "./absolutePath.js";
-import type { AbsolutePath, PathIOError } from "./absolutePath.js";
+import type { AbsolutePath, AbsolutePathIOError } from "./absolutePath.js";
 
 import * as file from "./file.js";
 import type { File } from "./file.js";
@@ -77,11 +78,31 @@ export const hash: (directory: Directory) => number = fn.flow(
   absolutePath.hash,
 );
 
+export type DirectoryStatusReader<DirectoryStatusReadError extends Error> = (
+  directory: Directory,
+) => TaskEither<DirectoryStatusReadError, BigIntStats>;
+
+export const status: DirectoryStatusReader<
+  AbsolutePathIOError | DirectoryIOError
+> = (directory) =>
+  fn.pipe(
+    directory,
+    path,
+    absolutePath.status,
+    taskEither.chainOptionK<AbsolutePathIOError | DirectoryIOError>(() => ({
+      name: "DIRECTORY_NOT_FOUND",
+      message: `No such file "${toString(directory)}"`,
+      directory,
+    }))(option.fromPredicate((status) => status.isDirectory())),
+  );
+
 export type DirectoryExistenceTester<E extends Error> = (
   directory: Directory,
 ) => TaskEither<E, boolean>;
 
-export const exists: DirectoryExistenceTester<PathIOError> = (directory) =>
+export const exists: DirectoryExistenceTester<AbsolutePathIOError> = (
+  directory,
+) =>
   fn.pipe(
     directory,
     path,
@@ -113,7 +134,6 @@ export const directoryFrom: (
 );
 
 export interface DirectoryIOError extends Error {
-  readonly code: string;
   readonly directory: Directory;
 }
 
@@ -123,7 +143,7 @@ export const ensure = (
   fn.pipe(
     taskEither.tryCatch(
       () => fse.ensureDir(absolutePath.toString(path(directory))),
-      (error) => ({ ...(error as Error & { code: string }), directory }),
+      (error) => ({ ...fn.unsafeCoerce<unknown, Error>(error), directory }),
     ),
     taskEither.map(() => directory),
   );
@@ -134,7 +154,7 @@ export const isEmpty = (
   fn.pipe(
     taskEither.tryCatch<DirectoryIOError, string[]>(
       () => promises.readdir(absolutePath.toString(path(directory))),
-      (error) => ({ ...(error as Error & { code: string }), directory }),
+      (error) => ({ ...fn.unsafeCoerce<unknown, Error>(error), directory }),
     ),
     taskEither.map((filenames) => !(filenames.length > 0)),
   );
@@ -145,7 +165,7 @@ export const empty = (
   fn.pipe(
     taskEither.tryCatch(
       () => fse.emptyDir(absolutePath.toString(path(directory))),
-      (error) => ({ ...(error as Error & { code: string }), directory }),
+      (error) => ({ ...fn.unsafeCoerce<unknown, Error>(error), directory }),
     ),
     taskEither.map(() => directory),
   );
@@ -212,7 +232,7 @@ export const reader =
             encoding,
           }),
         (error) => ({
-          ...(error as Error & { code: string }),
+          ...fn.unsafeCoerce<unknown, Error>(error),
           directory,
         }),
       ),

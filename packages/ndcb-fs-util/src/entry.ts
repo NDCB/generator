@@ -7,7 +7,7 @@ import { sequence } from "@ndcb/util";
 import type { Sequence } from "@ndcb/util";
 
 import * as absolutePath from "./absolutePath.js";
-import type { AbsolutePath, PathIOError } from "./absolutePath.js";
+import type { AbsolutePath, AbsolutePathIOError } from "./absolutePath.js";
 
 import * as relativePath from "./relativePath.js";
 import type { RelativePath } from "./relativePath.js";
@@ -17,6 +17,7 @@ import type { Directory, DirectoryIOError } from "./directory.js";
 
 import * as file from "./file.js";
 import type { File, FileIOError } from "./file.js";
+import { BigIntStats } from "fs";
 
 /**
  * A file system entry representation in the file system.
@@ -30,6 +31,11 @@ export interface EntryPattern<T> {
   readonly directory: (directory: Directory) => T;
 }
 
+export interface EntryPatternW<F, D> {
+  readonly file: (file: File) => F;
+  readonly directory: (directory: Directory) => D;
+}
+
 export const isFile: Refinement<Entry, File> = file.is;
 
 export const isDirectory: Refinement<Entry, Directory> = directory.is;
@@ -37,9 +43,9 @@ export const isDirectory: Refinement<Entry, Directory> = directory.is;
 export const is: Refinement<unknown, Entry> = (u): u is Entry =>
   file.is(u) || directory.is(u);
 
-export const match =
-  <T>(pattern: EntryPattern<T>) =>
-  (entry: Entry): T => {
+export const matchW =
+  <F, D>(pattern: EntryPatternW<F, D>) =>
+  (entry: Entry): F | D => {
     /* istanbul ignore else */
     if (isFile(entry)) return pattern.file(entry);
     else if (isDirectory(entry)) return pattern.directory(entry);
@@ -50,6 +56,9 @@ export const match =
         )}"`,
       );
   };
+
+export const match: <T>(pattern: EntryPattern<T>) => (entry: Entry) => T =
+  matchW;
 
 export const Eq: eq.Eq<Entry> = {
   equals: (e1, e2) =>
@@ -77,18 +86,26 @@ export const filterDirectories: (
   entries: readonly Entry[],
 ) => readonly Directory[] = readonlyArray.filter(isDirectory);
 
-export const exists: (entry: Entry) => TaskEither<PathIOError, boolean> = match(
-  {
-    file: file.exists,
-    directory: directory.exists,
-  },
-);
+export const status: (
+  entry: Entry,
+) => TaskEither<
+  AbsolutePathIOError | FileIOError | DirectoryIOError,
+  BigIntStats
+> = matchW({
+  file: file.status,
+  directory: directory.status,
+});
+
+export const exists: (
+  entry: Entry,
+) => TaskEither<AbsolutePathIOError, boolean> = match({
+  file: file.exists,
+  directory: directory.exists,
+});
 
 export const ensure: (
   entry: Entry,
-) => TaskEither<FileIOError | DirectoryIOError, Entry> = match<
-  TaskEither<FileIOError | DirectoryIOError, Entry>
->({
+) => TaskEither<FileIOError | DirectoryIOError, Entry> = matchW({
   file: file.ensure,
   directory: directory.ensure,
 });

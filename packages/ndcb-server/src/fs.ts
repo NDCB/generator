@@ -12,7 +12,7 @@ import {
 } from "@ndcb/fs";
 import type { FileSystem } from "@ndcb/fs";
 
-import { file, directory, absolutePath, cache } from "@ndcb/fs-util";
+import { file, directory, cache } from "@ndcb/fs-util";
 import type {
   FileReader,
   File,
@@ -21,7 +21,7 @@ import type {
   TextFileReader,
   FileExistenceTester,
   FileIOError,
-  PathIOError,
+  AbsolutePathIOError,
   DirectoryIOError,
 } from "@ndcb/fs-util";
 
@@ -65,9 +65,9 @@ const logReadDirectory =
 export const fileSystemReaders = (
   configuration: Configuration,
 ): {
-  readFile: FileReader<FileIOError | PathIOError>;
-  readTextFile: TextFileReader<PathIOError | FileIOError>;
-  readDirectory: DirectoryReader<DirectoryIOError | PathIOError>;
+  readFile: FileReader<FileIOError | AbsolutePathIOError>;
+  readTextFile: TextFileReader<AbsolutePathIOError | FileIOError>;
+  readDirectory: DirectoryReader<DirectoryIOError | AbsolutePathIOError>;
 } => {
   const {
     pathEncoding,
@@ -81,21 +81,18 @@ export const fileSystemReaders = (
   const log = logger.scoped("fs");
   const readFile = cache.fileReader(
     logFileReader ? logReadFile(file.read, log) : file.read,
-    absolutePath.status,
-    fileReaderCacheSize,
-  );
+    file.status,
+  )(fileReaderCacheSize).read;
   const readTextFile = cache.textFileReader(
     file.autoTextReader(readFile),
-    absolutePath.status,
-    textFileReaderCacheSize,
-  );
+    file.status,
+  )(textFileReaderCacheSize).read;
   const readDirectory = cache.directoryReader(
     logDirectoryReader
       ? logReadDirectory(directory.reader(pathEncoding), log)
       : directory.reader(pathEncoding),
-    absolutePath.status,
-    directoryReaderCacheSize,
-  );
+    directory.status,
+  )(directoryReaderCacheSize).read;
   return { readFile, readTextFile, readDirectory };
 };
 

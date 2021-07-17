@@ -15,8 +15,8 @@ import type { TaskEither } from "fp-ts/TaskEither";
 
 import fse from "fs-extra";
 
-import { detect } from "jschardet";
-import { decode } from "iconv-lite";
+import encodingDetector from "jschardet";
+import encodingDecoder from "iconv-lite";
 
 import * as util from "@ndcb/util";
 import type { Sequence } from "@ndcb/util";
@@ -25,7 +25,8 @@ import * as extensionModule from "./extension.js";
 import type { Extension } from "./extension.js";
 
 import * as absolutePath from "./absolutePath.js";
-import type { AbsolutePath, PathIOError } from "./absolutePath.js";
+import type { AbsolutePath, AbsolutePathIOError } from "./absolutePath.js";
+import { BigIntStats } from "fs";
 
 /**
  * A file representation in the file system.
@@ -76,11 +77,29 @@ export const equals: (f1: File, f2: File) => boolean = Eq.equals;
 
 export const hash: (file: File) => number = fn.flow(path, absolutePath.hash);
 
+export type FileStatusReader<FileStatusReadError extends Error> = (
+  file: File,
+) => TaskEither<FileStatusReadError, BigIntStats>;
+
+export const status: FileStatusReader<AbsolutePathIOError | FileIOError> = (
+  file,
+) =>
+  fn.pipe(
+    file,
+    path,
+    absolutePath.status,
+    taskEither.chainOptionK<AbsolutePathIOError | FileIOError>(() => ({
+      name: "FILE_NOT_FOUND",
+      message: `No such file "${toString(file)}"`,
+      file,
+    }))(option.fromPredicate((status) => status.isFile())),
+  );
+
 export type FileExistenceTester<FileStatusError extends Error> = (
   file: File,
 ) => TaskEither<FileStatusError, boolean>;
 
-export const exists: FileExistenceTester<PathIOError> = (file) =>
+export const exists: FileExistenceTester<AbsolutePathIOError> = (file) =>
   fn.pipe(
     file,
     path,
@@ -101,7 +120,6 @@ export const exists: FileExistenceTester<PathIOError> = (file) =>
   );
 
 export interface FileIOError extends Error {
-  readonly code: string;
   readonly file: File;
 }
 
@@ -109,7 +127,7 @@ export const ensure = (file: File): TaskEither<FileIOError, File> =>
   fn.pipe(
     taskEither.tryCatch(
       () => fse.ensureFile(absolutePath.toString(path(file))),
-      (error) => ({ ...(error as Error & { code: string }), file }),
+      (error) => ({ ...fn.unsafeCoerce<unknown, Error>(error), file }),
     ),
     taskEither.map(() => file),
   );
@@ -163,7 +181,7 @@ export type FileReader<FileReadError extends Error> = (
 export const read: FileReader<FileIOError> = (file) =>
   taskEither.tryCatch(
     () => fse.readFile(toString(file)),
-    (error) => ({ ...(error as Error & { code: string }), file }),
+    (error) => ({ ...fn.unsafeCoerce<unknown, Error>(error), file }),
   );
 
 export type TextFileReader<TextFileReadError extends Error> = (
@@ -184,7 +202,12 @@ export const autoTextReader = <FileReadError extends Error>(
 ): TextFileReader<FileReadError> =>
   fn.flow(
     readFile,
-    taskEither.map((contents) => decode(contents, detect(contents).encoding)),
+    taskEither.map((contents) =>
+      encodingDecoder.decode(
+        contents,
+        encodingDetector.detect(contents).encoding,
+      ),
+    ),
   );
 
 export type FileWriter<FileWriteError extends Error> = (
@@ -195,7 +218,7 @@ export type FileWriter<FileWriteError extends Error> = (
 export const writeFile: FileWriter<FileIOError> = (file, contents) =>
   taskEither.tryCatch(
     () => fse.writeFile(toString(file), contents),
-    (error) => ({ ...(error as Error & { code: string }), file }),
+    (error) => ({ ...fn.unsafeCoerce<unknown, Error>(error), file }),
   );
 
 export type TextFileWriter<FileWriteError extends Error> = (
@@ -206,5 +229,5 @@ export type TextFileWriter<FileWriteError extends Error> = (
 export const writeTextFile: TextFileWriter<FileIOError> = (file, contents) =>
   taskEither.tryCatch(
     () => fse.writeFile(toString(file), contents),
-    (error) => ({ ...(error as Error & { code: string }), file }),
+    (error) => ({ ...fn.unsafeCoerce<unknown, Error>(error), file }),
   );

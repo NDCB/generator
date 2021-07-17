@@ -1,7 +1,7 @@
 import * as fse from "fs-extra";
 
-import { promises } from "fs";
-import type { PathLike, StatsBase } from "fs";
+import { BigIntStats, promises } from "fs";
+import type { PathLike } from "fs";
 
 import upath from "upath";
 
@@ -28,8 +28,7 @@ import type { Sequence } from "@ndcb/util";
 import * as extensionModule from "./extension.js";
 import type { Extension } from "./extension.js";
 
-export interface PathIOError extends Error {
-  readonly code: string;
+export interface AbsolutePathIOError extends Error {
   readonly path: AbsolutePath;
 }
 
@@ -130,20 +129,20 @@ export const basename: (path: AbsolutePath) => string = fn.flow(
 
 export type PathStatusChecker<PathStatusCheckError extends Error> = (
   path: AbsolutePath,
-) => TaskEither<PathStatusCheckError, StatsBase<BigInt>>;
+) => TaskEither<PathStatusCheckError, BigIntStats>;
 
-export const status: PathStatusChecker<PathIOError> = (path) =>
+export const status: PathStatusChecker<AbsolutePathIOError> = (path) =>
   taskEither.tryCatch(
     () =>
       (
         promises.stat as unknown as (
           path: PathLike,
           options: { bigint: true },
-        ) => Promise<StatsBase<BigInt>>
+        ) => Promise<BigIntStats>
       )(toString(path), {
         bigint: true,
       }),
-    (error) => ({ ...(error as Error & { code: string }), path }),
+    (error) => ({ ...fn.unsafeCoerce<unknown, Error>(error), path }),
   );
 
 export const extension: (path: AbsolutePath) => Option<Extension> = fn.flow(
