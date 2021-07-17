@@ -133,7 +133,7 @@ describe("sourcePathname", () => {
           ),
         ),
         fn.pipe(
-          mockFs.make(fs),
+          mockFs.make(fn.unsafeCoerce<unknown, MockDirectory>(fs)),
           ({ fileExists }) =>
             (pathname: Pathname) =>
               fileExists(
@@ -322,7 +322,7 @@ describe("sourcePathname404", () => {
             ),
           ),
           fn.pipe(
-            mockFs.make(fs as MockDirectory),
+            mockFs.make(fn.unsafeCoerce<unknown, MockDirectory>(fs)),
             ({ fileExists }) =>
               (pathname: Pathname) =>
                 fileExists(

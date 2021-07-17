@@ -190,5 +190,5 @@ export const validate =
   (element?: unknown): TaskEither<Joi.ValidationError, unknown> =>
     taskEither.tryCatch(
       () => schema.validateAsync(element),
-      (error) => error as Joi.ValidationError,
+      (error) => fn.unsafeCoerce<unknown, Joi.ValidationError>(error),
     );

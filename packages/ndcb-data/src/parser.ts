@@ -47,7 +47,7 @@ const dataParserByFileExtensions = (
   parse: (contents) =>
     either.tryCatch(
       () => parse(contents),
-      (error) => ({ ...(error as Error), contents }),
+      (error) => ({ ...fn.unsafeCoerce<unknown, Error>(error), contents }),
     ),
 });
 

@@ -18,7 +18,11 @@ const contentType = (ext: Option<Extension>): string =>
     ext,
     option.getOrElse(() => extension.make(".txt")),
     extension.toString,
-    (ext) => mime.lookup(ext) as string,
+    (ext) => {
+      const correspondingMimeType = mime.lookup(ext);
+      if (correspondingMimeType) return correspondingMimeType;
+      return fn.unsafeCoerce<string | false, string>(mime.lookup(".txt"));
+    },
   );
 
 export type ServerProcessorResult = {

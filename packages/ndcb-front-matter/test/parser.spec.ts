@@ -15,7 +15,7 @@ describe("composite", () => {
       (contents) =>
         taskEither.tryCatch(
           async () => (await YAML.parse(contents)) ?? {},
-          (cause) => cause as Error,
+          (cause) => fn.unsafeCoerce<unknown, Error>(cause),
         ),
     ],
     [
@@ -23,7 +23,7 @@ describe("composite", () => {
       (contents) =>
         taskEither.tryCatch(
           async () => (await TOML.parse(contents)) ?? {},
-          (cause) => cause as Error,
+          (cause) => fn.unsafeCoerce<unknown, Error>(cause),
         ),
     ],
     [
@@ -31,7 +31,7 @@ describe("composite", () => {
       (contents) =>
         taskEither.tryCatch(
           async () => (await JSON.parse(contents)) ?? {},
-          (cause) => cause as Error,
+          (cause) => fn.unsafeCoerce<unknown, Error>(cause),
         ),
     ],
     [
@@ -39,7 +39,7 @@ describe("composite", () => {
       (contents) =>
         taskEither.tryCatch(
           async () => (await JSON5.parse(contents)) ?? {},
-          (cause) => cause as Error,
+          (cause) => fn.unsafeCoerce<unknown, Error>(cause),
         ),
     ],
   ]);

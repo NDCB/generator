@@ -60,11 +60,15 @@ export const inversedHashMap = <K, V>(
     let remainingEntries: Array<[K, V]> = [...entries];
     let ignoredEntries: Array<[K, V]> = [];
     while (remainingEntries.length > 0) {
-      const [key, masterValue] = remainingEntries.pop() as [K, V];
+      const [key, masterValue] = fn.unsafeCoerce<[K, V] | undefined, [K, V]>(
+        remainingEntries.pop(),
+      );
       const keys: K[] = [key];
       const entry: [V, K[]] = [masterValue, keys];
       while (remainingEntries.length > 0) {
-        const [key, value] = remainingEntries.pop() as [K, V];
+        const [key, value] = fn.unsafeCoerce<[K, V] | undefined, [K, V]>(
+          remainingEntries.pop(),
+        );
         if (valueEquality.equals(masterValue, value)) keys.push(key);
         else ignoredEntries.push([key, value]);
       }

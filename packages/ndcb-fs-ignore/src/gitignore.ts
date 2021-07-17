@@ -20,7 +20,7 @@ const parseGitignoreToPathnameExcluder =
     fn.pipe(
       either.tryCatch(
         () => gitignore().add(contents).add(file.name(f)),
-        (reason) => ({ ...(reason as Error), file: f }),
+        (reason) => ({ ...fn.unsafeCoerce<unknown, Error>(reason), file: f }),
       ),
       either.map(
         (ignore) => (pathname) =>

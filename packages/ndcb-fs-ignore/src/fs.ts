@@ -74,10 +74,17 @@ export const downwardNotIgnoredEntries = <
       parentExclusionRule: ExclusionRule;
     }[] = [{ directory, parentExclusionRule: exclusionRule.Monoid.empty }];
     while (stack.length > 0) {
-      const { directory, parentExclusionRule } = stack.pop() as {
-        directory: Directory;
-        parentExclusionRule: ExclusionRule;
-      };
+      const { directory, parentExclusionRule } = fn.unsafeCoerce<
+        | {
+            directory: Directory;
+            parentExclusionRule: ExclusionRule;
+          }
+        | undefined,
+        {
+          directory: Directory;
+          parentExclusionRule: ExclusionRule;
+        }
+      >(stack.pop());
       yield fn.pipe(
         directory,
         readDirectoryExclusionRule,
